@@ -295,44 +295,43 @@ Vegyük csak végig, hogy a **3 vizsgált eloszlásunkban** hogyan is kapjuk meg
   
 Ezeket **számoljuk is ki minden eloszlásra** egy-egy külön `list`-be, majd fűzzük őket össze egy data frame-be! A data frame sorindexeit pedig nevezzük el a számított mutatók neve alapján!
 
-```{python}
+```{r}
 # N(80,20) paraméterek
-átlag = 80
-szórás = 20
+mu <- 80
+sigma <- 20
 
 # Exp(0.0125) paraméterek
-lam = 0.0125
+lam <- 0.0125
 
 # U(40,160) paraméterek
-eloszlás_alsó_határ = 40
-eloszlás_felső_határ = 160
-eloszlás_terjedelem = eloszlás_felső_határ - eloszlás_alsó_határ
+low_bound <- 40
+upp_bound <- 160
 
-NormalisStat = [
-  átlag, # Átlag
-  szórás, # Szórás
-  stats.norm.ppf(0.5, loc=átlag, scale=szórás), # Medián
-  stats.norm.cdf(100, loc=átlag, scale=szórás)] # P(Y_i<100)
+NormStat <- c(
+  mu, # Átlag
+  sigma, # Szórás
+  qnorm(0.5, mu, sigma), # Medián
+  pnorm(100, mu, sigma)) # P(Y_i<100)
 
-ExponStat = [
+ExponStat = c(
   (1/lam), # Átlag
   (1/lam), # Szórás
-  stats.expon.ppf(0.5, scale=(1/lam)), # Medián
-  stats.expon.cdf(100, scale=(1/lam))] # P(Y_i<100)
+  qexp(0.5, rate = lam), # Medián
+  pexp(100, rate = lam)) # P(Y_i<100)
 
-EgyenletesStat = [
-  ((eloszlás_alsó_határ + eloszlás_felső_határ)/2), # Átlag
-  ((eloszlás_felső_határ-eloszlás_alsó_határ)/np.sqrt(12)), # Szórás
-  stats.uniform.ppf(0.5, loc=eloszlás_alsó_határ, scale=eloszlás_terjedelem), # Medián
-  stats.uniform.cdf(100, loc=eloszlás_alsó_határ, scale=eloszlás_terjedelem)] # P(Y_i<100)
+UnifStat = c(
+  ((low_bound + upp_bound)/2), # Átlag
+  ((upp_bound-low_bound)/sqrt(12)), # Szórás
+  qunif(0.5, min=low_bound, max=upp_bound), # Medián
+  punif(100, min=low_bound, max=upp_bound)) # P(Y_i<100)
 
-ElviStatMutatok = pd.DataFrame(
-  list(zip(EgyenletesStat, NormalisStat, ExponStat)),
-  columns=['Egyenletes','Normal', 'Expon'],
-  index = ['Atlag', 'Szoras', 'Median', 'P(Y_i<100)']
-)
+TheoreticalMeasures <- data.frame(Normal=NormStat,
+                                  Exponential=ExponStat,
+                                  Uniform=UnifStat)
 
-ElviStatMutatok
+rownames(TheoreticalMeasures) <- c("Exp Value", "St Dev", "Median", "P(Y_i<100)") # name of the measures as row indices
+
+TheoreticalMeasures
 ```
 
 Meg is vagyunk!
@@ -398,8 +397,10 @@ Ehhez írjunk egy Python függvényt, ami az eddig elvégzett műveleteinket egy
 
 Ez a függvény némi copy-paste után az alábbi formát ölti.
 
-```{python}
-def MintaGeneralas(Elemszam, VeletlenMag):
+```{r}
+MintaGeneralas <- function(sample_size, random_seed){
+  
+}
     # U(40, 160) minta generálása
     eloszlás_alsó_határ = 40
     eloszlás_terjedelem = 160-40

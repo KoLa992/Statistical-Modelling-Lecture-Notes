@@ -23,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1. Normal Distribution and its Density Function
  
-Vizsgáljuk meg a <a href="https://github.com/KoLa992/Statisztika-II-Python-Jegyzet/blob/main/TSLA.xlsx" target="_blank">TSLA.xlsx</a> című táblában található adatokat, amik a **TESLA részvények napi záróárfolyam-változásai**t mutatják ki **dollárban** ($) 2019 májusától 2020 májusáig.
+Vizsgáljuk meg a <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/TSLA.xlsx" target="_blank">TSLA.xlsx</a> című táblában található adatokat, amik a **TESLA részvények napi záróárfolyam-változásai**t mutatják ki **dollárban** ($) 2019 májusától 2020 májusáig.
 
 Az Excel táblákat, amennyiben az adattáblánk első értéke az *A1* cellában kezdődik és csak egy darab munkalapunk van, gond nélkül be lehet olvasni a `readxl` csomag `read_excel` függvényével egy data frame-be. Ezt csináltuk már az előző fejezetben is a *BP_Flats.xlsx* táblával.
 
@@ -326,9 +326,9 @@ But **be very careful with this method!** Looking for outliers based on standard
 One last thought: standardized $z_i$ values show us by how many standard deviations is the original $Y_i$ value above or below the mean.<br>
 Like the first element of the filter above, the $59.82\$$ gain on 30th Jan 2020 is $2.13$ standard deviations above the mean of $1.8\$$. While the the loss of $152.36\$$ on 5th Feb 2020 is $5.67$ standard deviations below the same mean.
 
-## 2. The Exponenetial Distribution
+## 2. The Exponential Distribution
 
-Na, hát akkor most engedjük el egy kicsit a Tesla részvények árváltozásait, és vizsgáljunk meg egy másik adatsort, ami a <a href="https://github.com/KoLa992/Statisztika-II-Python-Jegyzet/blob/main/CancerSurvival.xlsx" target="_blank">CancerSurvival.xlsx</a> fájlban lakik. Ebben az adattáblában 58 súlyos fej- és nyakrák páciensről rögzítették, hogy *hány hónapig* maradtak életben kemoterápia után. Az adatok valósak, 1988-ból a forrás <a href="https://www.jstor.org/stable/2288857#metadata_info_tab_contents" target="_blank">ez a tanulmány</a>.
+Na, hát akkor most engedjük el egy kicsit a Tesla részvények árváltozásait, és vizsgáljunk meg egy másik adatsort, ami a <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/CancerSurvival.xlsx" target="_blank">CancerSurvival.xlsx</a> fájlban lakik. Ebben az adattáblában 58 súlyos fej- és nyakrák páciensről rögzítették, hogy *hány hónapig* maradtak életben kemoterápia után. Az adatok valósak, 1988-ból a forrás <a href="https://www.jstor.org/stable/2288857#metadata_info_tab_contents" target="_blank">ez a tanulmány</a>.
 
 Töltsük is be az adatokat egy data frame-be!
 
