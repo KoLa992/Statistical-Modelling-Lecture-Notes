@@ -1,0 +1,653 @@
+---
+title: "Simulations and Sampling"
+author: "László Kovács"
+date: "2025.02.05."
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Véletlenszám generálás és Mintavételezés
+
+Minden programnyelv alapelemének számít egy olyan függvény, ami $0-1$ értékek közötti véletlen számokat generál. Egész pontosan ezek a függvények **úgy generálnak számokat, hogy azok $0-1$ között minden értéket azonos valószínűséggel**, tehát **egyenletes eloszlással** vehetnek fel.<br>
+Az ilyen $0-1$ között egyenletes eloszlású véletlenszám generátorok minden programnyelv alapvető eszközei, és a Számítástudományból tanult <a href="https://en.wikipedia.org/wiki/Linear_congruential_generator" target="_blank">lineáris kongruenciarendszereken alapulnak</a>.
+
+A $0-1$ közötti teljesen véletlen számok generálásához R-ben egy `runif` című függvényt kell használni. Ennek `n` paraméterében most megadom, hogy csak $n=1$ db $0-1$ közötti véletlen számot szeretnék.
+
+```{r}
+this_is_so_random = runif(n=1)
+this_is_so_random
+```
+
+Fenti kódsort futtatva nyilván mindenkinek más eredménye lesz, hiszen *random* számot generálunk. :) A lényeg, hogy a számunk $0-1$ közötti!
+
+Node, **mit csinál ez a véletlenszám generátor statisztikus szemmel tekintve**? Nos, ilyenkor ők **egy olyan $Y_i$ adatsorból húznak véletlenszerűen egy $x$ számértéket, aminek az eloszlása $0-1$ közötti egyenletes eloszlás**. Ennek a matematikai jelölésrendszere: $Y_i \sim U(0,1)$. Az $U$ onnan jön, hogy az egyenletes eloszlás in English *uniform distribution*.
+
+Húzzunk akkor most ebből a $Y_i \sim U(0,1)$ adatsorból $50$ db véletlen értéket, és tároljuk el az eredményeket egy `vector` objektumban! Azaz, **vegyünk a $U(0,1)$ eloszlásból egy $n=50$ elemű mintát!**
+
+Technikailag csak a függvény `n` paraméterét kell átállítani.
+
+```{r}
+unlucky_numbers = runif(n=50)
+unlucky_numbers
+```
+
+Itt is van az $50$ szép kicsi véletlen számom. Nyilván ezek megint mindenkinek más értékek. :)
+
+Következő lépésben **ezt az $50$ elemű mintát transzformáljuk át olyanná, hogy ne egy $U(0,1)$ eloszlásból, hanem mondjuk egy $U(40,160)$ eloszlásból származó minta**! Magyarul, az kéne, hogy ez az $50$ véletlen szám, ne $50$ db $0-1$ közötti véletlen szám, hanem $50$ db $40-160$ közötti véletlen szám legyen!
+
+Ezt a következőképpen tudjuk elérni:
+
+- Ha a $0-1$ közti véletlenszámokat megszorozzuk $160-40=120$-szal, akkor $0-120$ közti véletlen számok lesznek.
+- Ha a $0-120$ közti véletlen számokhoz hozzáadunk $40$-et, akkor $(0+40)$ és $(120+40)$ közti, azaz $40-160$ közti véletlen számok leszenek.
+
+```{r}
+unlucky_numbers = (unlucky_numbers * (160-40)) + 40
+unlucky_numbers
+```
+
+Olybá tűnik a foglalkozásunk elérte célját: tényleg nincs itt $40$-nél kisebb és $160$-nál nagyobb szám! :)
+
+Nézzük meg, hogy mennyire egyenletes eloszlásúak a generált $U(40,160)$ eloszlású számaink! Rajzoljuk ki a hisztogramot!
+
+```{r}
+hist(unlucky_numbers)
+```
+
+Mit is kéne látni ezen a hisztogramon? Hát általánossában az $U(a,b)$ eloszlás, azaz az $(a,b)$ intervallumon egyenletes eloszlás sűrűségfüggvénye $f(x) = \frac{1}{b-a}$, hiszen a sűrűségfüggvény helyettesítési értéke az egy konkrét $x$ érték bekövetkezési valószínűsége az $U(a,b)$ eloszlásban, $P(Y_i=x)$. Ami az egyenletes eloszlás esetén minden $x$-re $a-b$ között ugyan annyi, nevezetesen "*1 per az $(a,b)$ intervallum hossza*!
+
+Esetünkben tehát **az $U(40,160)$ eloszlás sűrűségfüggvénye** az $f(x)=\frac{1}{160-40}=\frac{1}{120}=0.0083$ magasságban futó **vízszintes egyenes**. Vagyis **a hisztogramnak minden $x$ értékre kb. ugyan akkora gyakoriságot kell mutatnia, ami azért szemmel láthatóan nem így van!**
+
+**Rajzoljuk csak ki a hisztogramot `ggplot`-ban `aes(y = after_stat(density))` beállítással és véssük fel rá az $U(40,160)$ eloszlás sűrűségfüggvényét!** Ezt az ábrát hasonlóan lehet elkészíteni, mint ahogy a normális eloszlás sűrűségfüggvény illeszkedését vizsgáltuk garfikusan a Tesla árváltozások hisztogramjára az <a href="https://kola992.github.io/Statisztika-II-Python-Jegyzet/Gyak01.html#23_Val%C3%B3sz%C3%ADn%C5%B1s%C3%A9g_vs_Relat%C3%ADv_Gyakoris%C3%A1g" target="_blank">Chapter 3. Section 1.3.</a> végén.<br>
+Csak az egész művelet előtt még a vektorunkat data frame formátumba kell rakni, hogy a ggplot kezelni tudja.<br>
+Sőt, természetesen az R `dunif` függvényével is ki tudjuk számolni az $U(40,160)$ eloszlás konstans $f(x)=0.0083$-as sűrűségfüggvényét, ahogy Chapter 3-ban kiszámoltuk a normális eloszlás sűrűségfüggvény $f(x)$ értékeit a `dnorm` függvénnyel. Arra kell figyelni az `dunif` függvénynél, hogy a `min` nevű paraméterben kell megadni az $U(a,b)$ eloszlás alsó határát, azaz $a$-t, míg a `max` paraméterben az elsoszlás felső határát, a $b=160$-at!<br>
+A hisztogramon 6 osztályközt alkalmazunk, hogy az ábra hasonlítson arra a hisztogramra,a mit a sima `hist` függvénnyel készítettünk korábban.
+
+```{r}
+random_df <- as.data.frame(unlucky_numbers)
+
+library(ggplot2)
+
+ggplot(random_df, aes(x=unlucky_numbers)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 6) +
+  stat_function(
+                fun = dunif, 
+                args = list(min = 40, max = 160),
+                col = 'red')
+```
+
+Láthatjuk azért, hogy az $50$ elemű **minta tapasztalt gyakoriságai nem annyira tükrözik az egyenletes eloszlás** vízszintes $f(x) = 0.0083$ magas **sűrűségfüggvényét, de azért többnyire a függvény vonala körül mozognak**. Azt pedig már lecsekkoltuk, hogy a vgenerált minta minden értéke tényleg a $(40,160)$ intervallumban található, de ez most szépen látszik a hisztogram $x$ tengelyén is.
+
+Tehát, sikeresen **eltranszformáltuk az $U(0,1)$ eloszlású $50$ elemű mintánkat $U(40,160)$ eloszlásúvá**. Mindjárt látjuk, hogy **az $U(0,1)$ eloszlású véletlen számokat nem csak egy másik egyenletes $U(a,b)$ eloszlásúvá, hanem tetszőleges eloszlásúvá is tudjuk tarnszformálni!!**
+
+### 1.1. A mintagenerálás általános elve
+
+Gondolkozzunk el azon, hogyan is lehet **formalizálni azt a képletet, amivel az $U(0,1)$ eloszlású véletlen számokból U(a,b) eloszlású véletlen számokat csináltunk!**<br>
+Ugyebár a generált számot megszoroztuk az $(a,b)$ intervallum hosszával, és hozzáadtuk az alsó határt, $a$-t. Azaz formálisan azt mondhatjuk, hogy ha $y \sim U(0,1)$, akkor $z = y \times (b-a) + a \sim U(a,b)$.
+
+De honnan is jön ez a képlet? **Gondoljunk bele, hogy $U(a,b)$ eloszlás esetén hogyan is számolunk ki egy $P(Y_i < x)$ "alá esési" valószínűséget?** Azaz, mi a $\int_{-\infty}^x{\frac{1}{b-a}}dx$ improprius integrál eredménye?
+
+Ez azért nem olyan bonyi vállalkozás, mint mondjuk egy normális eloszlás esetén kiszámolni a cuccot, hiszen mivel $a$ alatt az $a-b$ közötti egyenletes eloszlásban $0$ valószínűséggel lehetnek értékek, így az improprius integrálunk rögtön határozott integrállá válik:$\int_a^x{\frac{1}{b-a}}dx$. Ezzel pedig már könnyen elbánunk, hiszen az integrálandó függvényben nincs is benne a függvény változója, az $x$, tehát konstans függvényről van szó: $$\int_a^x{\frac{1}{b-a}}dx=\left[\frac{x}{b-a}\right]_a^x=\frac{x}{b-a}-\frac{a}{b-a}=\frac{x-a}{b-a}$$
+
+Az eredmény szemléletesen persze az alábbi téglalap területe, hiszen a két oldal hossza $oldal_1=x-a$, illetve a sűrűségfüggvény maga $oldal_2=f(x)=\frac{1}{b-a}$ és a téglalap területe $T=oldal_1 \times oldal_2 = (x-a) \times\frac{1}{b-a} = \frac{x-a}{b-a}$
+
+<center>
+![](unifelo.jpg){width=60%}
+</center>
+
+Szóval, ha **véletlenszerűen húzok egy $Y_i$ számot az $U(a,b)$ eloszlásból, akkor annak a valószínűsége, hogy $x$-nél kisebb értéket kapok nem más, mint $P(Y_i < x) = \frac{x-a}{b-a}$.**
+
+Nagyon jó. Akkor, **nézzük meg mi most az inverz függvény az egyenletes eloszlásban!** Azaz hogyan válaszolom meg azt a kérdést mi szerint: **Mi az az érték, aminél csak $5\%$ valószínűséggel kapok kisebb értéket egy $U(a,b)$ eloszlásban?**
+
+Ugye ekkor az $P(Y_i < x) = \frac{x-a}{b-a}$ összefüggésből kéne kifejeznem $x$-et, ami aránylag könnyű művelet: $$x=P(Y_i < x) \times (b-a) + a$$
+
+**Hoppácska!** Amit kaptunk az gyakorlatilag **ugyan az a formula, amivel a $y \sim U(0,1)$ eloszlásból $z \sim U(a,b)$ eloszlást csináltunk**: $z = y \times (b-a) + a$
+
+Tehát, **általánosságban azt az eredményt kapjuk, hogy ha egy $U(0,1)$ eloszlású véletlen számra $P(Y_i < x)$ valószínűségként tekintek, és berakom azt egy tetszőleges eloszlás kvantilis függvényébe, és megkeresem a hozzá tartozó $x$ értéket, akkor amit kapok eredményül az olyan eloszlású véletlen szám lesz, mint amilyen eloszlás kvantilis függvényébe beírtam az $U(0,1)$ eloszlású véletlen számot!!**<br>
+Ugyebár simán tekinthetek egy $0-1$ közötti véletlenszámra $P(Y_i < x)$ valószínűségként, hiszen minden valószínűség egy $0-1$ közötti szám. :)
+
+**Nézzük is meg az elvet a gyakorlatban!** Ugye R-ben minden eloszlás kvantilis függvényét a `q` előtagú függvényével számoltuk ki (lásd <a href="https://kola992.github.io/Statisztika-II-Python-Jegyzet/Gyak01.html#25_Inverz_%C3%89rt%C3%A9kek" target="_blank">Chapter 3. Section 1.5.</a>).
+
+```{r}
+low_bound <- 40
+upp_bound <- 160
+
+# 50 db U(0,1) eloszlású szám generálása
+unlucky_numbers <- runif(n=50)
+
+# U(40,160)-á transzformálás kvantilis függvénnyel
+unlucky_numbers <- qunif(unlucky_numbers, min = low_bound, max = upp_bound)
+
+# Eredmény ellenőrzése hisztogramon
+random_df <- as.data.frame(unlucky_numbers)
+ggplot(random_df, aes(x=unlucky_numbers)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 6) +
+  stat_function(
+                fun = dunif, 
+                args = list(min = 40, max = 160),
+                col = 'red')
+```
+
+E voilá: siker! Az értékek $40-160$ között mozognak, és a generált minta gyakoriságai kb. az $U(40,160)$ eloszlás $f(x)$ sűrűségfüggvénye körül ingadoznak!
+
+### 1.2. Nem egyenletes eloszlású minták generálása
+
+Na, akkor abban bízunk, hogy **az egyenletes eloszlás esetében megfigyelt trükk működni fog más eloszlásokra is**.
+
+Tehát, **ha egy $U(0,1)$ eloszlású véletlen számot berakom egy tetszőleges eloszlás inverz függvényébe, akkor amit eredményül kapok az olyan eloszlású véletlen szám, mint amilyen eloszlás inverz függvényébe beírtam az kezdeti $U(0,1)$ eloszlású véletlen számot!!**
+
+**Generáljunk akkor mondjuk először egy $N(80,20)$ eloszlású $50$ elemű mintát!** Tehát, a normális eloszlásunk átlaga $\mu=80$ és szórása $\sigma = 20$. A kezdeti $U(0,1)$ számok transzformálására pedig használhatjuk akkor az R `qnorm` függvényét.<br>
+Figyeljünk, hogy a sűrűségfüggvény rajzolásakor az $x$ tengely alsó-felső határait már a generált adatokból szedjük, mert az elvi eloszlás alapján nem lehet itt megmondani! --> Nem $U(a,b)$ egyenletes eloszlásunk van már *úgymond*. :)
+
+```{r}
+mu <- 80
+sigma <- 20
+
+# 50 db U(0,1) eloszlású szám generálása
+unlucky_numbers <- runif(n=50)
+
+# N(80,20)-á transzformálás kvantilis függvénnyel
+normies <- qnorm(unlucky_numbers, mean = mu, sd = sigma)
+
+# Eredmény ellenőrzése hisztogramon
+norm_df <- as.data.frame(normies)
+ggplot(norm_df, aes(x=normies)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 6) +
+  stat_function(
+                fun = dnorm, 
+                args = list(mean = mu, sd = sigma),
+                col = 'red')
+```
+
+Na, egészen jól illeszkednek a generált adatok gyakoriságai a normális eloszlás sűrűségfüggvényéhez! :)
+
+Természetesen, expoenciális eloszlásra (és bármi másra) is hasonlóan működik a trükk, de azt már nem nagy *copy-paste mágia* lenne lekódolni. :)
+
+A lényeg viszont, hogy ez a megoldás tényleg **minden létező eloszlásra működik!** Olyanokra is, amik **nincsenek benne** az R-ben!! Csak **tudni kell az eloszlás kvantilis függvényének képletét, és abba beírogatva $U(0,1)$ eloszlású számokat, le is generáltunk egy mintát az eloszlásból!**
+
+A jó hír viszont, hogy az R-ben szereplő eloszlásoknak van egy `r` előtagú függvénye (mint egyenletes elosztlásnak a már látott `runif`), ami **automatikusan eljátsza a fenti trükköt, így nem kell** az eddig használt hosszabb kódrészletet **mindig copy-pastelni**. A függvényben az aktuális eloszlásnak (egyenletes, normális, exponenciális vagy más) megfelelő módon kell megadni a paramétereket (lásd `mean`, `sd` vagy éppen `rate`), míg a generálandó számok mennyiségét (a minta elemszámát) a `n` paraméterben lehet beállítani.
+
+Tehát, egyszerűsítve az alábbi módon is lehet pl. $N(80,20)$ eloszlűsú adatokat (mintát) generálni.
+
+```{r}
+mu <- 80
+sigma <- 20
+
+# 50 db U(0,1) eloszlású szám generálása
+normies <- rnorm(n = 50, mean = mu, sd = sigma)
+
+# Eredmény ellenőrzése hisztogramon
+norm_df <- as.data.frame(normies)
+ggplot(norm_df, aes(x=normies)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 6) +
+  stat_function(
+                fun = dnorm, 
+                args = list(mean = mu, sd = sigma),
+                col = 'red')
+```
+
+Ha az `r` előtagú függvények előtt elsütünk egy `set.seed` függvényt is, és a zárójelei közé **mindannyian beírjuk oda ugyan azt a számot**, pl. mondjuk az én szülinapom évét, ami $1992$, akkor **mindenki ugyan azt az $50$ db véletlen számot generálta le!** És ugyan azt a hisztogramot fogjuk már bambulni! :)
+
+```{r}
+mu <- 80
+sigma <- 20
+
+# 50 db U(0,1) eloszlású szám generálása
+set.seed(1992)
+normies <- rnorm(n = 50, mean = mu, sd = sigma)
+
+# Eredmény ellenőrzése hisztogramon
+norm_df <- as.data.frame(normies)
+ggplot(norm_df, aes(x=normies)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 6) +
+  stat_function(
+                fun = dnorm, 
+                args = list(mean = mu, sd = sigma),
+                col = 'red')
+```
+
+Pazar! :) A `set.seed` függvényben megadott $1992$ értéket szokás a véletlenszám generálás **random seed** nevezni.
+
+Generáljunk még az $U(40, 160)$ eloszlás $50$ elemű mintája mellé egy $50$ elemű $N(80,20)$ és egy $50$ elemű $Exp(0.0125)$ eloszlású mintát is, szintén $1992$-es véletlen maggal. Majd fűzzük össze az eredményeket egy data frame-be úgy, hogy a különböző eloszlású adatok adják a tábla oszlopait (sorok száma akkor így 50 lesz ugyebár).<br>
+Az Exponenciális eloszlás $\lambda$ paraméterét az R függvényeinek `rate` paraméterében lehet megadni pl. a szórás reciprokával. Hiszen az Exponenciális eloszlás szórása $\frac{1}{\lambda}$. Emlékezetetőnek lásd <a href="https://kola992.github.io/Statisztika-II-Python-Jegyzet/Gyak01.html" target="_blank">Chapter 3. Section 2.</a>!
+
+```{r}
+# N(80,20) minta generálása
+mu <- 80
+sigma <- 20
+
+set.seed(1992)
+normies <- rnorm(n = 50, mean = mu, sd = sigma)
+  
+# Exp(0.0125) minta generálása
+lam <- 0.0125
+
+set.seed(1992)
+expies <- rexp(n = 50, rate = lam)
+
+# U(40, 160) minta generálása
+low_bound <- 40
+upp_bound <- 160
+
+set.seed(1992)
+unis <- runif(n = 50, min = low_bound, max = upp_bound)
+
+# Eredmények összefűzése data frame-be
+all_in_one <- data.frame(normies=normies,
+                         expies=expies,
+                         unis=unis)
+str(all_in_one)
+```
+
+Szuper, az `str` függvény alapján megvan egyben a $3$ db $50$ elemű mintánk! Egy-egy $k=6$ osztályközzel operáló hisztogramon meg is tudjuk nézni az eredményt. :)
+
+```{r}
+hist(all_in_one)
+```
+
+Na, meg is vagyunk, nagyjából mindegyik hisztogram követi a neki megfelelő Egyenletes, Normális és Exponenciális sűrűségfüggvény alakot.
+
+## 2. Elvi Eloszlás vs Megfigyelt Minta
+
+Azt már több soron megállapítottuk, hogy a **megfigyelt adatokból készített hisztogramok NEM követik hajszálpontosan a hozzájuk tartozó eloszlások sűrűségfüggvényeit**. Valamennyire eltérnek tőle, ezt az előző fejezet végén álló 3 hisztogram is szemlélteti.<br>
+Ez amúgy egy **teljesen logikus és természetes jelenség**, hiszen az általunk vizsgált eloszlások $f(x)$ sűrűségfüggvényei rengeteg számhoz rendelnek pozitív bekövetkezési valószínűséget egy véletlen húzás esetén:
+
+- Az $N(80,20)$ eloszlás konkrétan *minden valós számnak* pozitív bekövetkezési esélyt tulajdonít
+- Az $Exp(0.0125)$ eloszlás *minden pozitív valós számnak*
+- Az $U(40,160)$ pedig *minden $40$ és $160$ közötti valós számnak*
+
+Mindegyik számhalmaz elemszáma **végtelen**. Tehát, **akármelyik eloszlást is nézzük**, ahhoz hogy a **sűrűségfüggvényt teljes egészében meg tudjuk figyelni, végtelen sok elemű mintákat kéne generálni**. Nyilván, ez nem nagyon fog sosem összejönni. Ezért vannak a **némileg hektikus hisztogram alakok**. :)
+
+Ami csak azért zavaró, mert a **valóságban nem vagyunk istenségek**, így a megfigyelt mintánk mögött meghúzódó **valódi sűrűségfüggvényt SOSEM tudjuk megfigyelni**, csak azokat az **adatokat, amiket a mintánk tartalmaz**. A minta elemszáma pedig sosem végtelen. **Legfeljebb csak reménykedni tudunk abban, hogy a minta hisztogram alapján sac/kb be tudjuk lőni, hogy az adataink mögött milyen eloszlás lappang a háttérben**.<br>
+Ugyan ez **igaz a különféle statisztikai mutatókra** is! Értelemszerűen **más értékeket kapunk az átlagra, szórásra, mediánra vagy az $x$-nél kisebb elemek arányára, ha azokat a megfigyelt mintaadatokból számítjuk, és nem az adatok mögöt rejtőző sűrűségfüggvény alapján**!
+
+### 2.1. Az elvi eloszlás alapján számolt statisztikai mutatók
+
+Vegyük csak végig, hogy a **3 vizsgált eloszlásunkban** hogyan is kapjuk meg a **sűrűségfüggvény ismeretében az alap statisztikai mutatókat**.
+
+- $N(80,20)$ eloszlás
+  * Átlag: $\mu=80$
+  * Szórás: $\sigma=20$
+  * Medián: inverz függvény (`ppf`) értéke $0.5$-nél
+  * 100-nál kisebb értékek aránya: $P(Y_i<100)=\int_{-\infty}^{100}{f(x)}dx$
+- $Exp(0.0125)$ eloszlás
+  * Átlag: $\mu=\frac{1}{\lambda}=\frac{1}{0.0125}=80$
+  * Szórás: $\sigma=\frac{1}{\lambda}=\frac{1}{0.0125}=80$
+  * Medián: inverz függvény (`ppf`) értéke $0.5$-nél
+  * 100-nál kisebb értékek aránya: $P(Y_i<100)=\int_{-\infty}^{100}{f(x)}dx$
+- $U(40,160)$ eloszlás
+  * Átlag: $\mu=\frac{a+b}{2}=\frac{40+160}{2}=100$
+  * Szórás: $\sigma=\frac{b-a}{\sqrt{12}}=\frac{160-40}{\sqrt{12}}=34.64$
+  * Medián: inverz függvény (`ppf`) értéke $0.5$-nél
+  * 100-nál kisebb értékek aránya: $P(Y_i<100)=\int_{-\infty}^{100}{f(x)}dx$
+  
+Ezeket **számoljuk is ki minden eloszlásra** egy-egy külön `list`-be, majd fűzzük őket össze egy data frame-be! A data frame sorindexeit pedig nevezzük el a számított mutatók neve alapján!
+
+```{python}
+# N(80,20) paraméterek
+átlag = 80
+szórás = 20
+
+# Exp(0.0125) paraméterek
+lam = 0.0125
+
+# U(40,160) paraméterek
+eloszlás_alsó_határ = 40
+eloszlás_felső_határ = 160
+eloszlás_terjedelem = eloszlás_felső_határ - eloszlás_alsó_határ
+
+NormalisStat = [
+  átlag, # Átlag
+  szórás, # Szórás
+  stats.norm.ppf(0.5, loc=átlag, scale=szórás), # Medián
+  stats.norm.cdf(100, loc=átlag, scale=szórás)] # P(Y_i<100)
+
+ExponStat = [
+  (1/lam), # Átlag
+  (1/lam), # Szórás
+  stats.expon.ppf(0.5, scale=(1/lam)), # Medián
+  stats.expon.cdf(100, scale=(1/lam))] # P(Y_i<100)
+
+EgyenletesStat = [
+  ((eloszlás_alsó_határ + eloszlás_felső_határ)/2), # Átlag
+  ((eloszlás_felső_határ-eloszlás_alsó_határ)/np.sqrt(12)), # Szórás
+  stats.uniform.ppf(0.5, loc=eloszlás_alsó_határ, scale=eloszlás_terjedelem), # Medián
+  stats.uniform.cdf(100, loc=eloszlás_alsó_határ, scale=eloszlás_terjedelem)] # P(Y_i<100)
+
+ElviStatMutatok = pd.DataFrame(
+  list(zip(EgyenletesStat, NormalisStat, ExponStat)),
+  columns=['Egyenletes','Normal', 'Expon'],
+  index = ['Atlag', 'Szoras', 'Median', 'P(Y_i<100)']
+)
+
+ElviStatMutatok
+```
+
+Meg is vagyunk!
+
+### 2.2. A megfigyelt minta alapján számolt statisztikai mutatók
+
+Most pedig **tegyük az elvi statisztikai mutatók értéke mellé az $50$ elemű mintákból számolt verzióikat!** Hasonlóan összerakhatjuk őket egy data frame-be, mint fentebb csináltuk az elvi értékekkel.
+
+A $100$-nál kisebb értékek arányának (relatív gyakoriságának) számolásához két technikai megjegyzés:
+
+- A számolásnál azt a trükköt sütjük el, hogy pl. az `AdatokEgyben['Normal'] < 100` parancs egy `bool` tömböt ad vissza aszerint, hogy az `AdatokEgyben['Normal'] < 100` logikai állítás kire `True` és `False`.
+- A `numpy` csomag `sum` függvénye pedig egy ilyen tömbre `True = 1` és `False = 0` kódolásokkal végzi el az összegzést: azaz megadja a *kedvező esetek*, a 100-nál kisebb értékek *darabszámát*.
+
+```{python}
+NormalisMintaStat = [
+  np.mean(AdatokEgyben['Normal']), # Átlag
+  np.std(AdatokEgyben['Normal']), # Szórás
+  np.median(AdatokEgyben['Normal']), # Medián
+  np.sum(AdatokEgyben['Normal'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
+
+ExponMintaStat = [
+  np.mean(AdatokEgyben['Expon']), # Átlag
+  np.std(AdatokEgyben['Expon']), # Szórás
+  np.median(AdatokEgyben['Expon']), # Medián
+  np.sum(AdatokEgyben['Expon'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
+
+EgyenletesMintaStat = [
+  np.mean(AdatokEgyben['Egyenletes']), # Átlag
+  np.std(AdatokEgyben['Egyenletes']), # Szórás
+  np.median(AdatokEgyben['Egyenletes']), # Medián
+  np.sum(AdatokEgyben['Egyenletes'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
+
+MintaStatMutatok = pd.DataFrame(
+  list(zip(EgyenletesMintaStat, NormalisMintaStat, ExponMintaStat)),
+  columns=['Egyenletes','Normal', 'Expon'],
+  index = ['Atlag', 'Szoras', 'Median', 'P(Y_i<100)']
+)
+
+MintaStatMutatok
+```
+
+Meg is vagyunk!
+
+### 2.3. A mintavételi hiba (MVH) koncepciója
+
+Nézzük össze akkor kétféle stat. mutatókat tartalmazó data frame-et egymással!
+
+```{python}
+ElviStatMutatok
+MintaStatMutatok
+```
+
+Láthatjuk, hogy a **statisztikai mutatók terén is azt tapasztaljuk, amit a hisztogramok és a sűrűségfüggvény esetén**. Az **elvi értékekhez az $50$ elemű mintából számolt mutatók közel vannak, de nem egyeznek velük**.
+
+A **kétféle értékek (elvi és mintából számolt) közti eltérést hívjuk MINTAVÉTELI HIBÁNAK (MVH)**. Mivel a gyakorlatban **csak egy adott elemszámú mintát tudunk megfigyelni**, és abból kellene rájönnünk a vizsgált mutatók valódi értékére, a hisztogramból meg a valódi eloszlásra, **nagyon jó lenne ezt az MVH-t megmérni/kiszámolni/megbecsülni**! Na, ez a **statisztikai becsléselmélet alapfeladata**!
+
+Az MVH kiszámolásához hosszú az út, de az **MVH viselekdését megérthetjük, ha generálunk még pár extra mintát az eddig vizsgált eloszlásokból, különböző elemszámokkal**.
+
+Ehhez írjunk egy Python függvényt, ami az eddig elvégzett műveleteinket egy függvényben valószítja meg tetszőleges mintaelemszám és véletlenmag mellett:
+
+- $N(80,20)$, $Exp(0.0125)$ és $U(40,160)$ eloszlású minták generálása
+- A mintákból a vizsgált 4 statisztikai mutató számítása és azok összefüzése data frame-be
+
+Ez a függvény némi copy-paste után az alábbi formát ölti.
+
+```{python}
+def MintaGeneralas(Elemszam, VeletlenMag):
+    # U(40, 160) minta generálása
+    eloszlás_alsó_határ = 40
+    eloszlás_terjedelem = 160-40
+  
+    SzerencsésebbVéletlenek = stats.uniform.rvs(
+      loc = eloszlás_alsó_határ,
+      scale = eloszlás_terjedelem,
+      size = Elemszam,
+      random_state = VeletlenMag)
+  
+    # N(80,20) minta generálása
+    átlag = 80
+    szórás = 20
+
+    NormalisAdatok = stats.norm.rvs(
+      loc = átlag,
+      scale = szórás,
+      size = Elemszam,
+      random_state = VeletlenMag)
+  
+    # Exp(0.0125) minta generálása
+    lam = 0.0125
+
+    ExpiAdatok = stats.expon.rvs(
+      scale = (1/lam),
+      size = Elemszam,
+      random_state = VeletlenMag)
+
+    # Eredmények összefüzése data frame-be
+    AdatokEgyben = pd.DataFrame(
+      list(zip(SzerencsésebbVéletlenek, NormalisAdatok, ExpiAdatok)),
+      columns=['Egyenletes','Normal', 'Expon'])
+
+    NormalisMintaStat = [
+      np.mean(AdatokEgyben['Normal']), # Átlag
+      np.std(AdatokEgyben['Normal']), # Szórás
+      np.median(AdatokEgyben['Normal']), # Medián
+      np.sum(AdatokEgyben['Normal'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
+
+    ExponMintaStat = [
+      np.mean(AdatokEgyben['Expon']), # Átlag
+      np.std(AdatokEgyben['Expon']), # Szórás
+      np.median(AdatokEgyben['Expon']), # Medián
+      np.sum(AdatokEgyben['Expon'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
+
+    EgyenletesMintaStat = [
+      np.mean(AdatokEgyben['Egyenletes']), # Átlag
+      np.std(AdatokEgyben['Egyenletes']), # Szórás
+      np.median(AdatokEgyben['Egyenletes']), # Medián
+      np.sum(AdatokEgyben['Egyenletes'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
+
+    MintaStatMutatok = pd.DataFrame(
+      list(zip(EgyenletesMintaStat, NormalisMintaStat, ExponMintaStat)),
+      columns=['Egyenletes','Normal', 'Expon'],
+      index = ['Atlag', 'Szoras', 'Median', 'P(Y_i<100)']
+    )
+    
+    return MintaStatMutatok
+
+
+```
+
+Ha a `MintaGeneralas` függvény definícióját megadó fenti kód szépen lefutott, akkor a következőképpen tudjuk használni a függvényt egy $50$ elemű minta generálására $1994$-es véletlenmag mellett.
+
+```{python}
+MintaGeneralas(50, 1994)
+```
+
+Na, úgy néz ki működik! :)
+
+Akkor most lessük meg **mi történik a mintából számolt és az elvi statisztikai mutatók közti különbségekkel** (alias az MVH-val), ha **nem $50$, hanem mondjuk $1000$ elemű mintákat generálok az eloszlásokból**.
+
+```{python}
+ElviStatMutatok
+MintaGeneralas(50, 1992)
+MintaGeneralas(1000, 1992)
+```
+
+Na, hát ha $1000$ elemet tudtam megfigyelni az $50$ helyett, akkor minden statisztikai mutatóm mintából számolt értéke lényegesen közelebb van a valós, elvi értékhez! Tehát, olybá tűnik, hogy **mintaelemszám növelésével az MVH lecsökken!** Ez egy nagyon fontos tulajdonság, ami **minden statisztikai mutató esetén általánosságban igaz marad!**<br>
+Mivel ez egy marha fontos dolog, így kaptok róla egy mémet is! **Égjen csak ez be az agyakba! ;)**
+
+<center>
+![](sample_size.jpg){width=40%}
+</center>
+
+<br>További kísérletezgetésre a mintavétel hibával kapcsolatban, nyugodtan lehet használni az alábbi kis interaktív felületet.
+
+<iframe src ="https://kola992.shinyapps.io/samplingfromdistributions/" height=700px width=900px data-external="1" />
+
+A felületet nyomogatva érdemes megfigyelni pár dolgot.
+
+- A mintaelemszám növelésével a hisztogram alakja is közelebb kerül az adatok mögött álló eloszlás sűrűségfüggvényéhez. Tehát **elemszám növelésével a sűrűségfüggvény mintavételi hibája is csökken** úgymond.
+- Az **átlag és a 100-nál kisebb értékek aránya** általában **mindhárom eloszlásnál elég közel van a valós, elméleti értékéhez**.
+- Ellenben a **medián és szórás** értékek az **exponenciális eloszlás esetében aránylag többször is durván eltérnek a valós értéktől még nagyobb** (pl. 500 körüli) **elemszám esetén is**.
+
+
+## 3. Statisztikai sokaságok FAE mintavételezése
+
+Amit az első két fejezetben műveltünk az az **elméleti eloszlások Független Azonos Eloszlású, leánykori nevén FAE mintavételezése**.
+
+A FAE mintának ezek szerint két jellemzője van:
+
+- **Független**: a **mintaelemek kihúzása véletlenszerű**, tehát az, hogy mit húztam mondjuk 3-nak **nem függ** attól mit húztam 1-nek és 2-nak.
+- **Azonos Eloszlású**: A minta minden eleme **ugyan abból az eloszlásból** (pl. $N(80,20)$ vagy $Exp(0.0125)$) származik, nincs közben váltás arra nézve, hogy épp milyen eloszlásból húzzuk ki véletlenszerűen az értékeket.
+
+Ezt a FAE mintavételt **valós statisztikai adatsorok, azaz sokaságok esetén is el lehet végezni**, nem csak elméleti eloszlások esetén.<br>
+Mondjuk meg akarom ismerni a kb. 4,5 millió magyar munkavállaló havi bruttó átlagkeresetét. Nyilván a NAV-nál megvan mind a 4,5 millió dolgos magyar *en_ber* kereseti adata tételesen (tehát ezek az értékek nem egy exponenciális eloszlással vannak megadva pl., hanem tételesen fel vannak sorolva egy táblában valahol), csak hát tudjuk mikor adják ki ezeket az adatokat bárkinek is. Ezért inkább azt csináljuk, hogy mondjuk a népességnyilvántartótól elkérjük a 4,5 millió magyar munkavállaló lakcímét, beöntjük a címeket tartalmazó cetliket egy kalapba, és becsukott szemmel, random húzunk 100 címet *visszatevéssel*, azaz egy kihúzott címet visszateszünk mindig a kalapba, és nem rakjuk félre. Majd mind a 100 címre elmegyünk és megkérdezzük az emberek havi bruttó keresetét. Ezzel a **véletlen, visszatevéses mintavétellel a magyar munkavállalók sokaságából** valójában **FAE mintavételezést végeztünk**. Miért is?
+
+1. A **mintaelemek függetlenek**, hiszen "*becsukott szemmel*", véletlenszerűen húztuk ki a minta elemeket.
+2. Mivel **visszatevéses volt a mintavétel, így a kersetek eloszlása nem változott meg a mintavétel során**. Tehát végig ugyan azt az elméleti kereseteloszlást mintavételeztünk. Pont úgy, mint amikor mindig ugyan abból az elvi sűrűségfüggvényből generáltuk a mintaelemeket az eddig elvégzett mintavételeink során.
+
+Tehát, bízunk abban, hogy ami mondjuk a **mintából számolt átlagkereset és a teljes sokaság átlagekeresete között áll az ugyan az az MVH, mint amivel találkoztunk az eloszlások elvi átlaga és a belőlük generált minták tapasztalati átlaga esetében is!!**<br>
+Persze a gyakorlatban **nem mindig tudunk ilyen szép FAE mintavételt végezni**, mert
+
+1. **Nem tudunk visszatenni** elemeket. Ez a **kisebbik gond**. Hiszen, ha a **minta mérete a sokaság méretéhez képest nagyon kicsi** (pl. 100 főt választunk kis a 4,5 millióból és nem 2 milliót :)), akkor a **visszatevéses és visszatevés nélküli mintavétel nagyjából ugyan az**, mert nagyon kicsi lesz az esélye annak, hogy a visszatevéses esetben valakit tényleg kétszer beválasztunk a mintába.
+2. **Nem tudunk ténylegesen véletlenszerűen kiválasztani elemeket**. Ez a **nagyobb baj**. És sajnos gyakori is. Pl. *nem kapunk címjegyzéket, amiből sorsolni lehet a mintánkba emberkéket*. Mert ekkor a mintavételi hiba mellé bejön az úgynevezett **nem mintavételi hiba**. Ezek olyan tényezők, amik "*emberi gyarlóság*" miatt kerülnek a rendszerbe. Pl. nagyon tetszenek a vörös hajú lányok, így aránytalanul sokat kérdezek meg belőlük ahhoz képest ahányan a sokaságban vannak. Vagy, lusta vagyok lemenni 500 fő alatti településre, így az alacsonyabb keresetű társadalmi rétegből is kevesebb embert kérdezek meg, mint ahányat kéne a sokasági elemszámuk alapján. Tehát, szakszóval azt mondom, hogy a **minta nem lesz reprezentatív hajszínre és település méretre**. Ezekkel a **nem mintavételi hibákkal most nem foglalkozunk, feltesszük, hogy nincsenek**. Mert **kiszámolásuk és korrigálásuk elég bonyolult**, <a href="https://tatk.elte.hu/mesterszakok/survey" target="_blank">komplett mesterszakok</a> foglalkoznak a kérdéssel.
+
+Szóval, első körben nézzük meg **hogyan tudunk Pythonban egy ismert sokaságból FAE mintát venni**. A <a href="https://github.com/KoLa992/Statisztika-II-Python-Jegyzet/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a> fájlban a 2022-es LIDL Balaton átúszás résztvevőinek *neve, neme és percben mért időeredménye* található. Olvassuk be a táblát `pandas` data frame-be!
+
+```{python}
+Balcsi = pd.read_excel("LIDLBalaton2022.xlsx")
+
+Balcsi.info()
+Balcsi.head()
+```
+
+Szuper, úgy látszik megvan mind az $N=9751$ versenyző időeredménye hiánytalanul. **Ez lesz most akkor a sokaságunk.**
+
+Számoljunk ki az időeredményekre három statisztikai mutatót:
+
+- Az **átlag**os időt Jele: $\bar{Y}$ vagy $\mu$
+- Az egyéni idők **szórás**át Jele: $\sigma$
+- A 3 óra (180 perc) felett teljesítők **arányát** Jele: $P$
+  * Itt a számolásnál azt a trükköt sütjük el, hogy a `Balcsi.PERC > 180` parancs egy `bool` tömböt ad vissza aszerint, hogy a `Balcsi.PERC > 180` logikai állítás kire `True` és `False`.
+  * A `numpy` csomag `sum` függvénye pedig egy ilyen tömbre `True = 1` és `False = 0` kódolásokkal végzi el az összegzést: azaz megadja a *kedvező esetek*, a Balatont 180-an percnél hosszabb idő alatt átúszók *darabszámát*.
+
+```{python}
+SokasagiAtlag = np.mean(Balcsi.PERC)
+SokasagiSzoras = np.std(Balcsi.PERC)
+SokasagiArany = np.sum(Balcsi.PERC > 180)/len(Balcsi)
+
+SokasagiAtlag
+SokasagiSzoras
+SokasagiArany
+```
+
+Meg is vagyunk, **ezek akkor a statisztikai mutatóink valós, sokasági értékei**:
+
+- $\bar{Y}=\mu=167.5$ perc
+- $\sigma = 44.1$ perc
+- $P = 0.3295=32.95\%$
+
+Ezek alapján a **sokaság, azaz a teljes adatsor esetén a következő jelölési konvenciókkal élünk**:
+
+- Elemszám $N$
+- Sokaságból számított statisztikai mutatók együttes jelölése: $\theta$
+  * Tehát $\theta$ egy általános jelölés egy sokasági mutatószámra.
+  * Állhat mögötte átlag ($\bar{Y}=\mu$), szórás ($\sigma$), arány ($P$), de akár medián ($Me$), módusz ($Mo$) stb. is!
+  
+Általános szabály, hogy a "*sokasági dolgokat*" vagy **nagy** vagy **görög betűvel jelöljük**.
+
+Akkor most **vegyünk a Balaton 2022-es átúszóinak a sokaságából** egy $n=100$ elemű **mintát!** Szerencsére Pythonban ezt könnyű végrehajtani, mivel a `pandas` data frame-nek létezik `sample` metódusa, aminek az `n` paraméterében meg lehet mondani, hogy **hány elemű mintánk** legyen. A `replace = True` paraméter beállítással pedig azt mondjuk meg gépállatnak, hogy **visszatevéses véletlen, azaz FAE mintát** szeretnénk.<br>
+Itt is van `random_state` paraméter, amit azonos számla (pl. továbbra is 1992-re) beállítva *ugyan azt a véletlen mintát fogjuk kapni*.
+
+```{python}
+BalcsiMinta = Balcsi.sample(n = 100, replace = True, random_state = 1992)
+
+BalcsiMinta.info()
+```
+
+Olybá néz ki megvan az $n=100$ elemű FAE mintánk! :)
+
+Mielőtt nekiugrunk, és kiszámoljuk a minta alapján az időeredmények átlagát, szórását és a 3 órán felül úszók arányát, itt is szögezzünk le **jelölési konvenciót a mintára vonatkozóan**:
+
+- Elemszám $n$
+- A mintából számított statisztikai mutatók együttes jelölése: $\hat{\theta}$
+  * Tehát $\hat{\theta}$ egy általános jelölés egy sokasági mutatószámra.
+  * Általánosságban a "*kalap*", a $\hat{}$ mindig a mintából **becsült** érték jele.
+  * Állhat $\hat{\theta}$ mögött átlag ($\bar{y}$), szórás ($s^*$), arány ($p$), de akár medián ($me$), módusz ($mo$) stb. is!
+  
+Általános szabály, hogy a "*mintából számolt dolgokat*" vagy **kis betűvel** vagy **kalappal jelöljük**.
+
+Na, akkor nézzük meg **a statisztikai mutatóink** $n = 100$ elemű **mintából számítva/becsülve**!
+
+```{python}
+MintaAtlag = np.mean(BalcsiMinta.PERC)
+MintaSzoras = np.std(BalcsiMinta.PERC)
+MintaArany = np.sum(BalcsiMinta.PERC > 180)/len(BalcsiMinta)
+
+MintaAtlag
+MintaSzoras
+MintaArany
+```
+
+Meg is vagyunk, **ezek akkor a statisztikai mutatóink mintából becsült értékei**:
+
+- $\bar{y}=164.4$ perc
+- $s^* = 38.6$ perc
+- $p = 0.3=30\%$
+
+Ezek sem egyeznek pontosan a mutatók valós, sokasági értékével, de *nem térnek el nagyon durván* a valóságtól. Most is abban bízunk, hogy a **becsült és valós értékek közti eltérés a MVH miatt van, és akkor most ráfordulunk ennek az MVH-nak a  meghatározására!**
+
+Ehhez a **0. lépés, hogy nagyon-nagyon sok, pl. $10000$ db 100 elemű FAE mintát veszünk** a sokaságunkból, és mindegyik mintában kiszámoljuk az *átlagot, szórást és arányt*.
+
+### 3.1. Ismételt Mintavételezés (*Resampling*)
+
+Amit még ebben az anyagban megnézünk az az volna, **hogyan generálunk le $10000$ db 100 elemű FAE mintát** a 2022-es Balaton átúszók sokaságából.
+
+Természetesen a kódunk alapja egy $10000$ iteráción végiszaladó `for` ciklus lesz. Ami némileg érdekes, hogy miképpen tároljuk el a mintavételezett adatokat. A számításokhoz igazából csak a `PERC` oszlopra van szükség, így egy olyan data frame-t generálunk, aminek $10000$ sorában lesznek a különböző mintavételek, míg $100$ oszlopában a 100 db mintaelem minden egyes mintavételezési körben.
+
+Ehhez először létrehozunk egy üres $100$ oszlopos data frame-t. Ennek a lépései:
+
+- Létrehozzuk az oszlopneveket
+  * Létrehozunk egy `numpy` tömböt, amiben $1-100$-ig vannak az egész számok
+  * Ezt az `int` tömböt `string`gé konvertáljuk
+  * Minden számhoz hozzáfűzzük az "*Elem*" előtagot a `numpy` csomag `core.defchararray` névterében lakó `add` függvénnyel
+- A `pandas` csomag `DataFrame` függvényével létrehozzuk az *üres* 100 oszlopos data frame-t, az előző pontban megadott oszlopnevekkel.
+
+```{python warning = FALSE, message = FALSE}
+oszlopnevek = (np.array(range(100))+1)
+oszlopnevek = oszlopnevek.astype(str)
+oszlopnevek = np.core.defchararray.add("Elem", oszlopnevek)
+oszlopnevek
+MintaDF = pd.DataFrame(columns = oszlopnevek)
+MintaDF
+```
+
+Ha ezzel megvagyunk, akkor egyszerűen egy `for` ciklusban feltöltjük a data frame-t sorokkal. Ugye *1 sor = 1 db 100 elemű minta*. Ehhez pedig az 1. fejezet elején már használt `append` (egy új sor hozzáadása) metódusát vetjük be az alábbi kódban látható módon. Arra **kell figyelni**, hogy az `append` előtt a kiválasztott minta időadatait tartalmazó tömb `index`-eit a data frame-ünk *oszlopneveire* kell átrakni, különben az `append` nem tudja összekötni a mintaelemeket a cél data frame oszlopaival!<br>
+Természetesen most véletlenmagot nem rögzítünk a `sample` metódusban, különben a műveletnek nem lenne értelme (10000-szer vennénk ki ugyan azt a mintát ugyebár). 
+
+Futtatás előtt **arra készüljünk lélekben, hogy az alábbi kódrészlet futásideje elég hosszadalmas** (több perc) is lehet, mivel marhára nem optimalizáltuk a $10000$ iterációjú `for` ciklusunkat... Ejjnye! :)
+
+```{python warning = FALSE, message = FALSE, eval = FALSE}
+for index in range(10000):
+  AktualisMinta = Balcsi['PERC'].sample(n = 100, replace = True)
+  AktualisMinta.index = oszlopnevek
+  MintaDF = MintaDF.append(AktualisMinta, ignore_index = True)
+
+MintaDF
+```
+
+```{python warning = FALSE, message = FALSE, echo = FALSE}
+MintaDF = pd.read_excel("MintaDataFrame.xlsx")
+MintaDF
+```
+
+Ezzel meg is vagyunk, van az időeredményekből $10000$ db $n=100$ elemű mintánk! :) Csak, hogy ne kelljen ezt a hosszú mintagenerálási időt végigvárni, utolsó lélegzetünkkel **mentsük el az eredményünket tartalmazó data frame-t egy Excel fájlba**. A data frame `to_excel` metódusának `index = False` beállításával azt érjük el, hogy a sorindexeket ne írja ki egy külön oszlopba az Excelbe. Ezek most egyszerű sorszámok csak, semmi jelentőségük, felesleges az Excelben erre elpazarolni egy oszlopot. :)
+
+```{python warning = FALSE, message = FALSE, eval = FALSE}
+MintaDF.to_excel('MintaDataFrame.xlsx', index = False)
+```

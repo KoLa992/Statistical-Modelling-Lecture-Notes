@@ -1,0 +1,24 @@
+---
+title: |
+  <center>
+  ![](statistics-review.jpg){width=40%}<br> 
+  <br>Statistical Modelling Lecture Notes<br>
+  Corvinus University of Budapest<br>
+  Data Science in Business BSc<br><br>
+  </center> 
+output: html_document
+date: '2025.02.05.'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Chapter 1 - <a href="Chapter01.html" target="_blank">Introduction to R</a>
+
+## Chapter 2 - <a href="Chapter02.html" target="_blank">Descriptve Statistics and Data Visualization in R</a>
+
+## Chapter 3 - <a href="Chapter03.html" target="_blank">Probability Distributions</a>
+
+## Chapter 4 - <a href="Chapter04.html" target="_blank">Simulations and Sampling</a>
+

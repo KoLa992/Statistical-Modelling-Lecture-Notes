@@ -1,0 +1,524 @@
+---
+title: "Descriptve Statistics and Data Visualization in R"
+author: "László Kovács"
+date: "2025.02.05."
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify;
+font-size: 12pt}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Dataframe beolvasása Excel fájlból
+
+A <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/BP_Flats.xlsx" target="_blank">BP_Flats.xlsx</a> fájl egy olyan adattábla, ami 1406 budapesti lakásról 10 változó (oszlop) adatát tárolja:
+
+- Price_MillionHUF: lakás ára millió Ft-ban (MFt)
+- Area_m2: lakás területe négyzetméterben
+- Terasz: teraszok száma a lakásban
+- Szoba: szobák száma a lakásban
+- Felszoba: félszobák száma a lakásban
+- Furdoszoba: fürdőszobák száma a lakásban
+- Emelet: emeletek száma a lakásban
+- IsSouth: lakás déli fekvésű-e? (1 = igen; 0 = nem)
+- Buda: lakás déli fekvésű-e? (1 = igen; 0 = nem)
+- Kerulet: lakás kerülete (1 - 22)
+
+Olvassuk be az adattáblát egy R `data frame`-be!
+
+Láthatjuk, hogy ez nem *csv*, hanem Excel, azaz *xlsx* fájl. Ilyeneket R `data frame`-be olvasni a `readxl` csomag segítségével lehet:
+
+Először töltsük be a csomagot (az előző fejezetben már telepítettük ugyebár):
+
+```{r}
+library(readxl)
+```
+
+Majd használjuk a csomag `read_excel` függvényét. Amennyiben 1 db munkalap van és a beolasandó adattáblánk az *A1* cellában van, mindenféle extra paraméter nélkül, problémamentesen beolvassa gépállat az adatokat R `data frame`-be.<br>
+Ne feledjük el a megfelelő helyre beállítani a *Working Directory*-t is!
+
+```{r}
+setwd("~/Github Repok/Statistical-Modelling-Lecture-Notes")
+
+BP_Flats <- read_excel("BP_Flats.xlsx")
+```
+
+Ezek után nézzük meg, hogy rendben vagyunk-e az `str` függvénnyel:
+
+```{r}
+str(BP_Flats)
+```
+
+Első ránézésre rendben vagyunk: 10 oszlopunk = változónk van a megfelelő oszlopnevekkel, mindenhol 1406 megfigyeléssel.
+
+NODE, azt is látjuk, hogy a létrejött `BP_Flats` objektum nem `data frame`, hanem valami rejtélyes `tibble` típusú. Annyira nem érdekel minket, hogy mi a túró ez a `tibble` típus, inkább konvertáljuk `data frame`-é a dolgot, és nézzük meg újra a struktúrát:
+
+```{r}
+BP_Flats <- as.data.frame(BP_Flats)
+
+str(BP_Flats)
+```
+
+Most már minden oké, a `BP_Flats` objektum egy `data frame`. Az `str` eredmény alapján látjuk, hogy minden változónk a táblában `num`, azaz `double` adattípusú. Ezen lehetne finomítani, főleg a bináris, 1 vagy 0 jellegű változók (IsSouth, IsBuda) esetében, de egyelőre ezt most még ne tegyük meg.
+
+## 2. Egyváltozós leíró statisztikák R-ben
+
+Egy `data frame` oszlopainak egyváltozós leíró statisztikáit R-ben nagyon könnyen le lehet kérni a `summary` függvénnyel:
+
+```{r}
+summary(BP_Flats)
+```
+
+Az eredményből láthatjuk, hogy van itt mindenféle földi jó mind a 10 változónkra: minimum, maximum, kvartilisek és átlag.
+
+Értelmezzük az eredményeket néhány változóra!
+
+- **Kínálati Ár**
+  * A legolcsóbb lakás 5 MFt-ba kerül, míg a legdrágább 198 MFt-ba.
+  * A lakások fele 21 M Ft-nál olcsóbb. A lakások legolcsóbb 25%-nak az ára 13,9 MFt alatti, míg a legdrágább negyedbe tartozó lakások ára legalább 31,43 MFt.
+  * Az előző eredményeket akár úgy is mondhattuk volna, hogy a lakások árának középső 50%-a 13,9 és 31.43 MFt közé esik.
+  * A lakások átlagára pedig 26,5 MFt. Abból, hogy az átlag nagyobb, mint a medián már sejthetjük, hogy az árak eloszlása jobbra elnyúló!
+- **Buda**: figyeljünk, hogy ez valójában egy bináris (igen/nem) típusú változó! Emiatt itt az átlag az, ami igazán hasznos!
+  * Az átlag alapján az 1-es értékek, azaz a budai lakások arányát tudjuk leolvasni, ami 45,66% (0,4566). Ugye ha egy 1 vagy 0 változó értékeit átlagoljuk akkor az elemek összege az 1-es értékek száma lesz, és ezt osztjuk a teljes elemszámmal. Szóval valójában az 1-es értékek arányát kapjuk ilyenkor meg.
+  * Azt, hogy a lakásoknak kevesebb, mint fele van csak budán az onnan is látszik, hogy a medián 0. Azt meg, hogy a lakások negyede legalább budai mutatja, hogy a 3. kvartilis értéke = 1.
+- **Kerulet**: Nagy huncut ez a kerület, mert technikailag ez valóban egy számadat, ám statisztikai szempontból ez valójában csak egy szöveges adat **nominális** átkódolása!
+  * Mivel ez egy nominális változó, így annak, hogy az átlagos kerület 8,647 az égvilágon **semmi értéleme**.
+  * Hasonlóan, az sem egy értelmes információ pl., hogy a lakások negyedének a kerülete 13 vagy nagyobb.
+
+Tovább nézelődve a leíró statisztikák kapcsán feltűnhet, hogy az **Emelet** változó minimális értéke -1. Ez elsőre furcsának tűnik, de ha jobban belegondolunk, akkor igazából létezhetnek olyan lakások, amik ilyen "pince lakások".<br>
+Mindazonáltal, nem árt, ha megnézzük, hogy az **Emelet** változónak milyen lehetséges értékei vannak, és ezek milyen **gyakorisággal** szerepelnek az adattáblában!<br>
+Erre a műveletre tökéletesen alkalmas nekünk az R `table` függvénye:
+```{r}
+table(BP_Flats$Floor) # csak az Emelet változóra alkalmazzuk a függvényt!
+```
+
+Látható, hogy -1 emeletes "pince lakásból" nincs sok, konkrétan csak 1 darab. Na, ez azért már fura! Ha csak egy ilyen érték van az 1406-ból, akkor az jó eséllyel nem tudatosan a "pince lakások" jelölése, hanem adathiba!
+
+Szabaduljunk meg ettől az adathibás lakástól:
+
+```{r}
+BP_Flats <- BP_Flats[BP_Flats$Floor >= 0,]
+```
+
+A `prop.table` függvényt kombinálva a sima `table` függvénnyel, az **Floor** változó **relatív gyakoriságait** is le tudjuk kérdezni:
+
+```{r}
+prop.table(table(BP_Flats$Floor))
+```
+
+Az eredményből látszik, hogy a vizsgált lakások kb. 19.6%-a 2 emeletes.
+
+Némi szorzással, és kerekítéssel (`round` függvény) tényleg szép százalékos adatokat is kimutathatunk:
+
+```{r}
+round(prop.table(table(BP_Flats$Floor))*100,1)
+```
+
+### 2.1. A `summary` függvény reakciója az adattípusok megjavítására
+
+Azt láttuk a `summary` függvény eredményeinek értelmezése során, hogy mivel a **IsSouth**, **Buda** és **Kerulet** változók statisztikai értelemben nem számok, így a `summary` függvény sok olyan dolgot kiszámol rájuk, ami értelmetlen. Plusz, a **IsSouth** és **Buda** változók esetében hatalmas RAM pazarlás őket `double` adattípuson tárolni!
+
+Javítsuk akkor most meg az adattípusokat! Konvertáljuk át a **IsSouth** és **Buda** változókat `logical` típussá, míg a **Kerulet** változót `character`ré, hiszen a kerület száma logikailag egy szöveges földrajzi megjelölést jelent csak:
+
+```{r}
+BP_Flats$IsSouth <- as.logical(BP_Flats$IsSouth)
+BP_Flats$IsBuda <- as.logical(BP_Flats$IsBuda)
+
+BP_Flats$District <- as.character(BP_Flats$District)
+
+summary(BP_Flats)
+```
+
+Az átkonvertált változók esetében azt látjuk, hogy a `summary` függvény a `logical` típus esetében nagyon szépen megadja a `TRUE` és `FALSE` értékek megoszlását az adattáblában. Kicsit utána kell számolni, de kijön, hogy a lakások $\frac{642}{642+763}=0,457=45,7\%$-a budai.
+
+Ellenben **a `character` típusra az égvilágon semmi leíró statisztikát nem kapunk**. :( Ennek hátterében az áll, hogy a `character` típusról azt gondolja a `summary` függvény, hogy az tényleg valami szabadszöveges adat (pl. emberek neve), és nem egy jó előre megadott, nem túl nagy számú szöveges kategóriákból álló besorolás. Pedig a lakás kerülete logikailag egy ilyen adat: a 22 kerület fixen adott előre, és minden lakás a 22 kerületből egybe kerül besorolásra!<br>
+Ahhoz, hogy rávegyük az R-t, hogy tényleg így kezelje a kerületeket, akkor `factor` típusra kell őket konvertálni:
+
+A `factor` típus úgy működik az R `data frame`-ek esetében, hogy minden szöveges kategóriához egy egész számot (`integer`) rendel, és az egyes megfigyelésekhez ezeket a számokat rendeli hozzá. Majd egy külön *szótár*ban eltárolja, hogy melyik szám melyik szöveges kategóriát jelenti. Aztán a háttérben mindig megfelelteti a kódszámot a szöveges kategóriának.<br>
+Ez azért is hasznos, mert egy `integer` típusú kódszámot kisebb helyen is lehet tárolni a RAM-ban, mint egy `character`t! Így a tömeges adattárolás a "kisebb költségű" `integer`rel történik, és a nagyobb tárolási költségű `character` csak a *szótár*ban szerepel.
+
+Nézzük meg mi történik a `summary` függvény eredményével, ha a **Kerulet** változót `factor`rá konvertáljuk:
+
+```{r}
+BP_Flats$District <- as.factor(BP_Flats$District)
+
+summary(BP_Flats)
+```
+
+De jó! Megkaptuk a lakások kerületek közti megoszlását gyakoriság szerint csökkenő sorrendben! Tehát, a legtöbb lakás a 13. kerületben található (pontosan 197 db), a második legtöbb lakást tartalmazó kerület a 2. és így tovább!
+
+**FONTOS** dolgok a `factor`okkal kapcsolatban!
+
+Csak limitált számú szöveges kategóriákat tartalmazhatnak! Azt, hogy a `factor` típusú változónak milyen kategóriái, azaz milyen lehetséges értékei vannak, azokat a `factor` "szintjeinek" (level) hívjuk, és a `levels` függvénnyel lehet őket lekérdezni:
+
+```{r}
+levels(BP_Flats$District)
+# Figyeljük meg, hogy a számok idézőjelek között vannak!
+# Tehát szövegként érti a kerületek számát az R a háttérben, nagyon helyesen!
+```
+
+Mint ahogy a `factor` típus bevezetésénél utaltam rá, ezek a szintek előre adottak, és megváltoztatni **nem lehet** őket! Ha valamiért mégis erre szorulnánk (mert pl. megszűnik egy kerület vagy létrejön egy új), akkor a `factor` típusú változót vissza kell kódolni `character`ré, elvégezni az adatokon a módosításokat majd visszakonvertálni a változót `factor`rá!
+
+Azt is megtehetjük a `by` függvény alkalmazásával, hogy ezt az egész `summary` függvényt külön alkalmazzuk egy `logical` vagy `factor` típusú változó értékei szerint. Nézzük meg az alap leíró statisztikákat a lakásárakról pl. külön Budán és külön Pesten:
+
+```{r}
+by(BP_Flats$Price_MillionHUF, BP_Flats$IsBuda, summary)
+```
+
+Láthatjuk, hogy Budán a lakások legdrágább 25%-a legalább 42 MFt-ba kerül, míg Pesten a lakások legdrágább negyedének minimális ára csak 24 és fél MFt. Budán az átlag-medián eltérés is nagyobb, szóval Budán jobban jobbra elnyúló az árak eloszlása.
+
+Az egész Buda vs Pest megbontást a `summary` függvényben egyszerre több oszlopon is alkalmazhatjuk természetesen:
+
+```{r}
+by(BP_Flats[,c("Price_MillionHUF", "Area_m2", "IsSouth")], BP_Flats$IsBuda, summary)
+```
+
+Az eredményekből látszik, hogy a medián terület is nagyobb Budán pl.
+
+### 2.2. A `summary` függvény egy alternatívája: `describe`
+
+A `describe` függvény a `psych` csomag lakója, így első körben ezt kell telepíteni és behívni a `library` függvénnyel:
+
+```{r eval=FALSE}
+install.packages("psych")
+library(psych) # Szokásos módon ne törődjünk az esetleges Warningokkal! :)
+```
+```{r echo=FALSE}
+library(psych)
+```
+
+A függvény maga ugyan úgy működik, mint a `summary`, csak a leíró statisztika egy szélesebb tárházát tárja a téma szerelmesei elé:
+
+```{r}
+describe(BP_Flats)
+```
+
+Ha eddig hiányoltuk volna a szórást, csúcsosságot és ferdeséget, akkor mindent megtaláltunk! :)
+
+A függvény hátulütője, hogy a nem `double` típusú változóinkra (két `logical` és az egy `factor`) nem mutat ki semmi értelmes dolgot az eloszlásokról. Emiatt is kaptunk piros betűs *Warning*ot a függvény futtatása után!<br>
+Ilyen szempontból a `summary` függvény intelligensebb jószág. Ez a 'describe` alapvetően a numerikus változók alaposabb leíró statisztikai elemzésére alkalmas.
+
+Nézzük meg a **Price_MillionHUF** dolgait!
+
+- Az lakások átlagára 26,51 MFt, +- 19.64 MFt szórással (a szórás korrigált). Az átlagár outlierek (a függvény definíciója szerint felső és alsó 10%) nélkül 22,97 MFt. Ezt az értéket hívjuk *nyesett*, azaz **trimmed** átlagnak.
+- A **mad** az a mediántól vett abszolút eltérések összege, osztva elemszámmal: $\frac{\sum_{i=1}^n\mid Y_i-Me \mid}{n}$
+- Nem meglepő módon a **range** az adatok teljes terjedelme: $Y_{max}-Y_{min}$
+- Ami még igazán érdekes nekünk az a **skew** és **kurtosis**. A **skew** a Stat. I-es ferdeség mutató: $\alpha_3$, a **kurtosis** pedig az $\alpha_4$-gyel jelölt csúcsosság. Az, hogy mindkét érték pozitív, azt jelenti, hogy a lakások árának eloszlása a szimmetrikus normális eloszláshoz képest csúcsosabb és jobbra elnyúlóbb.
+
+Ugye mind az $\alpha_3$ és az $\alpha_4$ mutatók értéke bármi lehet $\pm \infty$ között. Emiatt csak arra jó mutatók, hogy előjelük alapján megállapítsuk az elnyúlás, illetve a ferdeség jellegét. Plusz, az érték alapján meg tudjuk mondani két változó közül, hogy melyik a csúcsosabb, illetve a ferdébb valamelyik irányba.<br>
+Pl. a lakások területe csúcsosabb és jobbra elnyúlóbb eloszlású, mint a lakások ára, mert a **skew** és **kurtosis** mutatója nagyobb.
+
+Egy összefoglaló tábla a **skew** és **kurtosis** előjeleinek értelmezéséről:
+
+```{r, echo=FALSE}
+
+x <- data.frame("Tartomány" = c("pozitív", "kb. 0 [első tizedesre nulla]", "negatív"),
+                "skew" = c("jobbra elnyúló", "szimmetrikus", "balra elnyúló"),
+                "kurtosis" = c("csúcsos", "standard normális eloszlás csúcsosságú", "lapult"))
+
+knitr::kable(
+  x, align = "cc"
+)
+```
+
+Ha táblák helyett inkább a vizuális összefoglalót szeretjük, akkor a ferdeségről beszúrok egyet :)
+
+<center>
+![](ferde.jpg){width=60%}
+</center>
+
+## 3. Egyszerű eloszlást jellemző ábrák R-ben
+
+A 2. fejezetben, a leíró statisztikai mutatók vizsgálatával alapvetően azt kerülgettük több nézőpontból, hogy milyen a numerikus változónk eloszlása. Ezt alapvetően két grafikus eszközzel is meg lehet vizsgálni:
+
+- hisztogrammal
+- doboz ábrával.
+
+Mindkettőt elég könnyen le lehet kérni R-ben a `data frame` objektumunk egy `double` vagy `integer` típusú oszlopára. Nézzük is meg őket a lakások kínálati árára:
+
+```{r}
+hist(BP_Flats$Price_MillionHUF) # hisztogram
+
+boxplot(BP_Flats$Price_MillionHUF) # doboz ábra
+```
+
+A hisztogramból nagyon szépen látszik az eloszlás jobbra elnyúló jellege, amit az átlag-medián viszonyból és az $\alpha_3$ mutató látványosan pozitív értékéből is láthattunk.
+
+A doboz ábráról pedig szintén leolvasható a `summary` függvény egyik fontos eredménye: a lakásárak középső 50%-a kb. 14 és 32 MFt között ingadozik.
+
+A jobbra elnyúló jelleg miatt nem meglepő talán, hogy a doboz ábra felső kilógó értékeket jelez az árak adatsorában. Ezeket jeleníti meg pontokkal. Konkrétan, minden kb. 60 MFt feletti ár kilógónak minősül az ábra alapján. Ezt a határt pontosan a $Q_3 + 1.5\times(Q_3-Q_1)$ formulával kapjuk meg: $31.5 + 1.5\times(31.5-13.9)=57.9$. Hasonlóan elven tudjuk meghatározni, hogy milyen érték alatt lennének az adatsorban lefelé kilógó értékek: $Q_1 - 1.5\times(Q_3-Q_1)=13.9 - 1.5\times(31.5-13.9)=-12.5$. De mivel az árak minimuma 5 MFt (lásd `summary` függvény eredménye), így ilyen értékeket a doboz ábra nem jelez.
+
+Egyébként, ez a kilógó érték keresési eljárás elég aggresszív. Ha a doboz ábrát alaposan megnézzük, akkor inkább csak a 3 db 150 MFt vagy afeletti árakat kéne kilógóan magas áraknak venni, de ezek sincsenek annyira vészesen elszakadva a "keménymagtól", azaz a középső 50%-tól.
+
+A doboz ábrát lekérhetjük úgy is, hogy egy `factor` típusú változó szerint bontsa meg a doboz ábrát. Pl. megnézhetjük a lakások árának eloszlását kerületenként:
+
+```{r}
+boxplot(BP_Flats$Price_MillionHUF ~ BP_Flats$District) # hullám jel után adjuk meg a factort, ami szerint megbontva kérjük az ábrát
+```
+
+A doboz ábrából láthatjuk, hogy a középső 50% szintje a 2. kerületben a legmagasabb. A legtöbb felfelé kiugró lakásár pedig a 12. kerületben található.
+
+## 4. Ábrák a `ggplot2` csomaggal
+
+Az igazán szép és általános R ábrák készítéséhez napjainkban a `ggplot2` csomag függvényei a bevett eszközök.
+
+Telepítsük, és hivatkozzuk is be a csomag függvényeit:
+
+```{r eval=FALSE}
+install.packages("ggplot2")
+library(ggplot2) # Szokásos módon ne törődjünk az esetleges Warningokkal! :)
+```
+```{r echo=FALSE}
+library(ggplot2)
+```
+
+A `ggplot2` csomagban az ábrakészítés alapelve, hogy egyfajta "*hagyma struktúrában*" kell a grafikonjainkat felépíteni: egyszer megírjuk az ábra magját, majd arra újabb és újabb "díszítő" rétegeket rakunk rá. A végeredmény pedig így egy sok-sok rétegből álló hagyma lesz. :)
+
+### 4.1. Hisztogram
+
+Először csináljunk egy sima hisztogramot. A `ggplot2` logika szerint először meg kell adni, hogy melyik `data frame`-ből kiindulva szeretnénk létrehozni az ábrát. Majd meg kell adni, hogy a `data frame` mely változóit (oszlopait) az ábra melyik tengelyén *x* vagy *y* akarjuk ábrázolni. **Minden esetben ez az ábra első rétege: hogy mit rakunk a tengelyekre**!<br>
+Az ábra második rétegében meg kell adni, hogy milyen típusú ábrát akarunk elkészíteni az első rétegben megadott tengelyek segítségével. Ez esetünkben egy hisztogram lesz. **Fontos, hogy az egyes rétegeket mindig `+` jellel választjuk el!**<br>
+Mindez R kód szintjén az alábbi lesz. Figyeljük meg a kódban, hogy azt, hogy mely változókat rakjuk a tengelyekre, azt egy külön `aes` nevű függvénnyel kell megadni az alap `ggplot` függvényen belül! Mivel az *y* tengelyen csak gyakoriságok vannak, **NEM** a `data frame` egy másik változója, így az aes függvény *y* paraméterét üresen hagyhatjuk:
+
+```{r}
+ggplot(data = BP_Flats, aes(x = Price_MillionHUF)) +
+  geom_histogram()
+```
+
+Csudiszép hisztogram. Szebb, mint ami a `hist` függvénnyel kijött, ugye? :)
+
+Ahogy az R output tájékoztatóul írja, a hisztogramhoz 30 db osztályközt (*bin*t) alakított ki az árakból. Ha az osztályközök számát változtatni akarjuk (pl. 20-ra csökkenteni), akkor azt a `geom_histogram` függvény `bins` paraméterével lehet szabályozni:
+
+```{r}
+ggplot(data = BP_Flats, aes(x = Price_MillionHUF)) +
+  geom_histogram(bins = 20)
+```
+
+Ha szeretnénk, akkor az osztályköz hozzát változtatni azt is lehet a `geom_histogram` függvény `binwidth` paraméterével.
+
+### 4.2. Doboz ábra
+
+Csinálhatunk doboz ábrát is `ggplot`tal a lakásárakra. Annyi változtatást kell eszközölni, hogy az *x* tengely helyett az *y* tengelyre kell rakni a vizsgált oszlopunk, mert a doboz ábrán az adatok tengelye ugyebár az *y* és nem az *x* tengely. Plusz az ábra típusát kell cserélni hisztogramról doboz ábrára a második rétegben:
+
+```{r}
+ggplot(data = BP_Flats, aes(y = Price_MillionHUF)) +
+  geom_boxplot()
+```
+
+Ez is csodásan fest!
+
+Nézzük meg hogyan lehet itt egy `factor` típusú változó szerinti csoportosítást megoldani. Kicsit cselesen, mert itt a kitöltési szín paraméterén (`fill`) keresztül kell jelezni a csoportosítási szándékunkat valamelyik változó szerint az első réteg `aes` függvényének paraméterein belül. Cserébe a gépállat megszínezi nekünk külön színekkel az egyes kerületek ár szerinti doboz ábráit:
+
+```{r}
+ggplot(data = BP_Flats, aes(y = Price_MillionHUF, fill = District)) +
+  geom_boxplot()
+```
+
+### 4.3. Doboz ábra, optikai tuninggal
+
+Az előbb elkészített ábrának talán két szépséghibája van még. Az egyik, hogy a tengelyfeliratok nem olyan szép beszédes szövegek. A másik, hogy az *x* tengelyen lévő számok most semmi értelmes dolgot nem mutatnak, hisz az *x* tengelyen semmi értelmes adat nincs. Szóval, ezeket a számfeliratokat el kéne tünteni az *x* tengelyről.
+
+Ezeket az extrákat egy-egy extra rétegként tudjuk rárakni az ábrára a `+` jellel:
+
+```{r}
+ggplot(data = BP_Flats, aes(y = Price_MillionHUF, fill = District)) +
+  geom_boxplot() +
+  labs(y = "Kínálati ár MFt-ban", fill = "Kerület") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+```
+
+A 3. réteg (`labs` függvény) adja az *y* tengely és a színmagyarázat feliratát, nyilván az *x* tengely feliratát is lehet itt szabályozni, mint egy újabb paraméter a függvény zárójelein belül.
+
+Figyeljük meg, hogy a 4. rétegben a `theme` függvény hasonló funkciót tölt be, mint az első rétegben az `aes`: az ábrának több paraméterét is ebben a függvényben lehet szabályozni. Az `aes`-ben az olyan alapdolgokat állítjuk, hogy milyen változók vannak a tengelyeken és hogy milyen változó alapján színezünk. A `theme` függvényben pedig az ilyen "pepecselős" dolgokat állítgathatjuk: tengelybeosztás, megjelenítendő számok, betűméret, ilyesmiket.<br>
+Az `axis.text.x = element_blank()` utasítás üresre (`blank`) veszi le az *x* tengelyről a feliratokat. Nyilván van `.y` végű verziója is.<br>
+Az `axis.ticks.x = element_blank()` utasítás üresre (`blank`) veszi le az *x* tengelyről a a kis fekete vonalkákat. Nyilván van `.y` végű verziója is.
+
+Rakjunk még az ábrára valami cuki címet, és állítgassuk be betűméretet külön a címre és külön a tengelyfeliratra:
+
+```{r}
+ggplot(data = BP_Flats, aes(y = Price_MillionHUF, fill = District)) +
+  geom_boxplot() +
+  labs(y = "Kínálati ár MFt-ban", fill = "Kerület", title = "Lakárak eloszlása kerületek szerint") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_text(size = 16), # y tengely betűméretének állítása
+        plot.title = element_text(size = 20, face = "bold", color = "darkgreen")) # cím betűméret, stílus (félkövér) és betűszín állítása
+```
+
+Mint látjuk, lehet egyedi színeket is adni a különbözá ábraelemeknek. A `ggplot2`-ben elérhető színekről pl. [itt](https://www.r-graph-gallery.com/ggplot2-color.html) található egy jó kis összefoglaló.
+
+A `theme` függvény paramétereiben az ábrának gyakorlatilag minden összetevőjéről megmondhatjuk hogyan is szeretnénk, hogy kinézzen. A lehetőségek áttekintéséhez [ezen a linken](https://ggplot2.tidyverse.org/reference/theme.html) találtok egy jó referenciát.
+
+### 4.4. Halmozott oszlop diagram
+
+Nézzük meg, hogyan lehet két alapvetően nominális mérési skálájú (`logical` vagy `factor` adattípusú) változó kapcsolatát szemléltetni `ggplot2`-ben halmozott oszlopdiagramon.
+
+Vizsgáljuk meg hogyan alakul a budai és pesti lakások esetén a déli fekvésű ingatlanok megoszlása:
+
+```{r}
+ggplot(data = BP_Flats, aes(x = IsBuda, fill = IsSouth)) + # y tengely üres, alapból a gyakoriságok kerülnek rá
+  geom_bar() # ez az általános oszlopdiagram: vegyük észre, hogy ez külön ábratípus a hisztogramhoz képest!!
+```
+
+Az ábráról láthatjuk, hogy picit több pesti ingatlan van, mint budai (erre a leíró statisztikákból emlékezhetünk, a budai lakások aránya olyan 45% körül volt). A budai és pesti ingatlanok esetén is **darabra** kb. ugyan annyi déli fekvésű ingatlanunk van. Ez azt jelenti, hogy Budán valamivel nagyobb a déli fekvésű ingatlanok *aránya*, mint Pesten, mert Buda kisebb gyakoriságból éri el darabra kb. ugyan azt a déli fekvésű szám-szintet, mint Pest.
+
+De erről meg is tudunk győződni, ha 100%-ig halmozott oszloppá alakítjuk a cuccot! Ezt a `geom_bar` függvény `position` paraméterének `"fill"`-ra állításával érhető el:
+
+```{r}
+ggplot(data = BP_Flats, aes(x = IsBuda, fill = IsSouth)) +
+  geom_bar(position = "fill")
+```
+
+Így már látszik is, hogy Budán némileg magasabb a déli fekvésű lakások **aránya**, mint Pesten.
+
+Nézzük meg hogyan lehet a színezést mondjuk egy másik színpalettáról megoldani! Egy új réteg hozzáadásával lehet szabályozni, hogy az `aes` függvényben megadott `fill` színpalettáját:
+
+```{r}
+ggplot(data = BP_Flats, aes(x = IsBuda, fill = IsSouth)) +
+  geom_bar(position = "fill") +
+  scale_fill_brewer(palette="Dark2") # az új, színkitöltést (fill) szabályozó réteg
+```
+
+Csudiszép sötét tónusú színeink lettek a halmozáshoz! :) A színpalettákról, és a színváltoztatás még bővebb rejtelmeiről `ggplot2`-ben [ezen](http://www.sthda.com/english/wiki/ggplot2-colors-how-to-change-colors-automatically-and-manually) a linken mélyebben is olvashatsz.
+
+Megnézhetjük a diagram mögötti kereszttábla (leánykori nevén kontingencia tábla) téynleges gyakoriság adatait is. Ehhez egy ismerős függvényt, a `table`-t kell alkalmazni a két vizsgált nominális változóra:
+
+```{r}
+table(BP_Flats$IsBuda, BP_Flats$IsSouth)
+```
+
+A táblából látszik, hogy *367* darab budai és déli fekvésű lakás található a táblában.
+
+A `prop.table` bevetésével az arányok is ismét lekérdezhetők:
+
+```{r}
+round(prop.table(table(BP_Flats$IsBuda, BP_Flats$IsSouth))*100, 1)
+```
+
+A déli fekvésű és budai lakások aránya a táblában 26.1%.
+
+De itt már lekérhetjük a **peremeloszlásokat** is! Pl. ha külön szeretnénk megnézni a budai és pesti lakásokon **belül** a déli fekvésűek arányát:
+
+```{r}
+round(prop.table(table(BP_Flats$IsBuda, BP_Flats$IsSouth), 1)*100, 1)
+```
+
+Budán a déli fekvésű lakások aránya 57.2%, míg Pesten 48.2%. Onnan tudom, hogy a **Buda** változó szerint történt a leosztás, mert a `prop.table` függvény második paraméterébe **1-et** írtam, és a **Buda** változó volt a sima `table`-ben az **1.** paraméter.
+
+De ezt ellenőrizhetjük is:
+
+- $51.8+48.2=100$ és $42.8+57.2=100$
+- $51.8+42.8\neq100$ és $48.2+57.2\neq100$.
+
+Ha valaki egy olyan kereszttáblát szeretne megjelenítettni az R-rel, amiben a peremgyakoriságok is látszanak, akkor azt úgy kell kierőszakolni, hogy egy `addmargins` nevű függvénybe falazzuk be a `table` függvény eredményét:
+
+```{r}
+addmargins(table(BP_Flats$IsBuda, BP_Flats$IsSouth))
+```
+
+### 4.5. Pontdiagram
+
+Nézzük meg a tárgy szempontjából legfontosabb diagramtípus működését `ggplot2`-ben: a **pontdiagram**ét! A pontdiagram lényege, hogy egy `data frame`-ben szereplő két numerikus (`double` vagy `integer`) változó kapcsolatát szemlélteti.
+
+Vizsgáljuk meg a lakások kínálati árának és a területének a kapcsolatát! Mivel logikusan azt gondoljuk, hogy a terület fogja meghatározni az árak alakulását, és nem fordítva, így a terület lesz a magyarázóváltozónk (*x* tengely) és az ár az eredményváltozónk (*y* tengely):
+
+```{r}
+ggplot(data = BP_Flats, aes(x = Area_m2, y = Price_MillionHUF)) +
+  geom_point() # pontdiagram ábratípusa
+```
+
+Láthatjuk, hogy a terület növekedésével nőnek az árak, és ez a kapcsolat szoros is lehet, mert a pontokra gondolatban is elég jó pontossággal rá tudunk illeszteni egy pozitív meredekségű egyenest.<br>
+De, tegyük is ezt meg! Húzzuk be a fenti pontdiagramon a pontokra legjobban illeszkedő egyenest (leánykori nevén *regressziós* egyenest):
+
+```{r}
+ggplot(data = BP_Flats, aes(x = Area_m2, y = Price_MillionHUF)) +
+  geom_point() +
+  stat_smooth(method=lm) # trendvonalt illesztő réteg
+```
+
+Látszik, hogy az egyenes pozitív meredekségű (a kapcsolat egyirányú) és a pontok közel helyezkednek el hozzá képest (a kapcsolat szoros). Az egyenes mögött homályos sáv az egyenes 95%-os megbízhatóságú konfidencia-intervalluma. Tehát az egyenes ezen határok között helyezkedhet el a sokaságban (más szóval a megfigyelt 1405 lakáson kívüli világban). Az ilyen konfidencia-intervallumok kiszámításával fogunk foglalkozni a kurzus első felében. :)
+
+Mindezt amúgy egy gyors korrelációszámítással is ellenőrizni tudjuk:
+
+```{r}
+cor(BP_Flats$Price_MillionHUF, BP_Flats$Area_m2)
+```
+
+A korreláció pozitív előjelű, és abszolút értéke 0.7 feletti: a terület és az ár között a kapcsolat egyirányú és szoros.
+
+Egy picit az zavarhat minket, hogy 300 m2 felett nem sok lakás található, így a trendvonal azon az intervallumon bizonytalanabbul becsülhető (tágabb a konfidencia-intervallumot jelölő sáv).
+
+Csinálhatunk olyat pontdiagramon is a `ggplot2`-ben, hogy megszínezzük az objektumokat (jelen esetben a pontokat) egy nominális mérési skálájú változó szerint az `aes` függvény `color` paraméterének segítségével. Itt rendhagyó módon **nem** a `fill` paramétert használjuk, mert egy pontnak csak sima színe van az R fejében, **nem** pedig kitöltési színe!<br>
+Nézzük most meg, hogyan alakul a terület és az ár kapcsolata külön Budán és külön Pesten:
+
+```{r}
+ggplot(data = BP_Flats, aes(x = Area_m2, y = Price_MillionHUF, color = IsBuda)) +
+  geom_point() +
+  stat_smooth(method=lm)
+```
+
+Látszik, hogy Budán jobban (meredekebben) emelkedik az ár, ha nő a lakás területe: vagyis +1 m2 drágább Budán, mint Pesten. Ennek részben az is az oka, hogy a 300 m2 feletti területű lakások szinte kivétel nélkül budaiak.
+
+## 5. Korrelációmátrix R-ben
+
+Az 5. fejezetben gyorsan összefoglalt kapcsolatvizsgálati mutatók közül a korreláció elég fontos lesz nekünk a félév során, így nézzük meg, hogyan lehet több **mennyiségi változó közti** korrelációs mátrixot kiszámoltatni R-ben.<br>
+Emlékezzünk, hogy a `BP_Flats` nevű táblánknak az első 7 oszlopa tartalmaz statisztikai értelemben mennyiségi változókat, így csak ezekre van értelme korrelációmátrixot nézni:
+
+```{r}
+cor(BP_Flats[,1:7])
+```
+
+Ez nem valami gusztusos megjelenítési mód, bár tény, hogy ha tovább akarunk majd a korrelációmátrixszal számolni, akkor ez a formátum lesz jó nekünk.
+
+Kis emlékeztető álljon itt azért egy korreláció értelemzéséhez: mindig két lépésben értelmezzük őket. Először megnézzük az előjelet, majd az abszolút értéket. Két konkrét példa:
+
+- **Terület** és **Szobaszám** közti korreláció = 0.799 --> **Előjel**: A szobák száma és a terület egyirányú kapcsolatban áll: minél több szoba van, annál nagyobb a terület. **Abszolút érték**: A megfigyelt kapcsolat erős.
+- **Terület** és **Emelet** közti korreláció = -0.088 --> **Előjel**: Az emeletek száma és a terület ellentétes irányú kapcsolatban áll: minél több emelet van, annál kisebb a terület. **Abszolút érték**: A megfigyelt kapcsolat gyenge.
+
+A korreláció (jelölve: $r$) *abszolút értékének* értelmezési segédtáblája:
+
+```{r, echo=FALSE}
+
+x <- data.frame("Correlation Abs Value" = c("|r|<0.3", "0.3<=|r|<=0.7", "|r|>0.7"),
+                "Strenght of Relationship" = c("weak", "moderate", "strong"))
+
+knitr::kable(
+  x, align = "cc"
+)
+```
+
+Azért jó lenne, ha a sima korrelációs kapcsolatokat valami szebb formában is ki tudnánk mutatni, mint ezek a "lelketlen, fekete számok"! Szerencsére, a `psych` csomagnak, van erre egy jó kis függvénye. Alkalmazzuk most ezt a `BP_Flats` tábla első 7 oszlopára:
+
+```{r}
+pairs.panels(BP_Flats[,1:7])
+```
+
+Sokkal szebb, nem? :) Ráadásul a korreláción túl megkapjuk a vizsgálatba bevont változók közötti pontdiagramokat és a változók eloszlását megadó hisztogramokat is, némi simító egyenesekkel megtűzdelve.
+
+De az R szépsége, hogy a korrelációmátrix vizualizációjára [rengeteg csomag](http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram) készült már! szóval, a lehetőségek tárháza végtelen! :) Nézhetjük még pl. a `corrplot` csomag lehetőségeit:
+
+```{r eval=FALSE}
+install.packages("corrplot")
+library(corrplot) # Szokásos módon ne törődjünk az esetleges Warningokkal! :)
+```
+```{r echo=FALSE}
+library(corrplot)
+```
+```{r}
+KorrelMatrix <- cor(BP_Flats[,1:7])
+
+corrplot(KorrelMatrix, method="color")
+
+corrplot(KorrelMatrix, method="number")
+```

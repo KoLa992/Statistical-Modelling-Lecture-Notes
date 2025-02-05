@@ -1,0 +1,435 @@
+---
+title: "Probability Distributions"
+author: "László Kovács"
+date: "2025.02.05."
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## 1. Normal Distribution and its Density Function
+ 
+Vizsgáljuk meg a <a href="https://github.com/KoLa992/Statisztika-II-Python-Jegyzet/blob/main/TSLA.xlsx" target="_blank">TSLA.xlsx</a> című táblában található adatokat, amik a **TESLA részvények napi záróárfolyam-változásai**t mutatják ki **dollárban** ($) 2019 májusától 2020 májusáig.
+
+Az Excel táblákat, amennyiben az adattáblánk első értéke az *A1* cellában kezdődik és csak egy darab munkalapunk van, gond nélkül be lehet olvasni a `readxl` csomag `read_excel` függvényével egy data frame-be. Ezt csináltuk már az előző fejezetben is a *BP_Flats.xlsx* táblával.
+
+```{r}
+library(readxl)
+
+Tesla <- read_excel("TSLA.xlsx")
+
+str(Tesla)
+```
+
+Láthatjuk, hogy két oszlopunk van: a dátum és a részvény árváltozása az adott napon az előző napi záróárfolyamhoz képest a **TESLA** oszlopban. Tehát 2019.05.07-én egy Tesla részvény kb. $8.3$ dollárral ért kevesebbet a nap végére, mint amennyit 2019.05.06-án ért nap végén. Ellenben 05.13-án már $12.5$ dollárral ér kevesebbet, mint előző nap, 05.12-én. Az  `info` metódus alapján $N=250$ napnyi ilyen adatunk van, ami nagyjából meg is egyezik egy évben a tőzsdei kereskedési napok számával.
+
+Nos, az első öt vizsgált nap alapján nem lennék Elon Musk helyében, elég szép mínuszokat produkál a részvénye. De lássuk, hogy a hisztogram alapján megmutatkozó eloszlás mit is árul el arról hogyan is teljesített ez a csodacég a teljes vizsgált 1 éves időtartamban!<br>
+Let's **draw the histogram** of the Tesla price changes **such that relative frequencies are on the $y$ axis**! This is done by setting the `freq=FALSE` parameter in the `hist` function.
+
+```{r}
+hist(Tesla$TESLA, freq = FALSE)
+```
+
+Ok, we can see that most days have a price change close to $0$ and the larger and smaller price changes are rarer and rarer...so the **histogram shows a symmetric, normal distribution, although a bit pointy** (kurtosis is positive).
+
+Now, let's imagine what happens when we **connect the columns of the histogram with a continuous line**...We don't need much fantasy to see that connecting the columns **results in a function similar to the one just below**:
+
+```{r echo=FALSE}
+mu = mean(Tesla$TESLA)
+szigma = sd(Tesla$TESLA)
+
+x <- seq(mu-3*szigma, mu+3*szigma)
+y <- dnorm(x, mean = mu, sd = szigma)
+
+DFRajz <- data.frame(x=x, y=y)
+
+library(ggplot2)
+ggplot(DFRajz, aes(x=x, y=y)) + geom_line(linewidth=1)
+```
+
+Now, this beauty right here is the **density function of the normal distribution**. Or, to be more precise this is the **density function of a normal distribution with a mean of $\mu=1.8\$$ and the standard deviation of $\sigma=27.19\$$ since this is the mean and standard deviation of the variable containing the Tesla price changes**, based on which we've drawn this density function:
+
+```{r}
+mu = mean(Tesla$TESLA)
+sigma = sd(Tesla$TESLA)
+
+mu
+sigma
+```
+
+So, to what we can say is that we see the density function of a $N(1.8,27.19)$ distribution. Therefore, the **general notation** for normal distributions is $N(\mu, \sigma)$. And with the notation $Y_i \sim N(1.8,27.19)$ we say that our $Y_i$ observations (now the Tesla price changes) follow a $N(1.8,27.19)$ distribution.
+
+Why is that? because, the exact shape of the density function for the normal distribution depends on the mean and standard deviation of the data that we want to fit this density function on.
+
+- The **mean** defines where the **maximum of the function** is (since for symmetrical distributions the mean equals the mode)
+- The **standard deviation** defines how **pointy or flat** the function is
+
+You can see all of this in the interactive plot below:
+
+<iframe src ="https://kola992.shinyapps.io/normaldensityplot/" height=500px width=800px data-external="1" />
+
+The $f(x)$ formula for the density function with a given $\mu$ and $\sigma$ is the following: $$f(x)=\frac{1}{\sigma\sqrt{2\pi}}e^{-\frac{1}{2}\left(\frac{x-\mu}{\sigma}\right)^2}$$
+
+Don't get PTSD from Calculus classes: we won't use this formula directly. It's just good to see one time what kind of formula can produce this beautiful bell shape of the density function! :)
+
+### 1.1. Using the Desnity Function
+
+Ok, but "*What have the Romans ever done for us?*". So, we can rightly ask the question: what is this density function good for? First and foremost, if we substitute an $x$ number to the $f(x)$ formula of the density function, we get **the probability for a random number drawn from the variable $Y$ being equal with $x$.** With mathematical notations, this means $f(x)=P(Y_i=x)$.<br>
+Ok, technically I am not very accurate here, since the probability of the $Y_i=x$ event would be practically $0$. Since a variable with normal distribution can take so many unique values that the probability of taking just one of these values is really-really small. Hence, the density function actually shows the probability of a random $Y_i$ element being in the small area of $x$ with a radius of $\epsilon$. So, the correct formula would be $P(x \leq Y_i \leq x + \epsilon)$.<br>
+But, for **our purposes it's perfectly fine if we think of the $f(x)$ value as the probability of $x$'s occurrence in our $Y$ variable: $P(Y_i=x)$.**
+
+So, if we want to know the probability of a random Tesla price change being exactly $2.76\$$ (the price change in 23th May 2019), then we just need to substitute this $x=2.76$ value into the density function formula of the $N(1.8,27.19)$ distribution: $$P(Y_i=2.76)=f(2.76)=\frac{1}{27.19\sqrt{2\pi}}e^{-\frac{1}{2}\left(\frac{2.76-1.8}{27.19}\right)^2}$$
+
+Since based on the observed trading data the mean of price changes is $\mu=1.8\$$ and the standard deviation is $\sigma=27.19\$$.
+
+We can apply the `dnorm` function in R to calculate this substitution into the $f(x)$ density function:
+
+```{r}
+mu = mean(Tesla$TESLA)
+sigma = sd(Tesla$TESLA)
+
+dnorm(2.76, mean = mu, sd = sigma)
+```
+
+Perfect! So, the probability of a $2.76\$$ daily gain in Tesla stocks is $1.4\%$.
+
+At this point, let's **think back how the shape of the density function reacted to increasing he standard deviation: it got flat!** Now, this reaction is absolutely understandable since **if the standard deviation is increasing**, then the **probability of extremely high and low $Y_i$ values is also increasing**! And **if $f(x)=P(Y_i=x)$, then the function will "get fat" at the two ends of the $x$ axis**, so the **shape of the function gets to flatten**.
+
+### 1.2. Integral of the Density Function
+
+We can see from the result in the previous section that the occurrence of specific values in a normal distribution is not very high, due to what we discussed before: the occurrence of a specific value in a variable with lots of unique values is very small.<br>
+Therefore, we usually ask from our distribution function that **what is the probability of a random $Y_i$ being smaller than $x$?** So, we usually look for the $P(Y_i < x)$ probabilities.<br>
+This is nothing more than the **area of the density function below $x$.** So, we can calculate this with the $F(x)=\int_{-\infty}^x{f(x)}dx$ improper integral. This is called as the **cumulative distribution function**: $F(x)$.
+
+If we didn't want to manually substitute $x$ into the formula of the $f(x)$ density function, it's sure as hell, we don't want to take the integral of it!<br>
+Luckily, the machine spirit of R has blessed us with the `pnorm` function that will calculate this integral and the $P(Y_i < x)$ probability for us!
+
+Let's see what is the probability of getting a daily *loss* greater than $82\$$ with a Tesla stock. So, we actually look for the $P(Y_i<-82)$ probability.
+
+```{r}
+pnorm(-82, mean = mu, sd = sigma)
+```
+
+Thankfully, the probability of such great losses is just $0.1\%$, so we can breathe a bit easier. :)
+
+Of course, if we can calculate the probability of being smaller than $x$, then we can also calculate the probability of being greater than $x$, since **being above $x$ is the complementary event of being below $x$,** so we the following formula is valid: $P(Y_i>x)=1-P(Y_i<x)$. We simply calculate the **area of the density function that is above $x$.**
+
+So, let's see what's the probability of gaining more than $20\$$ with a Tesla stock on a random trading day! The whole thing can be handled by the `pnorm` function again:
+
+```{r}
+1 - pnorm(20, mean = mu, sd = sigma)
+```
+
+Oh wow, these gains above $20\$$ have roughly $25\%$ of occurring. Not bad!
+
+If we want to know the probability of a randomly drawn $Y_i$ being between two numbers $x$ and $y$, then we simply need to **subtract the probability of being below the smaller value from the probability of being below the higher value**. So, if $x>y$, then $P(y<Y_i<x)=P(Y_i<x)-P(Y_i<y)$, but if $x<y$, then $P(x<Y_i<y)=P(Y_i<y)-P(Y_i<x)$ is the way to calculate. So, the `pnorm` function still solves our problems here. On the plot side, we take the **area between $x$ and $y$ under the density function**.
+
+If I want to see the probability of a loss between $47\$$ and $82\$$ with a Tesla stock. So, we just take the probability of being smaller than $-82$ and we subtract it from the probability of being smaller than $-47$:
+
+```{r}
+pnorm(-47, mean = mu, sd = sigma) - pnorm(-82, mean = mu, sd = sigma)
+```
+
+Perfect, so the probability of a loss between $47\$$ and $82\$$ with a Tesla stock is $3.5\%$.
+
+**To sum up**, we can calculate the following probabilities with the help of a $f(x)$ density function, where $Y_i$ is a random element of our currently examined $Y$ variable, plus $x$ and $y$ are given numbers:
+
+- being exactly $x$: $P(Y_i=x)=f(x)$
+- being below $x$: $P(Y_i<x)=\int_{-\infty}^x{f(x)}dx$
+- being above $x$: $P(Y_i>x)=1-P(Y_i<x)$
+- being between $x$ and $y$: $P(y<Y_i<x)=P(Y_i<x)-P(Y_i<y)$
+
+All of these calculations and their graphical representations can be reviewed in the interactive plot below.<br>
+A *small comment*: in the formulas for the probabilities of the *below, above and between* events I didn't apply the $=$ sign since due to the great number of unique values in the variable, the probability of a specific value appearing is essentially $0$, so if we examine the *probability of being in a given range, including and excluding a given point does not really matter*.
+
+<iframe src ="https://kola992.shinyapps.io/normalprobabilities/" height=600px width=800px data-external="1" />
+
+### 1.3. Probability vs Relative Frequency
+
+All right, now we can use the density function of the normal distribution. But **what's the point?** I mean, ok we calculate from the density function that the probability of a loss between $47\$$ and $82\$$ with Tesla is $3.5\%$.
+
+```{r}
+pnorm(-47, mean = mu, sd = sigma) - pnorm(-82, mean = mu, sd = sigma)
+```
+
+But this is something that we can also know from **the relative frequency of these elements in the data frame, right?** If we calculate the frequency of the elements between $-47\$$ and $-82\$$, and divide the result with the total number of observations, which is $n=250$, then we get the proportion or relative frequency of the losses between $47\$$ and $82\$$:
+
+```{r warning=FALSE}
+Tesla_Filter <- Tesla[(Tesla$TESLA > -82) & (Tesla$TESLA < -47),]
+
+nrow(Tesla_Filter) / nrow(Tesla)
+```
+
+Oh, well this relative frequency is just $2.0\%$. But the normal distribution suggests that the probability of these losses is $3.5\%$. Now, who is in the right? What's the difference?
+
+Now, the difference comes from the fact that **with the relative frequency of $2.0\%$ we only consider the observed data only, so the result only comes from the observed statistical SAMPLE!!** The $2.0\%$ only means that **only 2% of our observed trading days had losses between 47-82 dollars!!**
+
+On the other hand, the $3.5\%$ is the *theoretical probability* calculated from the density function of the normal distribution, with mean and standard deviation fitted on the data. This a theoretical probability since **the $f(x)$ density function** (being a continuous function) **assigns positive occurrence probabilities to $x$ values that are not yet included in the observed sample!!** This means, that **when calculating probabilities the density function considers values that are OUTSIDE of the sample! In other words, it can "see" values that haven't occurred yet!** That is why we call the density function's $f(x)$ values *PROBABILITIES* and the proportions are just called relative frequencies.
+
+*Nota bene*: To rightfully call the density function's $f(x)$ values probabilities, it is required that the density function more or less fits to the observed histogram. As I've suggested at the start of this section, our Tesla stock price changes have a too pointy frequency distribution for the normal density function to fit completely.
+
+We can create a plot to see how well the theoretical normal distribution with the given $\mu$ mean and $\sigma$ standard deviation fits to the observed histogram.<br>
+We can create a simple histogram with `ggplot` that shows the relative frequencies instead of the absolute frequencies with the parameter `aes(y = after_stat(density))` setting in the `geom_histogram` function:
+
+```{r}
+library(ggplot2)
+
+ggplot(Tesla, aes(x=TESLA)) +
+  geom_histogram(aes(y = after_stat(density)))
+```
+
+Then, we can just add another layer on the plot with the `stat_function` function, where we specify in the parameter settings that we want to add a normal density function (`fun = dnorm`) with $\mu=1.8\$$ and $\sigma=27.19\$$ (`args = list(mean = 80, sd = 20)`). Plus we can also set the color of the function as red for example (`col = 'red'`):
+
+```{r warning=FALSE}
+mu = mean(Tesla$TESLA)
+sigma = sd(Tesla$TESLA)
+
+ggplot(Tesla, aes(x=TESLA)) +
+  geom_histogram(aes(y = after_stat(density))) +
+  stat_function(
+                fun = dnorm, 
+                args = list(mean = mu, sd = sigma),
+                col = 'red')
+```
+
+All right, we can see that the observed histogram is a bit too pointy (has positive kurtosis) compared to the density function of the classic normal distribution.
+
+In the following chapters, we'll see a more exact method than staring at graphs or measures of shape to test whether a theoretical distribution fits to an observed histogram. :)
+
+### 1.4. Central Limit Theorem (CLT)
+
+As we **discussed in the Fundamentals of Statistics course**, it is no surprise that these price changes of financial instruments tend to follow something close to the normal distribution. There is a theory lurking behind the shadows, the **Central Limit Theorem (CLT)**. But we **revise this theorem here**, since it's that important. :)
+
+This theorem states that **if the $Y_i$ elements of a variable are created as a sum of random effects, than the $Y$ variable itself is normally distributed**.<br>
+If we think about it, **this is probably the case for the daily price changes**: the **exact price change of a day, the $Y_i$ element, is a sum of the random economic events for that trading day**. Like at the start of the day, Tesla announces that it couldn't open a new factory in China due to not complying with some special regulation there, so the stock prices go down (*not stonks*). But around midday Elon Musk tweets that this fact won't influence meeting their car production plans, so the price of Tesla stocks go up (*stonks*). But at the end of day, Musk tweets that he's pulling some capital out of Tesla to cover some legal costs, so stock prices go down again (*not stonks*), and finally **Tesla stocks have a price change of like $Y_i=-8.28$ dollars as a sum of these random effects that happened during the day**. Since it is reasonable to assume that every trading day looks like something similar (random economic events have some effect to Tesla stock prices and at the end of the they, they sum up), **all the $Y_i$s can be considered as a sum of random effects**. Therefore, **according to the CLT, the $Y$ variable needs to have a normal or symmetric distribution**.
+
+We can see on the histograms at the end of Section 1.3. that **the CLT works to some extent on the price changes of these investment funds, but not perfectly due to the excess kurtosis**. De **több egyéb esetben elég szépen érvényesül**: Pl. egy termelőgép által a nap végén gyártott selejtes termékek száma esetén. Az adott napi selejtszám értéke (ha nincs szabotőr a gyárban) az adott napi véletlen hatások összegződése állítja elő. Így, ha több nap nap végi selejtszámait vizsgáljuk, akkor azok hisztogramja csudiszép normális eloszlást kell, hogy kirajzoljon.
+
+### 1.5. Quantile Function
+
+We can also *ask backwards* from our dear density function. So, they are not only capable of calculating probabilities of given events (like losses greater than 80 dollars with Tesla), but they also can tell us values for given probabilities via their **inverse values**. So I can ask *what is the amount where we have only a $5\%$ probability to experience greater losses?*<br>
+So, our task here is to find $x$ such that $P(Y_i<x)=0.05$ and this $x$ is called the **5th quantile of the distribution**, which can be calculated as the **inverse value of the cumulative distribution function**: $F^{-1}(x)$.
+
+Of course, we have a built-in function in R for this purpose, called `qnorm` that can determine $x$ for us, if we give a $P(Y_i<x)$ probability to it in its $1$st parameter. The other two parameters are just the mean and standard deviation of the normal distribution, defining the exact shape of the density function just like before:
+
+```{r}
+mu = mean(Tesla$TESLA)
+sigma = sd(Tesla$TESLA)
+
+qnorm(0.05, mean = mu, sd = sigma)
+```
+
+All right, so $42.9\$$ is the amount, where the probability of a higher loss is just $5\%$. Or, in other words, there is only a $5\%$ probability for a price change lower than $-42.9\$$ on a random trading day. In Finance, we usually call this value as **Value at Risk (VaR)** at $5\%$ level. Usually, financial regulators compel investment banks to put these values into reserve after each of their investment portfolios.
+
+If we think about it, logically **this operation with the distribution quantile values looks the same as the calculation of percentiles from our data**. Since the **5th percentile** of the observed price changes gives the value below which only $5\%$ of the data is found. So, this can be considered as an analogy for the question "*What is the amount where we have only a $5\%$ probability to experience smaller price changes?*"
+
+Let's see the 5th percentile then! The `quantile` function can do the calculation for us from the data observed. The `probs` parameter is where we specify which percentile to calculate: the 5th percentile is the point below of which $0.05$ part of the data is smaller.
+
+```{r}
+quantile(Tesla$TESLA, probs = 0.05)
+```
+
+Oh my good God in Heaven! That's just $-28.5\$$! So only $5\%$ of ur observed trading days had a greater loss than $28.5\$$! This is a **significantly lower loss level than the $-42.9\$$ from the density function!** And the **value from the density function** is more proper to use here since it **considered values** with some positive probabilities **that the observed datet haven't yet seen occurring**, since they are smaller than the minimum of the observed data for example.<br>
+Again, **if we look for the given percentile from a distribution, then I can consider data points outside of our observations!** So, we can **generalize to our whole population**.
+
+As we can see from this example above that we can have a significant difference in *Value at Risk (VaR)* of a portfolio if we calculate it from a distribution or from the observed data of price history! Of course, the normal distribution is not necessarily the best fit, but we can find loads of exotic probability distributions on the menu, so we can choose! :)<br>
+Of course, to choose the best fitting distribution, some work must be done, so there is a great temptation to just calculate a percentile from observed past price data...some of the greatest investement banks before 2008 gave in to this tempatation because the regulators allowed them to do so. The result is the financial crysis of 2008. This is partly the topic of the book titled <a href="https://en.wikipedia.org/wiki/The_Black_Swan:_The_Impact_of_the_Highly_Improbable" target="_blank">The Black Swan: The Impact of the Highly Improbable</a>. I recommend it to everyone interested in the topic, it's quite easy to understand reading. :)<br>
+Since 2008, regulations (Basel III in Europe, Basel IV from 2023) compels banks to calculate *VaR* based on the best fitting probability distribution on their data.
+
+Of course, inverse values can answer "positive" questions as well: **What is the amount where we have only a $5\%$ probability to experience greater gains with Tesla on a random trading day?** So, what is the value below which price changes have $99\%$ probability to occur?
+
+Mathematically speaking, we need to find $x$ such that $P(Y_i>x)=0.01$. However, **the `qnorm` function can only handle $P(Y_i<x)$ probabilities**, we need to rephrase the question as **let's find $x$ such that $P(Y_i<x)=0.99$!** And now, the machine spirit will answer our prayers:
+
+```{r}
+mu = mean(Tesla$TESLA)
+sigma = sd(Tesla$TESLA)
+
+qnorm(0.99, mean = mu, sd = sigma)
+```
+
+So we have only $1\%$ probability to experience more gains than $65\$$ on a random trading day with Tesla.
+
+### 1.6. Standard Normal Distribution
+
+We must still take a moment to deal with one last thing regarding normal distributions. The case of the normal distribution with $\mu=0$ mean and $\sigma=1$ standard deviation, called **standard normal distribution**, which has a special space in hell.
+
+Why it has a special place is the fact that every other $N(\mu,\sigma)$ distribution can be transformed to a $N(0,1)$ distribution. We just need to apply the following formula: $$z_i=\frac{Y_i-\mu}{\sigma}$$
+
+
+So, if we have a **normally distributed variable $Y$ and from its every $Y_i$ element, we subtract the mean and divide the result by the standard deviation, then the resulting $z$ variable with $z_i$ elements has a standard normal distribution**. This operation is called **normalization/standardization**.
+
+In matehematics, we denote by $\sim$ if a variable follows some kind of distribution. So what I can say is that $Y \sim N(\mu,\sigma)$ and $z \sim N(0,1)$.
+
+Let's calculate this tsandardaized $z$ variable for the price changes of the Tesla stock:
+
+```{r}
+Tesla$z <- (Tesla$TESLA - mean(Tesla$TESLA))/sd(Tesla$TESLA)
+
+mean(Tesla$z)
+sd(Tesla$z)
+```
+
+Ok, We can see that this new $z$ variable has a mean of prectically $0$ ($9.5 \times 10^{-18}$) and a standards deviation of $1$.
+
+But we can see that the histogram is still the same, so it's symmetric:
+
+```{r}
+hist(Tesla$z)
+```
+
+Why we "*love*" the standard normal distribution is that this distribution has
+
+- the middle $68.2\%$ of its data between $-1$ and $+1$
+- the middle $95.4\%$ of its data between $-2$ and $+2$
+- the middle $99.7\%$ of its data between $-3$ and $+3$
+
+This is further emphasized by the figure below.
+
+<center>
+![](stnormal.png){width=50%}
+</center>
+
+<br> But we can check this in R as well. For example, for the case of $\pm 2$. The `pnorm` function runs with `mean=0` and `sd=1` parameters by default. So, let's calculate the $P(-2<z_i<+2)$ probability in case of a $z \sim N(0,1)$ distribution:
+
+```{r}
+pnorm(2) - pnorm(-2)
+```
+
+It's really $95.4\%$! :) **This property of the standard normal distribution will be exploited later, so remember this**!
+
+Because of this property, sometimes the standardized values are used to look for outliers. Like a $Y_i$ value in the variable is an outlier if its corresponding $z_i$ value is outside the $\pm2$ range since in this case, the $Y_i$ value is either in the top or bottom $2.5\%$ of the variable (we can see from the density function of the standard normal distribution that the $5\%$ outside of the $\pm 2$ range is symmetrically distributed on the lower and upper edges of the graph...but this symmetry is no surprise :)). 
+
+We can try this method to locate trading days with outlier price changes in Tesla:
+
+```{r}
+Tesla[Tesla$z < -2 | Tesla$z > 2,]
+```
+
+We have the days with extreme gains or losses.
+
+But **be very careful with this method!** Looking for outliers based on standardized $z_i$ values **only works if the original (not standardized) variable is already normally distributed!** Since this is the only way the standardized data can follow the symmetric standard normal distribution and the only way for $P(-2<z_i<+2)=0.954$ formula to be correct!
+
+One last thought: standardized $z_i$ values show us by how many standard deviations is the original $Y_i$ value above or below the mean.<br>
+Like the first element of the filter above, the $59.82\$$ gain on 30th Jan 2020 is $2.13$ standard deviations above the mean of $1.8\$$. While the the loss of $152.36\$$ on 5th Feb 2020 is $5.67$ standard deviations below the same mean.
+
+## 2. The Exponenetial Distribution
+
+Na, hát akkor most engedjük el egy kicsit a Tesla részvények árváltozásait, és vizsgáljunk meg egy másik adatsort, ami a <a href="https://github.com/KoLa992/Statisztika-II-Python-Jegyzet/blob/main/CancerSurvival.xlsx" target="_blank">CancerSurvival.xlsx</a> fájlban lakik. Ebben az adattáblában 58 súlyos fej- és nyakrák páciensről rögzítették, hogy *hány hónapig* maradtak életben kemoterápia után. Az adatok valósak, 1988-ból a forrás <a href="https://www.jstor.org/stable/2288857#metadata_info_tab_contents" target="_blank">ez a tanulmány</a>.
+
+Töltsük is be az adatokat egy data frame-be!
+
+```{r}
+Surv <- read_excel("CancerSurvival.xlsx")
+
+str(Surv)
+```
+
+Mint láthatjuk, ebben a data frame-ben is csak két oszlopunk van. Az első a páciens sorszáma, a második pedig a kemoterápiától számítot túlélési idő hónapokban megadva (*SurvMonth*).
+
+Nézzünk rá egy hisztogrammal a túlélési idők eloszlására.
+
+```{r}
+hist(Surv$SurvMonth)
+```
+
+Nos, hát itt az látszódik, hogy az eloszlásunk jobbra elnyúló: a túlélési idők nagy többsége (45 az 58-ból konkrétan) $256$ hónapon belüli, de a maradék $13$ meghaladja ezt, sőt $3$ páciens $1000$ hónapnál is hosszabb ideig élt túl a kemoterápia után.
+
+A jobbra elnyúlás miatt, ha folytonos vonallal összekötjük a hisztogram oszlopait, akkor valami ilyesmi függvényábrát kapunk, mint alább.
+
+```{r echo=FALSE}
+x <- seq(min(Surv$SurvMonth), max(Surv$SurvMonth))
+y <- dexp(x, rate = 1/mean(Surv$SurvMonth))
+
+DFRajz <- data.frame(x=x, y=y)
+
+ggplot(DFRajz, aes(x=x, y=y)) + geom_line(linewidth=1)
+```
+
+Ez az alakzat pedig az **exponenciális eloszlás sűrűségfüggvénye**. Ennek a sűrűségfüggvénynek a konkrét alakját egy $\lambda$ paraméter határozza meg. Minél nagyobb $\lambda$, annál meredekebben jobbra elnyúló a sűrűségfüggvény. Ezt alább lehet kipróbálni.
+
+
+<center>
+```{r echo=FALSE}
+knitr::include_app("https://kola992.shinyapps.io/normaldensityplot/?distr=Exp",
+                   height = "500px")
+```
+</center>
+
+Természetesen a $\lambda$-nak van köze a valós adatok átlagához és szórásához, egész konkrétan mindkét érték $\mu=\sigma=\frac{1}{\lambda}$. Tehát, az exponenciális eloszlásban azonos átlagot és szórást tételezünk fel az adatokra, és ennek a közös értéknek a reciproka (a $\lambda$) határozza meg, hogy mennyire meredeken nyúlik jobbra az eloszlás sűrűségfüggvénye. Emiatt az exponenciális eloszlásokat $Exp(\lambda)$ módon szokták jelölni.
+
+Persze valós adatokon gyakorlatilag sosem fog teljesülni, hogy $\mu=\sigma$, de láthatjuk egy `describe` függvényből, hogy a túlélési adatok esetén a két mutató értéke aránylag közel esik egymáshoz: $\mu=226.17 \approx \sigma=273.94$ 
+
+```{r}
+library(psych)
+describe(Surv$SurvMonth)
+```
+
+R-ben a `dnorm`, `pnorm` és `qnorm` függvények mintájára léteznek `dexp`, `pexp` és `qexp` függvények is. Használatuk és jelentésük teljesen megegyezik a normális eloszlásnál látott függvényekkel. Egyetlen különbség ugyebár, hogy exponenciális eloszlásnál csak az egységes $\lambda$-t kell megadni a külön $\mu$ és $\sigma$ helyett, mint ahogy a normális eloszlásnál működött a dolog.<br>
+R-ben a $\lambda$-t a függvények `rate` paraméterében tudjuk megadni. Az előbb látott összefüggések alapján akár az átlag, akár a szórás reciprokaként is tudjuk számolni. Azt, hogy melyik logikát érdemes követni ebből a kettőből későbbi fejezetekben fogjuk megszakérteni. Most vegyük a $\lambda$-t a szórás reciprokaként<br>
+Ez alapján akkor most a túlélési idők esetében $\lambda=\frac{1}{\sigma}=\frac{1}{273.94}=0.00365$. Tehát az egyes $Y_i$ túlélési idők $Exp(0.00365)$ eloszlást követnek: $Y_i \sim Exp(0.00365)$
+
+Ezek alapján számoljunk ki pár valószínűséget a túlélési időkre vonatkozóan:
+
+1. Mi a valószínűsége, hogy kemoterápia után pont egy évet, azaz $12$ hónapot fogunk élni?
+
+```{r}
+dexp(12, rate = 1/sd(Surv$SurvMonth))
+```
+
+Ez egy jó alacsony, kb. $0.3\%$-os valószínűség. Nem lepődünk meg, hiszen egy konkrét pont bekövetkezése a nagy túlélési idő-értékkészlet miatt itt is kicsi.
+
+2. Mi a valószínűsége, hogy kemoterápia után több, mint öt évet, azaz $60$ hónapot fogunk élni?
+
+```{r}
+1 - pexp(60, rate = 1/sd(Surv$SurvMonth))
+```
+
+Az eredmény kb. $80\%$, egész jó kilátások!
+
+3. Mi a valószínűsége, hogy a kemoterápia utáni harmadik év során, azaz $24$ és $36$ hónapközött fogunk elpatkolni?
+
+```{r}
+pexp(36, rate = 1/sd(Surv$SurvMonth)) - pexp(24, rate = 1/sd(Surv$SurvMonth))
+```
+
+A számítások alapja itt is az, hogy $f(x)=P(Y_i=x)$, tehát **a sűrűségfüggvény helyettesítési értékre $x$ helyen megegyezik az $x$ érték bekövetkezési valószínűségével** egy véletlen húzás esetén az adatsorból. A $P(Y_i<x)$ valószínűség pedig exponenciális sűrűségfüggvény esetén is az $\int_{-\infty}^x{f(x)}dx$ improprius integrállal számítható, azaz a sűrűségfüggvény $x$ alatti területével egyezik meg.
+
+Ezeket a vizuális jelentéstartalmakat az alábbi interaktív ábrán meg lehet nézni és ki lehet próbálni úgy, ahogy a normális eloszlásnál lehetett.
+
+<iframe src ="https://kola992.shinyapps.io/normalprobabilities/?distr=Exp" height=550px width=800px data-external="1" />
+
+Természetesen *kvantilis értéket* is tudunk számolni az exponenciális eloszlásban is. Nézzük meg pl, hogy Mi az az idő, aminél csak $1\%$ a valószínűsége, hogy egy kemoterápiával kezelt fej- és nyakrák páciens tovább él.<br>
+Ugyebár a számításhoz úgy kell átfogalmazni a kérdést, hogy mi az az idő, ami esetén csak $99\%$ a valószínűsége, hogy egy kemoterápiával kezelt fej- és nyakrák páciens már *NEM* él tovább. Hiszen az `qexp` függvény is *alá esési* valószínűségekból dolgozik, mint a `qnorm`.
+
+```{r}
+qexp(0.99, rate = 1/sd(Surv$SurvMonth))
+```
+
+A megfejtés kb. $1262$ hónap, azaz $105$ év! De hát ugye ez a nagy érték alapvetően a jobbra elnyúlás miatt van, hiszen a jobbra elnyúló eloszlásokra jellemzőek a felfelé kilógó értékek, így a jobbra elnyúló sűrűségfüggvényeknek is számolnia kell ezekkel az outlier elemekkel.
+
+Végül pedig nézzük meg szépen, hogy ez az exponenciális sűrűségfüggvény mennyire illeszkedik a túlélési idők hisztogramjára (), ahogy a normális eloszlás esetén is megtettük egy hisztogramra illesztett `ggplot` vonaldiagrammal.
+
+```{r warning=FALSE}
+ggplot(Surv, aes(x=SurvMonth)) +
+  geom_histogram(aes(y = after_stat(density))) +
+  stat_function(
+                fun = dexp, 
+                args = list(rate = 1/sd(Surv$SurvMonth)),
+                col = 'red')
+```
+
+Itt egész pofásnak tűnik az illeszkedés, egy nem szép pont van: a 150-200 hónapos osztályköz. Oda lényegesen többen estek be, mint az $Exp(0.00365)$ eloszlásunk alapján várható lenne. De ez könnyen lehet, hogy csak a túl sok osztályköz (ggplot alapból látjuk, hogy 30-at használt) miatt van. A 2. fejezetben tanultak alapján ezt tudjuk is javítani, ha kéne. :)
