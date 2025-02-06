@@ -1,7 +1,7 @@
 ---
 title: "Simulations and Sampling"
 author: "László Kovács"
-date: "2025.02.05."
+date: "06/02/2025"
 output:
   html_document:
     toc: true
@@ -254,7 +254,9 @@ str(all_in_one)
 Szuper, az `str` függvény alapján megvan egyben a $3$ db $50$ elemű mintánk! Egy-egy $k=6$ osztályközzel operáló hisztogramon meg is tudjuk nézni az eredményt. :)
 
 ```{r}
-hist(all_in_one)
+hist(all_in_one$normies, breaks = 6)
+hist(all_in_one$expies, breaks = 6)
+hist(all_in_one$unis, breaks = 6)
 ```
 
 Na, meg is vagyunk, nagyjából mindegyik hisztogram követi a neki megfelelő Egyenletes, Normális és Exponenciális sűrűségfüggvény alakot.
@@ -342,35 +344,34 @@ Most pedig **tegyük az elvi statisztikai mutatók értéke mellé az $50$ elem�
 
 A $100$-nál kisebb értékek arányának (relatív gyakoriságának) számolásához két technikai megjegyzés:
 
-- A számolásnál azt a trükköt sütjük el, hogy pl. az `AdatokEgyben['Normal'] < 100` parancs egy `bool` tömböt ad vissza aszerint, hogy az `AdatokEgyben['Normal'] < 100` logikai állítás kire `True` és `False`.
-- A `numpy` csomag `sum` függvénye pedig egy ilyen tömbre `True = 1` és `False = 0` kódolásokkal végzi el az összegzést: azaz megadja a *kedvező esetek*, a 100-nál kisebb értékek *darabszámát*.
+- A számolásnál azt a trükköt sütjük el, hogy pl. az `all_in_one$normies < 100` parancs egy `logical` tömböt ad vissza aszerint, hogy az `all_in_one$normies < 100` logikai állítás kire `TRUE` és `FALSE`.
+- A `sum` függvény pedig egy ilyen tömbre `TRUE = 1` és `FALSE = 0` kódolásokkal végzi el az összegzést: azaz megadja a *kedvező esetek*, a 100-nál kisebb értékek *darabszámát*.
 
-```{python}
-NormalisMintaStat = [
-  np.mean(AdatokEgyben['Normal']), # Átlag
-  np.std(AdatokEgyben['Normal']), # Szórás
-  np.median(AdatokEgyben['Normal']), # Medián
-  np.sum(AdatokEgyben['Normal'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
+```{r}
+NormalSampleStat = c(
+  mean(all_in_one$normies), # Átlag
+  sd(all_in_one$normies), # Szórás
+  median(all_in_one$normies), # Medián
+  sum(all_in_one$normies < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
 
-ExponMintaStat = [
-  np.mean(AdatokEgyben['Expon']), # Átlag
-  np.std(AdatokEgyben['Expon']), # Szórás
-  np.median(AdatokEgyben['Expon']), # Medián
-  np.sum(AdatokEgyben['Expon'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
+ExponSampleStat = c(
+  mean(all_in_one$expies), # Átlag
+  sd(all_in_one$expies), # Szórás
+  median(all_in_one$expies), # Medián
+  sum(all_in_one$expies < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
 
-EgyenletesMintaStat = [
-  np.mean(AdatokEgyben['Egyenletes']), # Átlag
-  np.std(AdatokEgyben['Egyenletes']), # Szórás
-  np.median(AdatokEgyben['Egyenletes']), # Medián
-  np.sum(AdatokEgyben['Egyenletes'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
+UnifSampleStat = c(
+  mean(all_in_one$unis), # Átlag
+  sd(all_in_one$unis), # Szórás
+  median(all_in_one$unis), # Medián
+  sum(all_in_one$unis < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
 
-MintaStatMutatok = pd.DataFrame(
-  list(zip(EgyenletesMintaStat, NormalisMintaStat, ExponMintaStat)),
-  columns=['Egyenletes','Normal', 'Expon'],
-  index = ['Atlag', 'Szoras', 'Median', 'P(Y_i<100)']
-)
+SampleStatAll <- data.frame(Normal=NormalSampleStat,
+                            Exponential=ExponSampleStat,
+                            Uniform=UnifSampleStat)
+rownames(SampleStatAll) <- c("Mean", "St Dev", "Median", "P(Y_i<100)") # name of the measures as row indices
 
-MintaStatMutatok
+SampleStatAll
 ```
 
 Meg is vagyunk!
@@ -379,9 +380,9 @@ Meg is vagyunk!
 
 Nézzük össze akkor kétféle stat. mutatókat tartalmazó data frame-et egymással!
 
-```{python}
-ElviStatMutatok
-MintaStatMutatok
+```{r}
+TheoreticalMeasures
+SampleStatAll
 ```
 
 Láthatjuk, hogy a **statisztikai mutatók terén is azt tapasztaljuk, amit a hisztogramok és a sűrűségfüggvény esetén**. Az **elvi értékekhez az $50$ elemű mintából számolt mutatók közel vannak, de nem egyeznek velük**.
@@ -390,7 +391,7 @@ A **kétféle értékek (elvi és mintából számolt) közti eltérést hívjuk
 
 Az MVH kiszámolásához hosszú az út, de az **MVH viselekdését megérthetjük, ha generálunk még pár extra mintát az eddig vizsgált eloszlásokból, különböző elemszámokkal**.
 
-Ehhez írjunk egy Python függvényt, ami az eddig elvégzett műveleteinket egy függvényben valószítja meg tetszőleges mintaelemszám és véletlenmag mellett:
+Ehhez írjunk egy R függvényt, ami az eddig elvégzett műveleteinket egy függvényben valószítja meg tetszőleges mintaelemszám és véletlenmag mellett:
 
 - $N(80,20)$, $Exp(0.0125)$ és $U(40,160)$ eloszlású minták generálása
 - A mintákból a vizsgált 4 statisztikai mutató számítása és azok összefüzése data frame-be
@@ -398,85 +399,73 @@ Ehhez írjunk egy Python függvényt, ami az eddig elvégzett műveleteinket egy
 Ez a függvény némi copy-paste után az alábbi formát ölti.
 
 ```{r}
-MintaGeneralas <- function(sample_size, random_seed){
+GenerateSample <- function(sample_size, random_seed){
+  # N(80,20) minta generálása
+  mu <- 80
+  sigma <- 20
+
+  set.seed(random_seed)
+  normies <- rnorm(n = sample_size, mean = mu, sd = sigma)
   
+  # Exp(0.0125) minta generálása
+  lam <- 0.0125
+
+  set.seed(random_seed)
+  expies <- rexp(n = sample_size, rate = lam)
+
+  # U(40, 160) minta generálása
+  low_bound <- 40
+  upp_bound <- 160
+
+  set.seed(random_seed)
+  unis <- runif(n = sample_size, min = low_bound, max = upp_bound)
+
+  # Eredmények összefűzése data frame-be
+  all_in_one <- data.frame(normies=normies,
+                          expies=expies,
+                          unis=unis)
+  
+  NormalSampleStat = c(
+    mean(all_in_one$normies), # Átlag
+    sd(all_in_one$normies), # Szórás
+    median(all_in_one$normies), # Medián
+    sum(all_in_one$normies < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
+
+  ExponSampleStat = c(
+    mean(all_in_one$expies), # Átlag
+    sd(all_in_one$expies), # Szórás
+    median(all_in_one$expies), # Medián
+    sum(all_in_one$expies < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
+
+  UnifSampleStat = c(
+    mean(all_in_one$unis), # Átlag
+    sd(all_in_one$unis), # Szórás
+    median(all_in_one$unis), # Medián
+    sum(all_in_one$unis < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
+
+  SampleStatAll <- data.frame(Normal=NormalSampleStat,
+                              Exponential=ExponSampleStat,
+                              Uniform=UnifSampleStat)
+  rownames(SampleStatAll) <- c("Mean", "St Dev", "Median", "P(Y_i<100)") # name of the measures as row indices
+  
+  return(SampleStatAll)
 }
-    # U(40, 160) minta generálása
-    eloszlás_alsó_határ = 40
-    eloszlás_terjedelem = 160-40
-  
-    SzerencsésebbVéletlenek = stats.uniform.rvs(
-      loc = eloszlás_alsó_határ,
-      scale = eloszlás_terjedelem,
-      size = Elemszam,
-      random_state = VeletlenMag)
-  
-    # N(80,20) minta generálása
-    átlag = 80
-    szórás = 20
-
-    NormalisAdatok = stats.norm.rvs(
-      loc = átlag,
-      scale = szórás,
-      size = Elemszam,
-      random_state = VeletlenMag)
-  
-    # Exp(0.0125) minta generálása
-    lam = 0.0125
-
-    ExpiAdatok = stats.expon.rvs(
-      scale = (1/lam),
-      size = Elemszam,
-      random_state = VeletlenMag)
-
-    # Eredmények összefüzése data frame-be
-    AdatokEgyben = pd.DataFrame(
-      list(zip(SzerencsésebbVéletlenek, NormalisAdatok, ExpiAdatok)),
-      columns=['Egyenletes','Normal', 'Expon'])
-
-    NormalisMintaStat = [
-      np.mean(AdatokEgyben['Normal']), # Átlag
-      np.std(AdatokEgyben['Normal']), # Szórás
-      np.median(AdatokEgyben['Normal']), # Medián
-      np.sum(AdatokEgyben['Normal'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
-
-    ExponMintaStat = [
-      np.mean(AdatokEgyben['Expon']), # Átlag
-      np.std(AdatokEgyben['Expon']), # Szórás
-      np.median(AdatokEgyben['Expon']), # Medián
-      np.sum(AdatokEgyben['Expon'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
-
-    EgyenletesMintaStat = [
-      np.mean(AdatokEgyben['Egyenletes']), # Átlag
-      np.std(AdatokEgyben['Egyenletes']), # Szórás
-      np.median(AdatokEgyben['Egyenletes']), # Medián
-      np.sum(AdatokEgyben['Egyenletes'] < 100)/len(AdatokEgyben)] # P(Y_i<100), most relatív gyak.
-
-    MintaStatMutatok = pd.DataFrame(
-      list(zip(EgyenletesMintaStat, NormalisMintaStat, ExponMintaStat)),
-      columns=['Egyenletes','Normal', 'Expon'],
-      index = ['Atlag', 'Szoras', 'Median', 'P(Y_i<100)']
-    )
-    
-    return MintaStatMutatok
-
-
 ```
 
-Ha a `MintaGeneralas` függvény definícióját megadó fenti kód szépen lefutott, akkor a következőképpen tudjuk használni a függvényt egy $50$ elemű minta generálására $1994$-es véletlenmag mellett.
+Ha a `GenerateSample` függvény definícióját megadó fenti kód szépen lefutott, akkor a következőképpen tudjuk használni a függvényt egy $50$ elemű minta generálására $1994$-es véletlenmag mellett.
 
-```{python}
-MintaGeneralas(50, 1994)
+```{r}
+GenerateSample(50, 1994)
 ```
 
 Na, úgy néz ki működik! :)
 
 Akkor most lessük meg **mi történik a mintából számolt és az elvi statisztikai mutatók közti különbségekkel** (alias az MVH-val), ha **nem $50$, hanem mondjuk $1000$ elemű mintákat generálok az eloszlásokból**.
 
-```{python}
-ElviStatMutatok
-MintaGeneralas(50, 1992)
-MintaGeneralas(1000, 1992)
+```{r}
+TheoreticalMeasures
+GenerateSample(50, 1992)
+GenerateSample(1000, 1992)
 ```
 
 Na, hát ha $1000$ elemet tudtam megfigyelni az $50$ helyett, akkor minden statisztikai mutatóm mintából számolt értéke lényegesen közelebb van a valós, elvi értékhez! Tehát, olybá tűnik, hogy **mintaelemszám növelésével az MVH lecsökken!** Ez egy nagyon fontos tulajdonság, ami **minden statisztikai mutató esetén általánosságban igaz marad!**<br>
@@ -496,8 +485,52 @@ A felületet nyomogatva érdemes megfigyelni pár dolgot.
 - Az **átlag és a 100-nál kisebb értékek aránya** általában **mindhárom eloszlásnál elég közel van a valós, elméleti értékéhez**.
 - Ellenben a **medián és szórás** értékek az **exponenciális eloszlás esetében aránylag többször is durván eltérnek a valós értéktől még nagyobb** (pl. 500 körüli) **elemszám esetén is**.
 
+## 3. Simulating the Central Limit Theorem
 
-## 3. Statisztikai sokaságok FAE mintavételezése
+With the help of these `r`-prefixed functions of probability distributions, I can simulate the behaviour some famous theorems in R. Like the *Central Limit Theorem* (CLT).
+
+The CLT states that if I have a number of $n$ random variables denoted as $X_1,X_2,...,X_n$ that are independent from each other ($cov(X_i,X_j)=0,\forall i\neq j$) and have the same identical distribution ($X_1 \sim X_2 \sim ... \sim X_n$) with $E(X_i)=\mu, \forall i$ and $Var(X_i)= \sigma^2, \forall i$, then $\sum_{i=1}^n{X_i} \sim N(n \mu, \sqrt{n}\sigma)$ if $n$ is "large enough", meaning as $n \rightarrow \infty$.
+
+Ok, so let's see a specific version of this with $X_i \sim Exp(0.01), \forall i$ (we could use eny other distribution as well) and $n=10, n=100, n=500$. We'll calculate these $\sum_{i=1}^n{X_i}$ sums with the different $n$s $1000$ times with the help of the `sapply` function.
+
+The `sapply` function has two parameters: a `vector` and a `function` with an input parameter (`x` for example, but it can be called as anything else). And it applies the function on all elements of the vector and it returns the results in a `vector` as well. So, it can be used to calculate the sum of all integers between $1$ and $100$ and to this $10$ times. Note in the code, that we do not necessarily need to use the input parameter `x` in the `function`.
+
+```{r}
+sapply(1:10, function(x) sum(1:100))
+```
+
+Ok, now we use this `sapply` function to simulate the CLT $1000$ for $n=10, n=100, n=500$ with $X_i \sim Exp(0.01), \forall i$. In the end we store the sums with each $n$ in different columns of a data frame. Note that this data frame has $1000$ rows as we run the simulations $1000$ times. Don't forget to use the `set.seed` function before the random number generators to obtain the same results that I do. :)
+
+```{r}
+lam <- 0.01
+set.seed(1992)
+n_10 <- sapply(1:1000, function(x) sum(rexp(n=10, rate = lam)))
+n_100 <- sapply(1:1000, function(x) sum(rexp(n=100, rate = lam)))
+n_500 <- sapply(1:1000, function(x) sum(rexp(n=500, rate = lam)))
+
+clt_df <- data.frame(n_10=n_10,
+                     n_100=n_100,
+                     n_500=n_500)
+str(clt_df)
+```
+
+Ok, see the mean and standard deviation for the $n=10$ case. As for the $X_i$ exponential distributions $E(X_i)=\mu=1/\lambda=1/0.01=100$ and $\sqrt{Var(X_i)}=\sigma=1/\lambda=1/0.01=100$, we expect the sums to have a mean of $E(\sum_{i=1}^n{X_i})=n \mu=10 \times100=1000$ and to have a standard deviation of $\sqrt{Var(\sum_{i=1}^n{X_i})}=\sqrt{n}\sigma=\sqrt{10} \times 100=316.23$.
+
+```{r}
+c(mean(clt_df$n_10),sd(clt_df$n_10))
+```
+
+We can see that the results more-or-less match with what we expect for the mean and standard deviation. If we would check the results for the higher $n$s, we would find that the the mean and standard deviation matches more exactly to what we would expect from the CLT, as the theorem states that it works for large enough $n$s ($n \rightarrow \infty$).
+
+Ad we can see from the histograms that the simulated distributions for the $\sum_{i=1}^n{X_i}$ sums approximate the normal density function (bell curve) more accurately if the $n$ is larger.
+
+```{r}
+hist(clt_df$n_10)
+hist(clt_df$n_100)
+hist(clt_df$n_500)
+```
+
+## 4. Statisztikai sokaságok FAE mintavételezése
 
 Amit az első két fejezetben műveltünk az az **elméleti eloszlások Független Azonos Eloszlású, leánykori nevén FAE mintavételezése**.
 
@@ -518,13 +551,12 @@ Persze a gyakorlatban **nem mindig tudunk ilyen szép FAE mintavételt végezni*
 1. **Nem tudunk visszatenni** elemeket. Ez a **kisebbik gond**. Hiszen, ha a **minta mérete a sokaság méretéhez képest nagyon kicsi** (pl. 100 főt választunk kis a 4,5 millióból és nem 2 milliót :)), akkor a **visszatevéses és visszatevés nélküli mintavétel nagyjából ugyan az**, mert nagyon kicsi lesz az esélye annak, hogy a visszatevéses esetben valakit tényleg kétszer beválasztunk a mintába.
 2. **Nem tudunk ténylegesen véletlenszerűen kiválasztani elemeket**. Ez a **nagyobb baj**. És sajnos gyakori is. Pl. *nem kapunk címjegyzéket, amiből sorsolni lehet a mintánkba emberkéket*. Mert ekkor a mintavételi hiba mellé bejön az úgynevezett **nem mintavételi hiba**. Ezek olyan tényezők, amik "*emberi gyarlóság*" miatt kerülnek a rendszerbe. Pl. nagyon tetszenek a vörös hajú lányok, így aránytalanul sokat kérdezek meg belőlük ahhoz képest ahányan a sokaságban vannak. Vagy, lusta vagyok lemenni 500 fő alatti településre, így az alacsonyabb keresetű társadalmi rétegből is kevesebb embert kérdezek meg, mint ahányat kéne a sokasági elemszámuk alapján. Tehát, szakszóval azt mondom, hogy a **minta nem lesz reprezentatív hajszínre és település méretre**. Ezekkel a **nem mintavételi hibákkal most nem foglalkozunk, feltesszük, hogy nincsenek**. Mert **kiszámolásuk és korrigálásuk elég bonyolult**, <a href="https://tatk.elte.hu/mesterszakok/survey" target="_blank">komplett mesterszakok</a> foglalkoznak a kérdéssel.
 
-Szóval, első körben nézzük meg **hogyan tudunk Pythonban egy ismert sokaságból FAE mintát venni**. A <a href="https://github.com/KoLa992/Statisztika-II-Python-Jegyzet/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a> fájlban a 2022-es LIDL Balaton átúszás résztvevőinek *neve, neme és percben mért időeredménye* található. Olvassuk be a táblát `pandas` data frame-be!
+Szóval, első körben nézzük meg **hogyan tudunk Pythonban egy ismert sokaságból FAE mintát venni**. A <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a> fájlban a 2022-es LIDL Balaton átúszás résztvevőinek *neve, neme és percben mért időeredménye* található. Olvassuk be a táblát R data frame-be!
 
-```{python}
-Balcsi = pd.read_excel("LIDLBalaton2022.xlsx")
-
-Balcsi.info()
-Balcsi.head()
+```{r}
+library(readxl)
+swimming = read_excel("LIDLBalaton2022.xlsx")
+str(swimming)
 ```
 
 Szuper, úgy látszik megvan mind az $N=9751$ versenyző időeredménye hiánytalanul. **Ez lesz most akkor a sokaságunk.**
@@ -534,17 +566,17 @@ Számoljunk ki az időeredményekre három statisztikai mutatót:
 - Az **átlag**os időt Jele: $\bar{Y}$ vagy $\mu$
 - Az egyéni idők **szórás**át Jele: $\sigma$
 - A 3 óra (180 perc) felett teljesítők **arányát** Jele: $P$
-  * Itt a számolásnál azt a trükköt sütjük el, hogy a `Balcsi.PERC > 180` parancs egy `bool` tömböt ad vissza aszerint, hogy a `Balcsi.PERC > 180` logikai állítás kire `True` és `False`.
+  * Itt a számolásnál azt a trükköt sütjük el, hogy a `swimming.PERC > 180` parancs egy `bool` tömböt ad vissza aszerint, hogy a `swimming.PERC > 180` logikai állítás kire `True` és `False`.
   * A `numpy` csomag `sum` függvénye pedig egy ilyen tömbre `True = 1` és `False = 0` kódolásokkal végzi el az összegzést: azaz megadja a *kedvező esetek*, a Balatont 180-an percnél hosszabb idő alatt átúszók *darabszámát*.
 
-```{python}
-SokasagiAtlag = np.mean(Balcsi.PERC)
-SokasagiSzoras = np.std(Balcsi.PERC)
-SokasagiArany = np.sum(Balcsi.PERC > 180)/len(Balcsi)
+```{r}
+PopMean = mean(swimming$TIME)
+PopStd = sd(swimming$TIME)
+PopProp = sum(swimming$TIME > 180)/nrow(swimming)
 
-SokasagiAtlag
-SokasagiSzoras
-SokasagiArany
+PopMean
+PopStd
+PopProp
 ```
 
 Meg is vagyunk, **ezek akkor a statisztikai mutatóink valós, sokasági értékei**:
@@ -562,13 +594,14 @@ Ezek alapján a **sokaság, azaz a teljes adatsor esetén a következő jelölé
   
 Általános szabály, hogy a "*sokasági dolgokat*" vagy **nagy** vagy **görög betűvel jelöljük**.
 
-Akkor most **vegyünk a Balaton 2022-es átúszóinak a sokaságából** egy $n=100$ elemű **mintát!** Szerencsére Pythonban ezt könnyű végrehajtani, mivel a `pandas` data frame-nek létezik `sample` metódusa, aminek az `n` paraméterében meg lehet mondani, hogy **hány elemű mintánk** legyen. A `replace = True` paraméter beállítással pedig azt mondjuk meg gépállatnak, hogy **visszatevéses véletlen, azaz FAE mintát** szeretnénk.<br>
-Itt is van `random_state` paraméter, amit azonos számla (pl. továbbra is 1992-re) beállítva *ugyan azt a véletlen mintát fogjuk kapni*.
+Akkor most **vegyünk a Balaton 2022-es átúszóinak a sokaságából** egy $n=100$ elemű **mintát!** R-ben létezik egy `sample` c. függvény, amivel egy **vektor típusú objektumból tudunk mintát venni**. Ezért azt fogjuk csinálni, hogy a data frame sorindexeiből (`rownames`) veszünk egy véletlen mintát, utána szögletes zárójeles szűrés segítségével választjuk ki az eredeti data frame-ből az így kisorsolt mintaelemeket, és mentjük el őket egy külön data frame-be. A `sample` függvénynek a `size` paraméterében meg lehet mondani, hogy **hány elemű mintánk** legyen. A `replace = TRUE` paraméter beállítással pedig azt mondjuk meg gépállatnak, hogy **visszatevéses véletlen, azaz FAE mintát** szeretnénk.<br>
+Itt is érdemes a mintavétel előtt elsütni a `set.seed` függvényt, amit azonos számra (pl. továbbra is 1992-re) beállítva *ugyan azt a véletlen mintát fogjuk kapni*.
 
-```{python}
-BalcsiMinta = Balcsi.sample(n = 100, replace = True, random_state = 1992)
-
-BalcsiMinta.info()
+```{r}
+set.seed(1992)
+selected_into_sample <- sample(rownames(swimming), size = 100, replace = TRUE)
+swimming_sample <- swimming[selected_into_sample,]
+str(swimming_sample)
 ```
 
 Olybá néz ki megvan az $n=100$ elemű FAE mintánk! :)
@@ -585,70 +618,68 @@ Mielőtt nekiugrunk, és kiszámoljuk a minta alapján az időeredmények átlag
 
 Na, akkor nézzük meg **a statisztikai mutatóink** $n = 100$ elemű **mintából számítva/becsülve**!
 
-```{python}
-MintaAtlag = np.mean(BalcsiMinta.PERC)
-MintaSzoras = np.std(BalcsiMinta.PERC)
-MintaArany = np.sum(BalcsiMinta.PERC > 180)/len(BalcsiMinta)
+```{r}
+SampleMean = mean(swimming_sample$TIME)
+SampleStd = sd(swimming_sample$TIME)
+SampleProp = sum(swimming_sample$TIME > 180)/nrow(swimming_sample)
 
-MintaAtlag
-MintaSzoras
-MintaArany
+SampleMean
+SampleStd
+SampleProp
 ```
 
 Meg is vagyunk, **ezek akkor a statisztikai mutatóink mintából becsült értékei**:
 
-- $\bar{y}=164.4$ perc
-- $s^* = 38.6$ perc
-- $p = 0.3=30\%$
+- $\bar{y}=160.81$ perc
+- $s^* = 36.74$ perc
+- $p = 0.27=27\%$
 
 Ezek sem egyeznek pontosan a mutatók valós, sokasági értékével, de *nem térnek el nagyon durván* a valóságtól. Most is abban bízunk, hogy a **becsült és valós értékek közti eltérés a MVH miatt van, és akkor most ráfordulunk ennek az MVH-nak a  meghatározására!**
 
 Ehhez a **0. lépés, hogy nagyon-nagyon sok, pl. $10000$ db 100 elemű FAE mintát veszünk** a sokaságunkból, és mindegyik mintában kiszámoljuk az *átlagot, szórást és arányt*.
 
-### 3.1. Ismételt Mintavételezés (*Resampling*)
+### 4.1. Ismételt Mintavételezés (*Resampling*)
 
 Amit még ebben az anyagban megnézünk az az volna, **hogyan generálunk le $10000$ db 100 elemű FAE mintát** a 2022-es Balaton átúszók sokaságából.
 
-Természetesen a kódunk alapja egy $10000$ iteráción végiszaladó `for` ciklus lesz. Ami némileg érdekes, hogy miképpen tároljuk el a mintavételezett adatokat. A számításokhoz igazából csak a `PERC` oszlopra van szükség, így egy olyan data frame-t generálunk, aminek $10000$ sorában lesznek a különböző mintavételek, míg $100$ oszlopában a 100 db mintaelem minden egyes mintavételezési körben.
+Természetesen a kódunk alapja egy $10000$ iteráción végiszaladó `for` ciklus lesz. Ami némileg érdekes, hogy miképpen tároljuk el a mintavételezett adatokat. A számításokhoz igazából csak a `TIME` oszlopra van szükség, így egy olyan data frame-t generálunk, aminek $10000$ sorában lesznek a különböző mintavételek, míg $100$ oszlopában a $100$ db mintaelem minden egyes mintavételezési körben.
 
-Ehhez először létrehozunk egy üres $100$ oszlopos data frame-t. Ennek a lépései:
+Ehhez először létrehozunk egy kiinduló $100$ elemű mintát csak a `TIME` oszlop értékeiből. Ne feledjük a `set.seed` függvényt most sem.
 
-- Létrehozzuk az oszlopneveket
-  * Létrehozunk egy `numpy` tömböt, amiben $1-100$-ig vannak az egész számok
-  * Ezt az `int` tömböt `string`gé konvertáljuk
-  * Minden számhoz hozzáfűzzük az "*Elem*" előtagot a `numpy` csomag `core.defchararray` névterében lakó `add` függvénnyel
-- A `pandas` csomag `DataFrame` függvényével létrehozzuk az *üres* 100 oszlopos data frame-t, az előző pontban megadott oszlopnevekkel.
-
-```{python warning = FALSE, message = FALSE}
-oszlopnevek = (np.array(range(100))+1)
-oszlopnevek = oszlopnevek.astype(str)
-oszlopnevek = np.core.defchararray.add("Elem", oszlopnevek)
-oszlopnevek
-MintaDF = pd.DataFrame(columns = oszlopnevek)
-MintaDF
+```{r}
+set.seed(1992)
+samples <- sample(swimming$TIME, size=100, replace = TRUE)
 ```
 
-Ha ezzel megvagyunk, akkor egyszerűen egy `for` ciklusban feltöltjük a data frame-t sorokkal. Ugye *1 sor = 1 db 100 elemű minta*. Ehhez pedig az 1. fejezet elején már használt `append` (egy új sor hozzáadása) metódusát vetjük be az alábbi kódban látható módon. Arra **kell figyelni**, hogy az `append` előtt a kiválasztott minta időadatait tartalmazó tömb `index`-eit a data frame-ünk *oszlopneveire* kell átrakni, különben az `append` nem tudja összekötni a mintaelemeket a cél data frame oszlopaival!<br>
-Természetesen most véletlenmagot nem rögzítünk a `sample` metódusban, különben a műveletnek nem lenne értelme (10000-szer vennénk ki ugyan azt a mintát ugyebár). 
+És ezek után egy `for` ciklust indítunk, ami $10000-1$ lépést megy (mert az első minta meglett az előbb), és minden lépésben generálunk egy új $100$ elemű mintát, és ezt egy új sorban hozzáfűzzük az előző mintákhoz a `rbind` függvénnyel. Arra kell figyelni, hogy a `set.seed`-ben a véletlen magot mindig valami más számra kell állítani, hogy ne ugyan azt a mintát vegyük ki $10000$-szer. Legegyszerűbb mindig a ciklusváltozót (iteráció sorszáma) hozzáadni a kezdeti $1992$-es maghoz: mindig más, de könnyen reprodukálható így a szimuláció eredménye.<br>
+Végül, az eredményeket egy data frame-be konvertáljuk, és annak sor- és oszlopneveit átnevezzük valami beszédesre. A paste0 függvény sima szövegösszefűzést csinál csak itt az R-ben. :)
 
-Futtatás előtt **arra készüljünk lélekben, hogy az alábbi kódrészlet futásideje elég hosszadalmas** (több perc) is lehet, mivel marhára nem optimalizáltuk a $10000$ iterációjú `for` ciklusunkat... Ejjnye! :)
+```{r eval=FALSE}
+for (index in 1:(10000-1)) {
+  set.seed(1992+index)
+  samples <- rbind(samples, sample(swimming$TIME, size=100, replace = TRUE))
+}
 
-```{python warning = FALSE, message = FALSE, eval = FALSE}
-for index in range(10000):
-  AktualisMinta = Balcsi['PERC'].sample(n = 100, replace = True)
-  AktualisMinta.index = oszlopnevek
-  MintaDF = MintaDF.append(AktualisMinta, ignore_index = True)
+samples <- as.data.frame(samples)
 
-MintaDF
+rownames(samples) <- paste0("Sample",1:10000)
+colnames(samples) <- paste0("Element",1:100)
+
+head(samples)
 ```
 
-```{python warning = FALSE, message = FALSE, echo = FALSE}
-MintaDF = pd.read_excel("MintaDataFrame.xlsx")
-MintaDF
+```{r echo=FALSE}
+samples <- as.data.frame(read_excel("SwimmingSamples.xlsx"))
+rownames(samples) <- paste0("Sample",1:10000)
+head(samples)
 ```
 
-Ezzel meg is vagyunk, van az időeredményekből $10000$ db $n=100$ elemű mintánk! :) Csak, hogy ne kelljen ezt a hosszú mintagenerálási időt végigvárni, utolsó lélegzetünkkel **mentsük el az eredményünket tartalmazó data frame-t egy Excel fájlba**. A data frame `to_excel` metódusának `index = False` beállításával azt érjük el, hogy a sorindexeket ne írja ki egy külön oszlopba az Excelbe. Ezek most egyszerű sorszámok csak, semmi jelentőségük, felesleges az Excelben erre elpazarolni egy oszlopot. :)
 
-```{python warning = FALSE, message = FALSE, eval = FALSE}
-MintaDF.to_excel('MintaDataFrame.xlsx', index = False)
+Kicsit hosszabb volt a futásidő, de akkor ezzel meg is vagyunk, van az időeredményekből $10000$ db $n=100$ elemű mintánk! :) Csak, hogy ne kelljen ezt a hosszú mintagenerálási időt végigvárni, utolsó lélegzetünkkel **mentsük el az eredményünket tartalmazó data frame-t egy Excel fájlba**. Ezt a `writexl` csomag (`writexl` tesója) `writexl` függvényével tudjuk elérni. Első paramétere a data frame, amit ki akarunk iratni az Excel fájla, a második paraméter a fájlneve (idézőjelek között `charater` adattípusban) annak az Excel fájlnak, amit létre akarunk hozni (*xlsx* kiterjesztést ne felejtsük le).
+
+```{r eval=FALSE}
+library(writexl)
+write_xlsx(samples, "SwimmingSamples.xlsx")
 ```
+
+Ha minden igaz, akkor a bállított *working directory*-ban létre is jött az Excel fájlunk! :)

@@ -1,7 +1,7 @@
 ---
 title: "Introduction to R"
 author: "László Kovács"
-date: "2025.02.05."
+date: "06/02/2025"
 output:
   html_document:
     toc: true
@@ -100,7 +100,7 @@ Once this folder is set, all of our files will be saved here and we should copy 
 To set the *Working Directory*, we should click on the tiny **...** button located in the right bottom corner of R Studio. By clicking on this button, we can select a folder. Once the folder is selected, we should find the **More** button (also in the right bottom corner of R Studio) left click on it, and then select the **Set As Working Directory** option.<br>
 This chain of events generates the following R code (naturally, everyone will have a different folder paths between the quotations):
 
-```{r}
+```{r eval=FALSE}
 setwd("~/Github Repok/Statistical-Modelling-Lecture-Notes")
 ```
 

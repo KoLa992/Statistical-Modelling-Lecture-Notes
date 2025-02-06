@@ -1,7 +1,7 @@
 ---
 title: "Probability Distributions"
 author: "László Kovács"
-date: "2025.02.05."
+date: "06/02/2025"
 output:
   html_document:
     toc: true

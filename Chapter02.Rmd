@@ -1,7 +1,7 @@
 ---
 title: "Descriptve Statistics and Data Visualization in R"
 author: "László Kovács"
-date: "2025.02.05."
+date: "06/02/2025"
 output:
   html_document:
     toc: true
@@ -47,11 +47,15 @@ library(readxl)
 Majd használjuk a csomag `read_excel` függvényét. Amennyiben 1 db munkalap van és a beolasandó adattáblánk az *A1* cellában van, mindenféle extra paraméter nélkül, problémamentesen beolvassa gépállat az adatokat R `data frame`-be.<br>
 Ne feledjük el a megfelelő helyre beállítani a *Working Directory*-t is!
 
-```{r}
+```{r eval=FALSE}
 setwd("~/Github Repok/Statistical-Modelling-Lecture-Notes")
 
 BP_Flats <- read_excel("BP_Flats.xlsx")
 ```
+```{r echo=FALSE}
+BP_Flats <- read_excel("BP_Flats.xlsx")
+```
+
 
 Ezek után nézzük meg, hogy rendben vagyunk-e az `str` függvénnyel:
 
