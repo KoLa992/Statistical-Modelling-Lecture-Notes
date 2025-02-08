@@ -1,7 +1,7 @@
 ---
 title: "Probability Distributions"
 author: "László Kovács"
-date: "06/02/2025"
+date: "08/02/2025"
 output:
   html_document:
     toc: true
@@ -23,9 +23,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1. Normal Distribution and its Density Function
  
-Vizsgáljuk meg a <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/TSLA.xlsx" target="_blank">TSLA.xlsx</a> című táblában található adatokat, amik a **TESLA részvények napi záróárfolyam-változásai**t mutatják ki **dollárban** ($) 2019 májusától 2020 májusáig.
+Let’s examine the data in the table titled <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/TSLA.xlsx\" target="_blank">TSLA.xlsx</a>, which shows the **daily closing price changes of TESLA stocks in dollars** ($) from May 2019 to May 2020.
 
-Az Excel táblákat, amennyiben az adattáblánk első értéke az *A1* cellában kezdődik és csak egy darab munkalapunk van, gond nélkül be lehet olvasni a `readxl` csomag `read_excel` függvényével egy data frame-be. Ezt csináltuk már az előző fejezetben is a *BP_Flats.xlsx* táblával.
+Excel tables, if the first value of our data table starts in the *A1* cell and we have only one worksheet, can easily be read into a data frame using the `readxl` package’s `read_excel` function. We did this with the *BP_Flats.xlsx* table in the previous chapter as well.
 
 ```{r}
 library(readxl)
@@ -35,9 +35,9 @@ Tesla <- read_excel("TSLA.xlsx")
 str(Tesla)
 ```
 
-Láthatjuk, hogy két oszlopunk van: a dátum és a részvény árváltozása az adott napon az előző napi záróárfolyamhoz képest a **TESLA** oszlopban. Tehát 2019.05.07-én egy Tesla részvény kb. $8.3$ dollárral ért kevesebbet a nap végére, mint amennyit 2019.05.06-án ért nap végén. Ellenben 05.13-án már $12.5$ dollárral ér kevesebbet, mint előző nap, 05.12-én. Az  `info` metódus alapján $N=250$ napnyi ilyen adatunk van, ami nagyjából meg is egyezik egy évben a tőzsdei kereskedési napok számával.
+We can see that we have two columns: the date and the price change of the stock on the given day compared to the previous day’s closing price. So, on 07/05/2019, a Tesla stock was worth $8.3\$$ less by the end of the day than it was worth on 06/05/2019. However, on 13th May, it was worth $12.5\$$ less than the previous day of 12th May. Based on the results of the `str` function, we have $N=250$ days of such data, which roughly matches the number of trading days in a year.
 
-Nos, az első öt vizsgált nap alapján nem lennék Elon Musk helyében, elég szép mínuszokat produkál a részvénye. De lássuk, hogy a hisztogram alapján megmutatkozó eloszlás mit is árul el arról hogyan is teljesített ez a csodacég a teljes vizsgált 1 éves időtartamban!<br>
+Now, based on the first five observed days, I wouldn’t want to be in Elon Musk’s place, as the stock is showing some pretty big losses. But let’s see what the distribution shown in the histogram tells us on how this miracle company performed over the full 1-year period under our review!<br>
 Let's **draw the histogram** of the Tesla price changes **such that relative frequencies are on the $y$ axis**! This is done by setting the `freq=FALSE` parameter in the `hist` function.
 
 ```{r}
@@ -328,9 +328,9 @@ Like the first element of the filter above, the $59.82\$$ gain on 30th Jan 2020 
 
 ## 2. The Exponential Distribution
 
-Na, hát akkor most engedjük el egy kicsit a Tesla részvények árváltozásait, és vizsgáljunk meg egy másik adatsort, ami a <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/CancerSurvival.xlsx" target="_blank">CancerSurvival.xlsx</a> fájlban lakik. Ebben az adattáblában 58 súlyos fej- és nyakrák páciensről rögzítették, hogy *hány hónapig* maradtak életben kemoterápia után. Az adatok valósak, 1988-ból a forrás <a href="https://www.jstor.org/stable/2288857#metadata_info_tab_contents" target="_blank">ez a tanulmány</a>.
+Now, let’s leave the Tesla stock price changes for a moment and examine another dataset that resides in the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/CancerSurvival.xlsx\" target="_blank">CancerSurvival.xlsx</a> file. This dataset contains data for 58 severe head and neck cancer patients, recording *how many months* they survived after chemotherapy. The data is real, from 1988, and the source is <a href="https://www.jstor.org/stable/2288857#metadata_info_tab_contents\" target="_blank">this study</a>.
 
-Töltsük is be az adatokat egy data frame-be!
+Let’s load the data into a data frame!
 
 ```{r}
 Surv <- read_excel("CancerSurvival.xlsx")
@@ -338,17 +338,17 @@ Surv <- read_excel("CancerSurvival.xlsx")
 str(Surv)
 ```
 
-Mint láthatjuk, ebben a data frame-ben is csak két oszlopunk van. Az első a páciens sorszáma, a második pedig a kemoterápiától számítot túlélési idő hónapokban megadva (*SurvMonth*).
+As we can see, this data frame also only contains two columns. The first column is the patient’s number, and the second column is the survival time in months after chemotherapy (**SurvMonth**).
 
-Nézzünk rá egy hisztogrammal a túlélési idők eloszlására.
+Let’s take a look at the distribution of survival times with a histogram.
 
 ```{r}
 hist(Surv$SurvMonth)
 ```
 
-Nos, hát itt az látszódik, hogy az eloszlásunk jobbra elnyúló: a túlélési idők nagy többsége (45 az 58-ból konkrétan) $256$ hónapon belüli, de a maradék $13$ meghaladja ezt, sőt $3$ páciens $1000$ hónapnál is hosszabb ideig élt túl a kemoterápia után.
+Well, here we can see that the distribution has a long right tail: the majority of the survival times (45 out of 58 specifically) are within 256 months, but the remaining 13 exceed this, and 3 patients survived for more than 1000 months after chemotherapy.
 
-A jobbra elnyúlás miatt, ha folytonos vonallal összekötjük a hisztogram oszlopait, akkor valami ilyesmi függvényábrát kapunk, mint alább.
+Due to the long right tail, if we connect the bars of the histogram with a continuous line, we would get a graph similar to the one below.
 
 ```{r echo=FALSE}
 x <- seq(min(Surv$SurvMonth), max(Surv$SurvMonth))
@@ -359,8 +359,7 @@ DFRajz <- data.frame(x=x, y=y)
 ggplot(DFRajz, aes(x=x, y=y)) + geom_line(linewidth=1)
 ```
 
-Ez az alakzat pedig az **exponenciális eloszlás sűrűségfüggvénye**. Ennek a sűrűségfüggvénynek a konkrét alakját egy $\lambda$ paraméter határozza meg. Minél nagyobb $\lambda$, annál meredekebben jobbra elnyúló a sűrűségfüggvény. Ezt alább lehet kipróbálni.
-
+This shape is the **probability density function of the exponential distribution**. The exact form of this probability density function is determined by the parameter $\lambda$. The larger $\lambda$ is, the steeper the distribution becomes as it tails to the right. This can be tested below.
 
 <center>
 ```{r echo=FALSE}
@@ -369,59 +368,57 @@ knitr::include_app("https://kola992.shinyapps.io/normaldensityplot/?distr=Exp",
 ```
 </center>
 
-Természetesen a $\lambda$-nak van köze a valós adatok átlagához és szórásához, egész konkrétan mindkét érték $\mu=\sigma=\frac{1}{\lambda}$. Tehát, az exponenciális eloszlásban azonos átlagot és szórást tételezünk fel az adatokra, és ennek a közös értéknek a reciproka (a $\lambda$) határozza meg, hogy mennyire meredeken nyúlik jobbra az eloszlás sűrűségfüggvénye. Emiatt az exponenciális eloszlásokat $Exp(\lambda)$ módon szokták jelölni.
+Of course, $\lambda$ is related to the mean and standard deviation of the real data, specifically, both values are $\mu=\sigma=\frac{1}{\lambda}$. So, for the exponential distribution, we assume the same mean and standard deviation for the data, and the reciprocal of this common value (i.e., $\lambda$) determines how steeply the distribution’s probability density function skews to the right. Because of this, exponential distributions are often denoted as $Exp(\lambda)$.
 
-Persze valós adatokon gyakorlatilag sosem fog teljesülni, hogy $\mu=\sigma$, de láthatjuk egy `describe` függvényből, hogy a túlélési adatok esetén a két mutató értéke aránylag közel esik egymáshoz: $\mu=226.17 \approx \sigma=273.94$ 
+Of course, in real data, it is practically never true that $\mu=\sigma$, but we can see from the `describe` function that in the survival data, the values of these two parameters are relatively close: $\mu=226.17 \approx \sigma=273.94$. 
 
 ```{r}
 library(psych)
 describe(Surv$SurvMonth)
 ```
 
-R-ben a `dnorm`, `pnorm` és `qnorm` függvények mintájára léteznek `dexp`, `pexp` és `qexp` függvények is. Használatuk és jelentésük teljesen megegyezik a normális eloszlásnál látott függvényekkel. Egyetlen különbség ugyebár, hogy exponenciális eloszlásnál csak az egységes $\lambda$-t kell megadni a külön $\mu$ és $\sigma$ helyett, mint ahogy a normális eloszlásnál működött a dolog.<br>
-R-ben a $\lambda$-t a függvények `rate` paraméterében tudjuk megadni. Az előbb látott összefüggések alapján akár az átlag, akár a szórás reciprokaként is tudjuk számolni. Azt, hogy melyik logikát érdemes követni ebből a kettőből későbbi fejezetekben fogjuk megszakérteni. Most vegyük a $\lambda$-t a szórás reciprokaként<br>
-Ez alapján akkor most a túlélési idők esetében $\lambda=\frac{1}{\sigma}=\frac{1}{273.94}=0.00365$. Tehát az egyes $Y_i$ túlélési idők $Exp(0.00365)$ eloszlást követnek: $Y_i \sim Exp(0.00365)$
+n R, the functions `dnorm`, `pnorm`, and `qnorm` have analogous functions for the exponential distribution: `dexp`, `pexp`, and `qexp`. Their usage and meaning are exactly the same as the normal distribution functions. The only difference, of course, is that for the exponential distribution, only the uniform $\lambda$ needs to be provided, instead of separate $\mu$ and $\sigma$ values, as was the case with the normal distribution.<br>
+In R, $\lambda$ can be provided in the function’s `rate` parameter. Based on the previously seen relationships, we can calculate it using either the mean or the standard deviation as their reciprocals. Which of these two logics we should follow will be discussed in later chapters. For now, let’s take $\lambda$ as the reciprocal of the standard deviation.<br> Thus, for the survival times, $\lambda=\frac{1}{\sigma}=\frac{1}{273.94}=0.00365$. Therefore, the individual survival times $Y_i$ follow an $Exp(0.00365)$ distribution: $Y_i \sim Exp(0.00365)$.
 
-Ezek alapján számoljunk ki pár valószínűséget a túlélési időkre vonatkozóan:
+Let’s now calculate a few probabilities related to the survival times:
 
-1. Mi a valószínűsége, hogy kemoterápia után pont egy évet, azaz $12$ hónapot fogunk élni?
+1. What is the probability that after chemotherapy, a person will survive exactly one year, i.e., $12$ months?
 
 ```{r}
 dexp(12, rate = 1/sd(Surv$SurvMonth))
 ```
 
-Ez egy jó alacsony, kb. $0.3\%$-os valószínűség. Nem lepődünk meg, hiszen egy konkrét pont bekövetkezése a nagy túlélési idő-értékkészlet miatt itt is kicsi.
+This is a fairly low probability, about $0.3\%$. We’re not surprised, because the likelihood of exactly one point occurring is low, given the large survival time range.
 
-2. Mi a valószínűsége, hogy kemoterápia után több, mint öt évet, azaz $60$ hónapot fogunk élni?
+2. What is the probability that after chemotherapy, a person will survive more than five years, i.e., $60$ months?
 
 ```{r}
 1 - pexp(60, rate = 1/sd(Surv$SurvMonth))
 ```
 
-Az eredmény kb. $80\%$, egész jó kilátások!
+The result is about $80\%$, which is quite a good outlook!
 
-3. Mi a valószínűsége, hogy a kemoterápia utáni harmadik év során, azaz $24$ és $36$ hónapközött fogunk elpatkolni?
+What is the probability that, during the third year after chemotherapy, i.e., between $24$ and $36$ months, the person will pass away?
 
 ```{r}
 pexp(36, rate = 1/sd(Surv$SurvMonth)) - pexp(24, rate = 1/sd(Surv$SurvMonth))
 ```
 
-A számítások alapja itt is az, hogy $f(x)=P(Y_i=x)$, tehát **a sűrűségfüggvény helyettesítési értékre $x$ helyen megegyezik az $x$ érték bekövetkezési valószínűségével** egy véletlen húzás esetén az adatsorból. A $P(Y_i<x)$ valószínűség pedig exponenciális sűrűségfüggvény esetén is az $\int_{-\infty}^x{f(x)}dx$ improprius integrállal számítható, azaz a sűrűségfüggvény $x$ alatti területével egyezik meg.
+The calculation here is also based on $f(x)=P(Y_i=x)$, meaning **the value of the probability density function at $x$ equals the probability of $x$ occurring** in a random draw from the dataset. The probability $P(Y_i<x)$ can also be calculated for the exponential distribution using the improper integral $\int_{-\infty}^x{f(x)}dx$, i.e., it corresponds to the area under the density function up to $x$.
 
-Ezeket a vizuális jelentéstartalmakat az alábbi interaktív ábrán meg lehet nézni és ki lehet próbálni úgy, ahogy a normális eloszlásnál lehetett.
+These visual interpretations can be viewed and tried out in the interactive plot below, just like we did with the normal distribution.
 
 <iframe src ="https://kola992.shinyapps.io/normalprobabilities/?distr=Exp" height=550px width=800px data-external="1" />
 
-Természetesen *kvantilis értéket* is tudunk számolni az exponenciális eloszlásban is. Nézzük meg pl, hogy Mi az az idő, aminél csak $1\%$ a valószínűsége, hogy egy kemoterápiával kezelt fej- és nyakrák páciens tovább él.<br>
-Ugyebár a számításhoz úgy kell átfogalmazni a kérdést, hogy mi az az idő, ami esetén csak $99\%$ a valószínűsége, hogy egy kemoterápiával kezelt fej- és nyakrák páciens már *NEM* él tovább. Hiszen az `qexp` függvény is *alá esési* valószínűségekból dolgozik, mint a `qnorm`.
+Of course, we can also calculate *quantile values* for the exponential distribution. For example, let’s see what the time is where there is only a $1%$ probability that a chemotherapy-treated head and neck cancer patient will survive.<br> For the calculation, we need to rephrase the question: what is the time at which there is only a $99%$ probability that a chemotherapy-treated head and neck cancer patient will **not** survive. This is because the `qexp` function, like `qnorm`, works with cumulative probabilities of **being below** the value we are looking for.
 
 ```{r}
 qexp(0.99, rate = 1/sd(Surv$SurvMonth))
 ```
 
-A megfejtés kb. $1262$ hónap, azaz $105$ év! De hát ugye ez a nagy érték alapvetően a jobbra elnyúlás miatt van, hiszen a jobbra elnyúló eloszlásokra jellemzőek a felfelé kilógó értékek, így a jobbra elnyúló sűrűségfüggvényeknek is számolnia kell ezekkel az outlier elemekkel.
+The answer is approximately $1262$ months, or $105$ years! But this large value is fundamentally due to the long right tail of the distribution, as long-right-tailed distributions tend to have outlier values that extend upward, so the long-right-tailed density functions must account for these outliers.
 
-Végül pedig nézzük meg szépen, hogy ez az exponenciális sűrűségfüggvény mennyire illeszkedik a túlélési idők hisztogramjára (), ahogy a normális eloszlás esetén is megtettük egy hisztogramra illesztett `ggplot` vonaldiagrammal.
+Finally, let’s check how well this exponential density function fits the survival time histogram, just as we did for the normal distribution with a histogram-fitted `ggplot` line plot.
 
 ```{r warning=FALSE}
 ggplot(Surv, aes(x=SurvMonth)) +
@@ -432,4 +429,4 @@ ggplot(Surv, aes(x=SurvMonth)) +
                 col = 'red')
 ```
 
-Itt egész pofásnak tűnik az illeszkedés, egy nem szép pont van: a 150-200 hónapos osztályköz. Oda lényegesen többen estek be, mint az $Exp(0.00365)$ eloszlásunk alapján várható lenne. De ez könnyen lehet, hogy csak a túl sok osztályköz (ggplot alapból látjuk, hogy 30-at használt) miatt van. A 2. fejezetben tanultak alapján ezt tudjuk is javítani, ha kéne. :)
+It looks quite nice here, with only one odd point: the 150-200 month range. Way more data points fall into this bin than would be expected based on the $Exp(0.00365)$ distribution. But this could easily be due to the large number of bins (we see that `ggplot` used 30 by default). Based on what we learned in Chapter 2, we could fix this if needed. :)"

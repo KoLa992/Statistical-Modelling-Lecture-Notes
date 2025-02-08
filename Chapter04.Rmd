@@ -19,61 +19,61 @@ text-align: justify}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 1. Véletlenszám generálás és Mintavételezés
+## 1. Generating Random Numbers and Samples
 
-Minden programnyelv alapelemének számít egy olyan függvény, ami $0-1$ értékek közötti véletlen számokat generál. Egész pontosan ezek a függvények **úgy generálnak számokat, hogy azok $0-1$ között minden értéket azonos valószínűséggel**, tehát **egyenletes eloszlással** vehetnek fel.<br>
-Az ilyen $0-1$ között egyenletes eloszlású véletlenszám generátorok minden programnyelv alapvető eszközei, és a Számítástudományból tanult <a href="https://en.wikipedia.org/wiki/Linear_congruential_generator" target="_blank">lineáris kongruenciarendszereken alapulnak</a>.
+Every programming language includes a basic element: a function that generates random numbers between $0$ and $1$. More precisely, these functions **generate numbers in such a way that they each have an equal probability of being any value between $0$ and $1$**, that is, they follow a **uniform distribution**.<br>
+Such random number generators that follow a uniform distribution between $0$ and $1$ are basic tools in every programming language, and they are based on the <a href="https://en.wikipedia.org/wiki/Linear_congruential_generator" target="_blank">linear congruential systems</a> as discussed in the Computer Science course.
 
-A $0-1$ közötti teljesen véletlen számok generálásához R-ben egy `runif` című függvényt kell használni. Ennek `n` paraméterében most megadom, hogy csak $n=1$ db $0-1$ közötti véletlen számot szeretnék.
+To generate completely random numbers between $0$ and $1$ in R, we need to use a function called `runif`. I will now set its `n` parameter to specify that I want only $n=1$ random number between $0$ and $1$.
 
 ```{r}
 this_is_so_random = runif(n=1)
 this_is_so_random
 ```
 
-Fenti kódsort futtatva nyilván mindenkinek más eredménye lesz, hiszen *random* számot generálunk. :) A lényeg, hogy a számunk $0-1$ közötti!
+Running the above code, everyone will get a different result since we are generating a *random* number. :) The point is that our number is between $0$ and $1$!
 
-Node, **mit csinál ez a véletlenszám generátor statisztikus szemmel tekintve**? Nos, ilyenkor ők **egy olyan $Y_i$ adatsorból húznak véletlenszerűen egy $x$ számértéket, aminek az eloszlása $0-1$ közötti egyenletes eloszlás**. Ennek a matematikai jelölésrendszere: $Y_i \sim U(0,1)$. Az $U$ onnan jön, hogy az egyenletes eloszlás in English *uniform distribution*.
+Node, **what does this random number generator do from a statistical point of view**? Well, in this case, they **randomly draw a $x$ value from a random variable $Y_i$, whose distribution is uniform between the $0$ and $1$ values**. The mathematical notation for this is: $Y_i \sim U(0,1)$. The $U$ comes from the fact that the *distribution is uniform*. :)
 
-Húzzunk akkor most ebből a $Y_i \sim U(0,1)$ adatsorból $50$ db véletlen értéket, és tároljuk el az eredményeket egy `vector` objektumban! Azaz, **vegyünk a $U(0,1)$ eloszlásból egy $n=50$ elemű mintát!**
+Now, let's draw $50$ random values from the $Y_i \sim U(0,1)$ data series, and store the results in a `vector` object! That is, **let's take a sample of size $n=50$ from the $U(0,1)$ distribution**.
 
-Technikailag csak a függvény `n` paraméterét kell átállítani.
+Technically, we only need to change the `n` parameter of the function.
 
 ```{r}
 unlucky_numbers = runif(n=50)
 unlucky_numbers
 ```
 
-Itt is van az $50$ szép kicsi véletlen számom. Nyilván ezek megint mindenkinek más értékek. :)
+Here are my $50$ nice little random numbers. Of course, these will be different for everyone. :)
 
-Következő lépésben **ezt az $50$ elemű mintát transzformáljuk át olyanná, hogy ne egy $U(0,1)$ eloszlásból, hanem mondjuk egy $U(40,160)$ eloszlásból származó minta**! Magyarul, az kéne, hogy ez az $50$ véletlen szám, ne $50$ db $0-1$ közötti véletlen szám, hanem $50$ db $40-160$ közötti véletlen szám legyen!
+In the next step, **let's transform this sample of size $50$ so that it no longer comes from a $U(0,1)$ distribution, but rather from a $U(40,160)$ distribution**! In other words, we want these $50$ random numbers to be between $40$ and $160$, instead of between $0$ and $1$!
 
-Ezt a következőképpen tudjuk elérni:
+We can achieve this in the following way:
 
-- Ha a $0-1$ közti véletlenszámokat megszorozzuk $160-40=120$-szal, akkor $0-120$ közti véletlen számok lesznek.
-- Ha a $0-120$ közti véletlen számokhoz hozzáadunk $40$-et, akkor $(0+40)$ és $(120+40)$ közti, azaz $40-160$ közti véletlen számok leszenek.
+- If we multiply the $0$ to $1$ random numbers by $160-40=120$, the resulting random numbers will be between $0$ and $120$.
+- If we then add $40$ to these $0$ to $120$ random numbers, the result will be random numbers between $(0+40)$ and $(120+40)$, i.e., between $40$ and $160$.
 
 ```{r}
 unlucky_numbers = (unlucky_numbers * (160-40)) + 40
 unlucky_numbers
 ```
 
-Olybá tűnik a foglalkozásunk elérte célját: tényleg nincs itt $40$-nél kisebb és $160$-nál nagyobb szám! :)
+It seems that our task is accomplished: there are indeed no numbers smaller than $40$ or larger than $160$! :)
 
-Nézzük meg, hogy mennyire egyenletes eloszlásúak a generált $U(40,160)$ eloszlású számaink! Rajzoljuk ki a hisztogramot!
+Now, let's check how uniform the distribution of our generated $U(40,160)$ numbers is! Let's plot the histogram!
 
 ```{r}
 hist(unlucky_numbers)
 ```
 
-Mit is kéne látni ezen a hisztogramon? Hát általánossában az $U(a,b)$ eloszlás, azaz az $(a,b)$ intervallumon egyenletes eloszlás sűrűségfüggvénye $f(x) = \frac{1}{b-a}$, hiszen a sűrűségfüggvény helyettesítési értéke az egy konkrét $x$ érték bekövetkezési valószínűsége az $U(a,b)$ eloszlásban, $P(Y_i=x)$. Ami az egyenletes eloszlás esetén minden $x$-re $a-b$ között ugyan annyi, nevezetesen "*1 per az $(a,b)$ intervallum hossza*!
+What should we expect to see on this histogram? Well, generally speaking, the density function for a uniform distribution $U(a,b)$ over the interval $(a,b)$ is $f(x) = \frac{1}{b-a}$, because the value of the density function represents the probability of any specific $x$ occurring in the $U(a,b)$ distribution, $P(Y_i=x)$. For a uniform distribution, this is the same for all $x$ within $a$ and $b$, specifically "*1 divided by the length of the $(a,b)$ interval*".
 
-Esetünkben tehát **az $U(40,160)$ eloszlás sűrűségfüggvénye** az $f(x)=\frac{1}{160-40}=\frac{1}{120}=0.0083$ magasságban futó **vízszintes egyenes**. Vagyis **a hisztogramnak minden $x$ értékre kb. ugyan akkora gyakoriságot kell mutatnia, ami azért szemmel láthatóan nem így van!**
+In our case, the **density function for the $U(40,160)$ distribution** is $f(x)=\frac{1}{160-40}=\frac{1}{120}=0.0083$, which is a **horizontal line** at height $0.0083$. Therefore, **the histogram should show approximately the same frequency for each $x$ value, although this is clearly not the case!**
 
-**Rajzoljuk csak ki a hisztogramot `ggplot`-ban `aes(y = after_stat(density))` beállítással és véssük fel rá az $U(40,160)$ eloszlás sűrűségfüggvényét!** Ezt az ábrát hasonlóan lehet elkészíteni, mint ahogy a normális eloszlás sűrűségfüggvény illeszkedését vizsgáltuk garfikusan a Tesla árváltozások hisztogramjára az <a href="https://kola992.github.io/Statisztika-II-Python-Jegyzet/Gyak01.html#23_Val%C3%B3sz%C3%ADn%C5%B1s%C3%A9g_vs_Relat%C3%ADv_Gyakoris%C3%A1g" target="_blank">Chapter 3. Section 1.3.</a> végén.<br>
-Csak az egész művelet előtt még a vektorunkat data frame formátumba kell rakni, hogy a ggplot kezelni tudja.<br>
-Sőt, természetesen az R `dunif` függvényével is ki tudjuk számolni az $U(40,160)$ eloszlás konstans $f(x)=0.0083$-as sűrűségfüggvényét, ahogy Chapter 3-ban kiszámoltuk a normális eloszlás sűrűségfüggvény $f(x)$ értékeit a `dnorm` függvénnyel. Arra kell figyelni az `dunif` függvénynél, hogy a `min` nevű paraméterben kell megadni az $U(a,b)$ eloszlás alsó határát, azaz $a$-t, míg a `max` paraméterben az elsoszlás felső határát, a $b=160$-at!<br>
-A hisztogramon 6 osztályközt alkalmazunk, hogy az ábra hasonlítson arra a hisztogramra,a mit a sima `hist` függvénnyel készítettünk korábban.
+**Let's plot the histogram using `ggplot` with `aes(y = after_stat(density))` setting, and overlay the density function of the $U(40,160)$ distribution on it!** This plot can be created in a similar way to how we graphically examined the normal distribution's density function fitting the Tesla price changes histogram in <a href="Chapter03.html" target="_blank">Chapter 3, Section 1.3.</a>.<br>
+Before we do this, we need to convert the vector to a data frame so that `ggplot` can handle it.<br>
+Moreover, we can of course calculate the constant density function $f(x)=0.0083$ for the $U(40,160)$ distribution using R's `dunif` function, just as we calculated the normal distribution's density function values using the `dnorm` function in Chapter 3. With the `dunif` function, we need to specify the lower limit of the $U(a,b)$ distribution, $a$, in the `min` parameter, and the upper limit $b=160$ in the `max` parameter!<br>
+We will apply 6 bins on the histogram so that the plot resembles the histogram we previously made using the standard `hist` function.
 
 ```{r}
 random_df <- as.data.frame(unlucky_numbers)
@@ -88,49 +88,49 @@ ggplot(random_df, aes(x=unlucky_numbers)) +
                 col = 'red')
 ```
 
-Láthatjuk azért, hogy az $50$ elemű **minta tapasztalt gyakoriságai nem annyira tükrözik az egyenletes eloszlás** vízszintes $f(x) = 0.0083$ magas **sűrűségfüggvényét, de azért többnyire a függvény vonala körül mozognak**. Azt pedig már lecsekkoltuk, hogy a vgenerált minta minden értéke tényleg a $(40,160)$ intervallumban található, de ez most szépen látszik a hisztogram $x$ tengelyén is.
+We can see that the **observed frequencies of our $50$-element sample do not fully reflect the horizontal density function of the uniform distribution $f(x) = 0.0083$**, but they are generally close to it. And we have already checked that all values of the generated sample are indeed within the $(40,160)$ interval, which is clearly visible on the $x$ axis of the histogram.
 
-Tehát, sikeresen **eltranszformáltuk az $U(0,1)$ eloszlású $50$ elemű mintánkat $U(40,160)$ eloszlásúvá**. Mindjárt látjuk, hogy **az $U(0,1)$ eloszlású véletlen számokat nem csak egy másik egyenletes $U(a,b)$ eloszlásúvá, hanem tetszőleges eloszlásúvá is tudjuk tarnszformálni!!**
+Thus, we have successfully **transformed our $50$-element sample from a $U(0,1)$ distribution to a $U(40,160)$ distribution**. Very soon, we will see that **we can transform random numbers from a $U(0,1)$ distribution not only into another uniform $U(a,b)$ distribution, but into any distribution we want**!!
 
-### 1.1. A mintagenerálás általános elve
+### 1.1. General Principles for Generating a Sample
 
-Gondolkozzunk el azon, hogyan is lehet **formalizálni azt a képletet, amivel az $U(0,1)$ eloszlású véletlen számokból U(a,b) eloszlású véletlen számokat csináltunk!**<br>
-Ugyebár a generált számot megszoroztuk az $(a,b)$ intervallum hosszával, és hozzáadtuk az alsó határt, $a$-t. Azaz formálisan azt mondhatjuk, hogy ha $y \sim U(0,1)$, akkor $z = y \times (b-a) + a \sim U(a,b)$.
+Let's think about how we can **formalize the formula that we used to transform $U(0,1)$ random numbers into $U(a,b)$ random numbers!** <br>
+As you know, we multiplied the generated number by the length of the $(a,b)$ interval and added the lower bound, $a$. Formally, we can say that if $y \sim U(0,1)$, then $z = y \times (b-a) + a \sim U(a,b)$.
 
-De honnan is jön ez a képlet? **Gondoljunk bele, hogy $U(a,b)$ eloszlás esetén hogyan is számolunk ki egy $P(Y_i < x)$ "alá esési" valószínűséget?** Azaz, mi a $\int_{-\infty}^x{\frac{1}{b-a}}dx$ improprius integrál eredménye?
+But where does this formula come from? **Let's consider how we calculate the "cumulative" probability $P(Y_i < x)$ for a $U(a,b)$ distribution?** That is, what is the result of the improper integral $\int_{-\infty}^x{\frac{1}{b-a}}dx$?
 
-Ez azért nem olyan bonyi vállalkozás, mint mondjuk egy normális eloszlás esetén kiszámolni a cuccot, hiszen mivel $a$ alatt az $a-b$ közötti egyenletes eloszlásban $0$ valószínűséggel lehetnek értékek, így az improprius integrálunk rögtön határozott integrállá válik:$\int_a^x{\frac{1}{b-a}}dx$. Ezzel pedig már könnyen elbánunk, hiszen az integrálandó függvényben nincs is benne a függvény változója, az $x$, tehát konstans függvényről van szó: $$\int_a^x{\frac{1}{b-a}}dx=\left[\frac{x}{b-a}\right]_a^x=\frac{x}{b-a}-\frac{a}{b-a}=\frac{x-a}{b-a}$$
+This is not as complicated as calculating the same thing for a normal distribution, because since there are no values below $a$ in the uniform distribution between $a$ and $b$, our improper integral immediately turns into a definite integral: $\int_a^x{\frac{1}{b-a}}dx$. And now we can easily handle this, since the integrand does not include the variable $x$, so it’s a constant function: $$\int_a^x{\frac{1}{b-a}}dx=\left[\frac{x}{b-a}\right]_a^x=\frac{x}{b-a}-\frac{a}{b-a}=\frac{x-a}{b-a}$$
 
-Az eredmény szemléletesen persze az alábbi téglalap területe, hiszen a két oldal hossza $oldal_1=x-a$, illetve a sűrűségfüggvény maga $oldal_2=f(x)=\frac{1}{b-a}$ és a téglalap területe $T=oldal_1 \times oldal_2 = (x-a) \times\frac{1}{b-a} = \frac{x-a}{b-a}$
+The result is visually the area of the rectangle below, since the lengths of the two sides are $side_1=x-a$ and the density function itself is $side_2=f(x)=\frac{1}{b-a}$, so the area of the rectangle is $T=side_1 \times side_2 = (x-a) \times\frac{1}{b-a} = \frac{x-a}{b-a}$.
 
 <center>
 ![](unifelo.jpg){width=60%}
 </center>
 
-Szóval, ha **véletlenszerűen húzok egy $Y_i$ számot az $U(a,b)$ eloszlásból, akkor annak a valószínűsége, hogy $x$-nél kisebb értéket kapok nem más, mint $P(Y_i < x) = \frac{x-a}{b-a}$.**
+So, if **I randomly draw a $Y_i$ number from the $U(a,b)$ distribution, then the probability that I get a value smaller than $x$ is just $P(Y_i < x) = \frac{x-a}{b-a}$.**
 
-Nagyon jó. Akkor, **nézzük meg mi most az inverz függvény az egyenletes eloszlásban!** Azaz hogyan válaszolom meg azt a kérdést mi szerint: **Mi az az érték, aminél csak $5\%$ valószínűséggel kapok kisebb értéket egy $U(a,b)$ eloszlásban?**
+Very good. Now, **let's see what the quantile function looks like in the uniform distribution!** That is, how do I answer the question: **What is the value at which there is only a $5\%$ probability of getting a smaller value in a $U(a,b)$ distribution?**
 
-Ugye ekkor az $P(Y_i < x) = \frac{x-a}{b-a}$ összefüggésből kéne kifejeznem $x$-et, ami aránylag könnyű művelet: $$x=P(Y_i < x) \times (b-a) + a$$
+At this point, I should express $x$ from the relationship $P(Y_i < x) = \frac{x-a}{b-a}$, which is relatively easy to do: $$x=P(Y_i < x) \times (b-a) + a$$
 
-**Hoppácska!** Amit kaptunk az gyakorlatilag **ugyan az a formula, amivel a $y \sim U(0,1)$ eloszlásból $z \sim U(a,b)$ eloszlást csináltunk**: $z = y \times (b-a) + a$
+**Oops!** What we got is practically **exactly the same formula that we used to transform a $y \sim U(0,1)$ random number into a $z \sim U(a,b)$ random number**: $z = y \times (b-a) + a$
 
-Tehát, **általánosságban azt az eredményt kapjuk, hogy ha egy $U(0,1)$ eloszlású véletlen számra $P(Y_i < x)$ valószínűségként tekintek, és berakom azt egy tetszőleges eloszlás kvantilis függvényébe, és megkeresem a hozzá tartozó $x$ értéket, akkor amit kapok eredményül az olyan eloszlású véletlen szám lesz, mint amilyen eloszlás kvantilis függvényébe beírtam az $U(0,1)$ eloszlású véletlen számot!!**<br>
-Ugyebár simán tekinthetek egy $0-1$ közötti véletlenszámra $P(Y_i < x)$ valószínűségként, hiszen minden valószínűség egy $0-1$ közötti szám. :)
+So, **in general, we get the result that if I treat a random number from the $U(0,1)$ distribution as a $P(Y_i < x)$ probability, and plug it into the quantile function of any distribution, the result will be a random number with the same distribution as the one whose quantile function I used for the $U(0,1)$ random number!!** <br>
+Of course, I can simply treat a random number between $0$ and $1$ as a $P(Y_i < x)$ probability, since every probability is a number between $0$ and $1$. :)
 
-**Nézzük is meg az elvet a gyakorlatban!** Ugye R-ben minden eloszlás kvantilis függvényét a `q` előtagú függvényével számoltuk ki (lásd <a href="https://kola992.github.io/Statisztika-II-Python-Jegyzet/Gyak01.html#25_Inverz_%C3%89rt%C3%A9kek" target="_blank">Chapter 3. Section 1.5.</a>).
+**Let’s check this theory in practice!** As we know, in R, we calculate the quantile function for every distribution using a function that has the `q` prefix (see <a href="Chapter03.html" target="_blank">Chapter 3. Section 1.5.</a>).
 
 ```{r}
 low_bound <- 40
 upp_bound <- 160
 
-# 50 db U(0,1) eloszlású szám generálása
+# Generating 50 numbers from the U(0,1) distribution
 unlucky_numbers <- runif(n=50)
 
-# U(40,160)-á transzformálás kvantilis függvénnyel
+# transforming to U(40,160) with the quantile function
 unlucky_numbers <- qunif(unlucky_numbers, min = low_bound, max = upp_bound)
 
-# Eredmény ellenőrzése hisztogramon
+# Check the results on a histogram
 random_df <- as.data.frame(unlucky_numbers)
 ggplot(random_df, aes(x=unlucky_numbers)) +
   geom_histogram(aes(y = after_stat(density)), bins = 6) +
@@ -140,28 +140,28 @@ ggplot(random_df, aes(x=unlucky_numbers)) +
                 col = 'red')
 ```
 
-E voilá: siker! Az értékek $40-160$ között mozognak, és a generált minta gyakoriságai kb. az $U(40,160)$ eloszlás $f(x)$ sűrűségfüggvénye körül ingadoznak!
+E voila: success! The values range from $40$ to $160$, and the frequencies of the generated sample fluctuate around the $f(x)$ density function of the $U(40,160)$ distribution!
 
-### 1.2. Nem egyenletes eloszlású minták generálása
+### 1.2. Generating NOT Uniformly Distributed Samples
 
-Na, akkor abban bízunk, hogy **az egyenletes eloszlás esetében megfigyelt trükk működni fog más eloszlásokra is**.
+Well, then we hope that **the trick observed for the uniform distribution will work for other distributions too**.
 
-Tehát, **ha egy $U(0,1)$ eloszlású véletlen számot berakom egy tetszőleges eloszlás inverz függvényébe, akkor amit eredményül kapok az olyan eloszlású véletlen szám, mint amilyen eloszlás inverz függvényébe beírtam az kezdeti $U(0,1)$ eloszlású véletlen számot!!**
+So, **if I plug a $U(0,1)$ random number into the quantile function of any distribution, the result will be a random number from the same distribution as the one whose quantile function I used to plug the initial $U(0,1)$ random number into!!**
 
-**Generáljunk akkor mondjuk először egy $N(80,20)$ eloszlású $50$ elemű mintát!** Tehát, a normális eloszlásunk átlaga $\mu=80$ és szórása $\sigma = 20$. A kezdeti $U(0,1)$ számok transzformálására pedig használhatjuk akkor az R `qnorm` függvényét.<br>
-Figyeljünk, hogy a sűrűségfüggvény rajzolásakor az $x$ tengely alsó-felső határait már a generált adatokból szedjük, mert az elvi eloszlás alapján nem lehet itt megmondani! --> Nem $U(a,b)$ egyenletes eloszlásunk van már *úgymond*. :)
+**Let’s generate, for example, a sample of $50$ elements from a $N(80,20)$ distribution!** That is, our normal distribution has a mean of $\mu=80$ and a standard deviation of $\sigma = 20$. To transform the initial $U(0,1)$ numbers, we can use the R `qnorm` function.<br>
+Notice that when plotting the density function, the lower and upper bounds of the $x$ axis are taken from the generated data because we can’t determine them from the theoretical distribution! --> We no longer have the $U(a,b)$ uniform distribution so to speak.
 
 ```{r}
 mu <- 80
 sigma <- 20
 
-# 50 db U(0,1) eloszlású szám generálása
+# Generating 50 numbers from a U(0,1) distribution
 unlucky_numbers <- runif(n=50)
 
-# N(80,20)-á transzformálás kvantilis függvénnyel
+# Transforming to N(80,20) with the help of the quantile function
 normies <- qnorm(unlucky_numbers, mean = mu, sd = sigma)
 
-# Eredmény ellenőrzése hisztogramon
+# Check the results on a histogram
 norm_df <- as.data.frame(normies)
 ggplot(norm_df, aes(x=normies)) +
   geom_histogram(aes(y = after_stat(density)), bins = 6) +
@@ -171,24 +171,24 @@ ggplot(norm_df, aes(x=normies)) +
                 col = 'red')
 ```
 
-Na, egészen jól illeszkednek a generált adatok gyakoriságai a normális eloszlás sűrűségfüggvényéhez! :)
+Well, the frequencies of the generated data fit quite well to the normal distribution’s density function! :)
 
-Természetesen, expoenciális eloszlásra (és bármi másra) is hasonlóan működik a trükk, de azt már nem nagy *copy-paste mágia* lenne lekódolni. :)
+Naturally, the trick works similarly for an exponential distribution (and anything else), but that wouldn’t be much *copy-paste magic* to code. :)
 
-A lényeg viszont, hogy ez a megoldás tényleg **minden létező eloszlásra működik!** Olyanokra is, amik **nincsenek benne** az R-ben!! Csak **tudni kell az eloszlás kvantilis függvényének képletét, és abba beírogatva $U(0,1)$ eloszlású számokat, le is generáltunk egy mintát az eloszlásból!**
+The important point is that this solution really **works for every existing distribution!** Even for distributions that **are not included** in R!! You just **need to know the formula for the distribution's quantile function, and by plugging in $U(0,1)$ random numbers, you generate a sample from the distribution!**
 
-A jó hír viszont, hogy az R-ben szereplő eloszlásoknak van egy `r` előtagú függvénye (mint egyenletes elosztlásnak a már látott `runif`), ami **automatikusan eljátsza a fenti trükköt, így nem kell** az eddig használt hosszabb kódrészletet **mindig copy-pastelni**. A függvényben az aktuális eloszlásnak (egyenletes, normális, exponenciális vagy más) megfelelő módon kell megadni a paramétereket (lásd `mean`, `sd` vagy éppen `rate`), míg a generálandó számok mennyiségét (a minta elemszámát) a `n` paraméterben lehet beállítani.
+The good news, however, is that for distributions in R, there is an `r`-prefixed function (like the `runif` for the uniform distribution), which **automatically performs the above trick, so you don't have to** always **copy-paste** the longer code snippet **every time**. In the function, the parameters for the current distribution (uniform, normal, exponential, or other) need to be specified accordingly (e.g., `mean`, `sd`, or `rate`), and the quantity of numbers to generate (sample size) can be set using the `n` parameter.
 
-Tehát, egyszerűsítve az alábbi módon is lehet pl. $N(80,20)$ eloszlűsú adatokat (mintát) generálni.
+So, simplifying, you can generate data (a sample) from a $N(80,20)$ distribution as follows.
 
 ```{r}
 mu <- 80
 sigma <- 20
 
-# 50 db U(0,1) eloszlású szám generálása
+# Generating 50 numbers from the N(80,20) distribution
 normies <- rnorm(n = 50, mean = mu, sd = sigma)
 
-# Eredmény ellenőrzése hisztogramon
+# Check the results on a histogram
 norm_df <- as.data.frame(normies)
 ggplot(norm_df, aes(x=normies)) +
   geom_histogram(aes(y = after_stat(density)), bins = 6) +
@@ -198,17 +198,17 @@ ggplot(norm_df, aes(x=normies)) +
                 col = 'red')
 ```
 
-Ha az `r` előtagú függvények előtt elsütünk egy `set.seed` függvényt is, és a zárójelei közé **mindannyian beírjuk oda ugyan azt a számot**, pl. mondjuk az én szülinapom évét, ami $1992$, akkor **mindenki ugyan azt az $50$ db véletlen számot generálta le!** És ugyan azt a hisztogramot fogjuk már bambulni! :)
+If we run the `set.seed` function before the `r`-prefixed functions, and **we all enter the same number in its parentheses**, for example, my birth year, $1992$, then **everyone will generate the same $50$ random numbers!** And we will all be staring at the same histogram! :)
 
 ```{r}
 mu <- 80
 sigma <- 20
 
-# 50 db U(0,1) eloszlású szám generálása
+# Generating 50 numbers from the N(80,20) distribution
 set.seed(1992)
 normies <- rnorm(n = 50, mean = mu, sd = sigma)
 
-# Eredmény ellenőrzése hisztogramon
+# Check the results on a histogram
 norm_df <- as.data.frame(normies)
 ggplot(norm_df, aes(x=normies)) +
   geom_histogram(aes(y = after_stat(density)), bins = 6) +
@@ -218,40 +218,40 @@ ggplot(norm_df, aes(x=normies)) +
                 col = 'red')
 ```
 
-Pazar! :) A `set.seed` függvényben megadott $1992$ értéket szokás a véletlenszám generálás **random seed** nevezni.
+Awesome! :) The value $1992$ in the `set.seed` function is often referred to as the **random seed** in random number generation.
 
-Generáljunk még az $U(40, 160)$ eloszlás $50$ elemű mintája mellé egy $50$ elemű $N(80,20)$ és egy $50$ elemű $Exp(0.0125)$ eloszlású mintát is, szintén $1992$-es véletlen maggal. Majd fűzzük össze az eredményeket egy data frame-be úgy, hogy a különböző eloszlású adatok adják a tábla oszlopait (sorok száma akkor így 50 lesz ugyebár).<br>
-Az Exponenciális eloszlás $\lambda$ paraméterét az R függvényeinek `rate` paraméterében lehet megadni pl. a szórás reciprokával. Hiszen az Exponenciális eloszlás szórása $\frac{1}{\lambda}$. Emlékezetetőnek lásd <a href="https://kola992.github.io/Statisztika-II-Python-Jegyzet/Gyak01.html" target="_blank">Chapter 3. Section 2.</a>!
+Now, let’s generate a $50$-element sample from the $U(40,160)$ distribution, along with a $50$-element sample from a $N(80,20)$ and a $50$-element sample from an $Exp(0.0125)$ distribution, using the same $1992$ random seed. Then, let’s combine the results into a data frame, where the columns represent the different distributions (so the number of rows will be $50$, of course).<br>
+The $\lambda$ parameter for the Exponential distribution can be set in R’s `rate` parameter, for example, using the reciprocal of the standard deviation. Since the standard deviation of the Exponential distribution is $\frac{1}{\lambda}$. For a reminder, see <a href="Chapter03.html" target="_blank">Chapter 3. Section 2.</a>!
 
 ```{r}
-# N(80,20) minta generálása
+# Generating 50 numbers from the N(80,20) distribution
 mu <- 80
 sigma <- 20
 
 set.seed(1992)
 normies <- rnorm(n = 50, mean = mu, sd = sigma)
   
-# Exp(0.0125) minta generálása
+# Generating 50 numbers from the Exp(0.0125) distribution
 lam <- 0.0125
 
 set.seed(1992)
 expies <- rexp(n = 50, rate = lam)
 
-# U(40, 160) minta generálása
+# Generating 50 numbers from the U(40, 160) distribution
 low_bound <- 40
 upp_bound <- 160
 
 set.seed(1992)
 unis <- runif(n = 50, min = low_bound, max = upp_bound)
 
-# Eredmények összefűzése data frame-be
+# Put the results into the same data frame
 all_in_one <- data.frame(normies=normies,
                          expies=expies,
                          unis=unis)
 str(all_in_one)
 ```
 
-Szuper, az `str` függvény alapján megvan egyben a $3$ db $50$ elemű mintánk! Egy-egy $k=6$ osztályközzel operáló hisztogramon meg is tudjuk nézni az eredményt. :)
+Great, based on the `str` function, we have all three $50$-element samples! We can now view the result on a histogram with $k=6$ bins. :)
 
 ```{r}
 hist(all_in_one$normies, breaks = 6)
@@ -259,72 +259,72 @@ hist(all_in_one$expies, breaks = 6)
 hist(all_in_one$unis, breaks = 6)
 ```
 
-Na, meg is vagyunk, nagyjából mindegyik hisztogram követi a neki megfelelő Egyenletes, Normális és Exponenciális sűrűségfüggvény alakot.
+Well, we're done, and pretty much every histogram follows the shape of its corresponding Uniform, Normal, and Exponential density functions.
 
-## 2. Elvi Eloszlás vs Megfigyelt Minta
+## 2. Probability Distribution vs Observed Sample
 
-Azt már több soron megállapítottuk, hogy a **megfigyelt adatokból készített hisztogramok NEM követik hajszálpontosan a hozzájuk tartozó eloszlások sűrűségfüggvényeit**. Valamennyire eltérnek tőle, ezt az előző fejezet végén álló 3 hisztogram is szemlélteti.<br>
-Ez amúgy egy **teljesen logikus és természetes jelenség**, hiszen az általunk vizsgált eloszlások $f(x)$ sűrűségfüggvényei rengeteg számhoz rendelnek pozitív bekövetkezési valószínűséget egy véletlen húzás esetén:
+We have already established on several occasions that the **histograms created from the observed data DO NOT follow the density functions of the corresponding distributions exactly**. They deviate from them to some extent, as illustrated by the three histograms at the end of the previous section.<br>
+This is, by the way, a **completely logical and natural phenomenon**, as the density functions $f(x)$ of the distributions we are examining assign a positive probability of occurrence to many numbers in the case of a random draw:
 
-- Az $N(80,20)$ eloszlás konkrétan *minden valós számnak* pozitív bekövetkezési esélyt tulajdonít
-- Az $Exp(0.0125)$ eloszlás *minden pozitív valós számnak*
-- Az $U(40,160)$ pedig *minden $40$ és $160$ közötti valós számnak*
+- The $N(80,20)$ distribution specifically assigns a positive probability of occurrence to *every real number*
+- The $Exp(0.0125)$ distribution assigns a positive probability of occurrence to *every positive real number*
+- The $U(40,160)$ distribution assigns a positive probability of occurrence to *every real number between $40$ and $160$*
 
-Mindegyik számhalmaz elemszáma **végtelen**. Tehát, **akármelyik eloszlást is nézzük**, ahhoz hogy a **sűrűségfüggvényt teljes egészében meg tudjuk figyelni, végtelen sok elemű mintákat kéne generálni**. Nyilván, ez nem nagyon fog sosem összejönni. Ezért vannak a **némileg hektikus hisztogram alakok**. :)
+The number of elements in each of these sets is **infinite**. Therefore, **no matter which distribution we look at**, to observe the **density function in its entirety, we would need to generate samples with an infinite number of elements**. Obviously, this will never happen. This is why we have **somewhat erratic histogram shapes**. :)
 
-Ami csak azért zavaró, mert a **valóságban nem vagyunk istenségek**, így a megfigyelt mintánk mögött meghúzódó **valódi sűrűségfüggvényt SOSEM tudjuk megfigyelni**, csak azokat az **adatokat, amiket a mintánk tartalmaz**. A minta elemszáma pedig sosem végtelen. **Legfeljebb csak reménykedni tudunk abban, hogy a minta hisztogram alapján sac/kb be tudjuk lőni, hogy az adataink mögött milyen eloszlás lappang a háttérben**.<br>
-Ugyan ez **igaz a különféle statisztikai mutatókra** is! Értelemszerűen **más értékeket kapunk az átlagra, szórásra, mediánra vagy az $x$-nél kisebb elemek arányára, ha azokat a megfigyelt mintaadatokból számítjuk, és nem az adatok mögöt rejtőző sűrűségfüggvény alapján**!
+This is only annoying because in **reality, we are not gods**, so we will **NEVER be able to observe the true density function behind our observed sample**, only the **data contained in our sample**. And the sample size is never infinite. **At best, we can hope that based on the sample histogram, we can approximately guess which distribution is lurking behind our data**.<br>
+This **also applies to various statistical measures**! Logically, **we get different values for the mean, standard deviation, median, or the proportion of elements smaller than $x$ if we calculate them from the observed sample data, rather than from the theoretical density function behind the variable**!
 
-### 2.1. Az elvi eloszlás alapján számolt statisztikai mutatók
+### 2.1. Statistical Measures based on the Theoretical Distributions
 
-Vegyük csak végig, hogy a **3 vizsgált eloszlásunkban** hogyan is kapjuk meg a **sűrűségfüggvény ismeretében az alap statisztikai mutatókat**.
+Let’s go through how we would calculate the **basic statistical indicators** from the **3 distributions we examined**, knowing their **density functions**.
 
-- $N(80,20)$ eloszlás
-  * Átlag: $\mu=80$
-  * Szórás: $\sigma=20$
-  * Medián: inverz függvény (`ppf`) értéke $0.5$-nél
-  * 100-nál kisebb értékek aránya: $P(Y_i<100)=\int_{-\infty}^{100}{f(x)}dx$
-- $Exp(0.0125)$ eloszlás
-  * Átlag: $\mu=\frac{1}{\lambda}=\frac{1}{0.0125}=80$
-  * Szórás: $\sigma=\frac{1}{\lambda}=\frac{1}{0.0125}=80$
-  * Medián: inverz függvény (`ppf`) értéke $0.5$-nél
-  * 100-nál kisebb értékek aránya: $P(Y_i<100)=\int_{-\infty}^{100}{f(x)}dx$
-- $U(40,160)$ eloszlás
-  * Átlag: $\mu=\frac{a+b}{2}=\frac{40+160}{2}=100$
-  * Szórás: $\sigma=\frac{b-a}{\sqrt{12}}=\frac{160-40}{\sqrt{12}}=34.64$
-  * Medián: inverz függvény (`ppf`) értéke $0.5$-nél
-  * 100-nál kisebb értékek aránya: $P(Y_i<100)=\int_{-\infty}^{100}{f(x)}dx$
+- $N(80,20)$ distribution
+  * Mean: $\mu=80$
+  * Standard deviation: $\sigma=20$
+  * Median: the value of the inverse function (`ppf`) at $0.5$
+  * Proportion of values smaller than 100: $P(Y_i<100)=\int_{-\infty}^{100}{f(x)}dx$
+- $Exp(0.0125)$ distribution
+  * Mean: $\mu=\frac{1}{\lambda}=\frac{1}{0.0125}=80$
+  * Standard deviation: $\sigma=\frac{1}{\lambda}=\frac{1}{0.0125}=80$
+  * Median: the value of the inverse function (`ppf`) at $0.5$
+  * Proportion of values smaller than 100: $P(Y_i<100)=\int_{-\infty}^{100}{f(x)}dx$
+- $U(40,160)$ distribution
+  * Mean: $\mu=\frac{a+b}{2}=\frac{40+160}{2}=100$
+  * Standard deviation: $\sigma=\frac{b-a}{\sqrt{12}}=\frac{160-40}{\sqrt{12}}=34.64$
+  * Median: the value of the inverse function (`ppf`) at $0.5$
+  * Proportion of values smaller than 100: $P(Y_i<100)=\int_{-\infty}^{100}{f(x)}dx$
   
-Ezeket **számoljuk is ki minden eloszlásra** egy-egy külön `list`-be, majd fűzzük őket össze egy data frame-be! A data frame sorindexeit pedig nevezzük el a számított mutatók neve alapján!
+Let’s **calculate these for each distribution** in a separate `list`, then combine them into a data frame! The row indices of the data frame will be named after the calculated indicator names!
 
 ```{r}
-# N(80,20) paraméterek
+# parameters of N(80,20)
 mu <- 80
 sigma <- 20
 
-# Exp(0.0125) paraméterek
+# parameters of Exp(0.0125)
 lam <- 0.0125
 
-# U(40,160) paraméterek
+# parameters of U(40,160)
 low_bound <- 40
 upp_bound <- 160
 
 NormStat <- c(
-  mu, # Átlag
-  sigma, # Szórás
-  qnorm(0.5, mu, sigma), # Medián
+  mu, # Mean (Expected Value)
+  sigma, # St Dev
+  qnorm(0.5, mu, sigma), # Median
   pnorm(100, mu, sigma)) # P(Y_i<100)
 
 ExponStat = c(
-  (1/lam), # Átlag
-  (1/lam), # Szórás
-  qexp(0.5, rate = lam), # Medián
+  (1/lam), # Mean (Expected Value)
+  (1/lam), # St Dev
+  qexp(0.5, rate = lam), # Median
   pexp(100, rate = lam)) # P(Y_i<100)
 
 UnifStat = c(
-  ((low_bound + upp_bound)/2), # Átlag
-  ((upp_bound-low_bound)/sqrt(12)), # Szórás
-  qunif(0.5, min=low_bound, max=upp_bound), # Medián
+  ((low_bound + upp_bound)/2), # Mean (Expected Value)
+  ((upp_bound-low_bound)/sqrt(12)), # St Dev
+  qunif(0.5, min=low_bound, max=upp_bound), # Median
   punif(100, min=low_bound, max=upp_bound)) # P(Y_i<100)
 
 TheoreticalMeasures <- data.frame(Normal=NormStat,
@@ -336,35 +336,35 @@ rownames(TheoreticalMeasures) <- c("Exp Value", "St Dev", "Median", "P(Y_i<100)"
 TheoreticalMeasures
 ```
 
-Meg is vagyunk!
+And we’re done!
 
-### 2.2. A megfigyelt minta alapján számolt statisztikai mutatók
+### 2.2. Statistical Measures based on the Observed Samples
 
-Most pedig **tegyük az elvi statisztikai mutatók értéke mellé az $50$ elemű mintákból számolt verzióikat!** Hasonlóan összerakhatjuk őket egy data frame-be, mint fentebb csináltuk az elvi értékekkel.
+Now, let's **put the values of the theoretical statistical measures alongside their versions calculated from the $50$-element samples!** We can similarly combine them into a data frame, as we did above with the theoretical values.
 
-A $100$-nál kisebb értékek arányának (relatív gyakoriságának) számolásához két technikai megjegyzés:
+For calculating the proportion (relative frequency) of values smaller than $100$, two technical notes:
 
-- A számolásnál azt a trükköt sütjük el, hogy pl. az `all_in_one$normies < 100` parancs egy `logical` tömböt ad vissza aszerint, hogy az `all_in_one$normies < 100` logikai állítás kire `TRUE` és `FALSE`.
-- A `sum` függvény pedig egy ilyen tömbre `TRUE = 1` és `FALSE = 0` kódolásokkal végzi el az összegzést: azaz megadja a *kedvező esetek*, a 100-nál kisebb értékek *darabszámát*.
+- For the calculation, we use the trick that, for example, the `all_in_one$normies < 100` command returns a `logical` array indicating whether the logical statement `all_in_one$normies < 100` is `TRUE` or `FALSE`.
+- The `sum` function then sums such an array with `TRUE = 1` and `FALSE = 0` encodings: in other words, it gives the *number of favorable cases*: the *count of values smaller than 100*.
 
 ```{r}
 NormalSampleStat = c(
-  mean(all_in_one$normies), # Átlag
-  sd(all_in_one$normies), # Szórás
-  median(all_in_one$normies), # Medián
-  sum(all_in_one$normies < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
+  mean(all_in_one$normies), # Mean
+  sd(all_in_one$normies), # St Dev
+  median(all_in_one$normies), # Median
+  sum(all_in_one$normies < 100)/nrow(all_in_one)) # P(Y_i<100), now relative freq.
 
 ExponSampleStat = c(
-  mean(all_in_one$expies), # Átlag
-  sd(all_in_one$expies), # Szórás
-  median(all_in_one$expies), # Medián
-  sum(all_in_one$expies < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
+  mean(all_in_one$expies), # Mean
+  sd(all_in_one$expies), # St Dev
+  median(all_in_one$expies), # Median
+  sum(all_in_one$expies < 100)/nrow(all_in_one)) # P(Y_i<100), now relative freq.
 
 UnifSampleStat = c(
-  mean(all_in_one$unis), # Átlag
-  sd(all_in_one$unis), # Szórás
-  median(all_in_one$unis), # Medián
-  sum(all_in_one$unis < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
+  mean(all_in_one$unis), # Mean
+  sd(all_in_one$unis), # St Dev
+  median(all_in_one$unis), # Median
+  sum(all_in_one$unis < 100)/nrow(all_in_one)) # P(Y_i<100), now relative freq.
 
 SampleStatAll <- data.frame(Normal=NormalSampleStat,
                             Exponential=ExponSampleStat,
@@ -374,74 +374,74 @@ rownames(SampleStatAll) <- c("Mean", "St Dev", "Median", "P(Y_i<100)") # name of
 SampleStatAll
 ```
 
-Meg is vagyunk!
+And we're done!
 
-### 2.3. A mintavételi hiba (MVH) koncepciója
+### 2.3. The Concept of Sampling Error
 
-Nézzük össze akkor kétféle stat. mutatókat tartalmazó data frame-et egymással!
+Let’s now compare two data frames containing different statistical measures!
 
 ```{r}
 TheoreticalMeasures
 SampleStatAll
 ```
 
-Láthatjuk, hogy a **statisztikai mutatók terén is azt tapasztaljuk, amit a hisztogramok és a sűrűségfüggvény esetén**. Az **elvi értékekhez az $50$ elemű mintából számolt mutatók közel vannak, de nem egyeznek velük**.
+We can see that, **with statistical indicators**, we observe the same thing as we did with histograms and density functions. The **calculated indicators from the $50$-element sample are close to the theoretical values but do not exactly match them**.
 
-A **kétféle értékek (elvi és mintából számolt) közti eltérést hívjuk MINTAVÉTELI HIBÁNAK (MVH)**. Mivel a gyakorlatban **csak egy adott elemszámú mintát tudunk megfigyelni**, és abból kellene rájönnünk a vizsgált mutatók valódi értékére, a hisztogramból meg a valódi eloszlásra, **nagyon jó lenne ezt az MVH-t megmérni/kiszámolni/megbecsülni**! Na, ez a **statisztikai becsléselmélet alapfeladata**!
+The **difference between the two sets of values (theoretical and sample-based) is called SAMPLING ERROR**. Since in practice, we can only observe a sample with a fixed sample size, and we need to infer the true values of the examined indicators and the true distribution behind the data from that sample, **it would be really helpful to measure/compute/estimate this sampling error!** This is the **core task of statistical estimation theory**!
 
-Az MVH kiszámolásához hosszú az út, de az **MVH viselekdését megérthetjük, ha generálunk még pár extra mintát az eddig vizsgált eloszlásokból, különböző elemszámokkal**.
+The road to calculating sampling error is long, but we can **understand the behavior of sampling error** by generating a few extra samples from the distributions we’ve examined, with different sample sizes.
 
-Ehhez írjunk egy R függvényt, ami az eddig elvégzett műveleteinket egy függvényben valószítja meg tetszőleges mintaelemszám és véletlenmag mellett:
+Let’s write an R function that implements all of the operations we’ve done so far in one function, with arbitrary sample sizes and random seeds:
 
-- $N(80,20)$, $Exp(0.0125)$ és $U(40,160)$ eloszlású minták generálása
-- A mintákból a vizsgált 4 statisztikai mutató számítása és azok összefüzése data frame-be
+- Generation of samples from $N(80,20)$, $Exp(0.0125)$, and $U(40,160)$ distributions
+- Calculation of the 4 examined statistical indicators from the samples and combining them into a data frame
 
-Ez a függvény némi copy-paste után az alábbi formát ölti.
+This function will take the following form after some copy-paste magic.
 
 ```{r}
 GenerateSample <- function(sample_size, random_seed){
-  # N(80,20) minta generálása
+  # generating sample from N(80,20)
   mu <- 80
   sigma <- 20
 
   set.seed(random_seed)
   normies <- rnorm(n = sample_size, mean = mu, sd = sigma)
   
-  # Exp(0.0125) minta generálása
+  # generating sample from Exp(0.0125)
   lam <- 0.0125
 
   set.seed(random_seed)
   expies <- rexp(n = sample_size, rate = lam)
 
-  # U(40, 160) minta generálása
+  # generating sample from U(40, 160)
   low_bound <- 40
   upp_bound <- 160
 
   set.seed(random_seed)
   unis <- runif(n = sample_size, min = low_bound, max = upp_bound)
 
-  # Eredmények összefűzése data frame-be
+  # Put results in the same data frame
   all_in_one <- data.frame(normies=normies,
                           expies=expies,
                           unis=unis)
   
   NormalSampleStat = c(
-    mean(all_in_one$normies), # Átlag
-    sd(all_in_one$normies), # Szórás
-    median(all_in_one$normies), # Medián
-    sum(all_in_one$normies < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
+    mean(all_in_one$normies), # Mean
+    sd(all_in_one$normies), # St Dev
+    median(all_in_one$normies), # Median
+    sum(all_in_one$normies < 100)/nrow(all_in_one)) # P(Y_i<100), now relative freq.
 
   ExponSampleStat = c(
-    mean(all_in_one$expies), # Átlag
-    sd(all_in_one$expies), # Szórás
-    median(all_in_one$expies), # Medián
-    sum(all_in_one$expies < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
+    mean(all_in_one$expies), # Mean
+    sd(all_in_one$expies), # St Dev
+    median(all_in_one$expies), # Median
+    sum(all_in_one$expies < 100)/nrow(all_in_one)) # P(Y_i<100), now relative freq.
 
   UnifSampleStat = c(
-    mean(all_in_one$unis), # Átlag
-    sd(all_in_one$unis), # Szórás
-    median(all_in_one$unis), # Medián
-    sum(all_in_one$unis < 100)/nrow(all_in_one)) # P(Y_i<100), most relatív gyak.
+    mean(all_in_one$unis), # Mean
+    sd(all_in_one$unis), # St Dev
+    median(all_in_one$unis), # Median
+    sum(all_in_one$unis < 100)/nrow(all_in_one)) # P(Y_i<100), now relative freq.
 
   SampleStatAll <- data.frame(Normal=NormalSampleStat,
                               Exponential=ExponSampleStat,
@@ -452,15 +452,15 @@ GenerateSample <- function(sample_size, random_seed){
 }
 ```
 
-Ha a `GenerateSample` függvény definícióját megadó fenti kód szépen lefutott, akkor a következőképpen tudjuk használni a függvényt egy $50$ elemű minta generálására $1994$-es véletlenmag mellett.
+If the code defining the `GenerateSample` function runs successfully, we can use the function to generate a $50$-element sample with a $1994$ random seed like this.
 
 ```{r}
 GenerateSample(50, 1994)
 ```
 
-Na, úgy néz ki működik! :)
+Looks like it works! :)
 
-Akkor most lessük meg **mi történik a mintából számolt és az elvi statisztikai mutatók közti különbségekkel** (alias az MVH-val), ha **nem $50$, hanem mondjuk $1000$ elemű mintákat generálok az eloszlásokból**.
+Now, let's check out **what happens to the differences between the sample-based and theoretical statistical measures** (i.e., the sampling errors) when I **generate samples with $1000$ elements instead of $50$** from the distributions.
 
 ```{r}
 TheoreticalMeasures
@@ -468,22 +468,22 @@ GenerateSample(50, 1992)
 GenerateSample(1000, 1992)
 ```
 
-Na, hát ha $1000$ elemet tudtam megfigyelni az $50$ helyett, akkor minden statisztikai mutatóm mintából számolt értéke lényegesen közelebb van a valós, elvi értékhez! Tehát, olybá tűnik, hogy **mintaelemszám növelésével az MVH lecsökken!** Ez egy nagyon fontos tulajdonság, ami **minden statisztikai mutató esetén általánosságban igaz marad!**<br>
-Mivel ez egy marha fontos dolog, így kaptok róla egy mémet is! **Égjen csak ez be az agyakba! ;)**
+Well, if I observed $1000$ elements instead of $50$, all of my statistical measures' sample-based values are much closer to the true theoretical values! So, it seems that **by increasing the sample size, sampling error decreases!** This is a very important property that **holds true for all statistical measures in general!**<br>
+Since this is a really important concept, here’s a meme to help it stick in your minds! **Let this burn into the brains! ;)**
 
 <center>
 ![](sample_size.jpg){width=40%}
 </center>
 
-<br>További kísérletezgetésre a mintavétel hibával kapcsolatban, nyugodtan lehet használni az alábbi kis interaktív felületet.
+<br>For further experimentation with sampling error, feel free to use the following interactive interface.
 
 <iframe src ="https://kola992.shinyapps.io/samplingfromdistributions/" height=700px width=900px data-external="1" />
 
-A felületet nyomogatva érdemes megfigyelni pár dolgot.
+By interacting with the interface above, it’s worth noting a few things.
 
-- A mintaelemszám növelésével a hisztogram alakja is közelebb kerül az adatok mögött álló eloszlás sűrűségfüggvényéhez. Tehát **elemszám növelésével a sűrűségfüggvény mintavételi hibája is csökken** úgymond.
-- Az **átlag és a 100-nál kisebb értékek aránya** általában **mindhárom eloszlásnál elég közel van a valós, elméleti értékéhez**.
-- Ellenben a **medián és szórás** értékek az **exponenciális eloszlás esetében aránylag többször is durván eltérnek a valós értéktől még nagyobb** (pl. 500 körüli) **elemszám esetén is**.
+- As the sample size increases, the shape of the histogram gets closer to the density function of the underlying distribution. So, **by increasing the sample size, the sampling error of the density function decreases**.
+- The **mean and the proportion of values smaller than 100** are generally **quite close to the true theoretical value for all three distributions**.
+- On the other hand, the **median and standard deviation** values for the **exponential distribution tend to differ more seriously from the true values even with larger** (e.g., around 500) **sample sizes**.
 
 ## 3. Simulating the Central Limit Theorem
 
@@ -530,28 +530,27 @@ hist(clt_df$n_100)
 hist(clt_df$n_500)
 ```
 
-## 4. Statisztikai sokaságok FAE mintavételezése
+## 4. IID Sampling of Statistical Populations
 
-Amit az első két fejezetben műveltünk az az **elméleti eloszlások Független Azonos Eloszlású, leánykori nevén FAE mintavételezése**.
+What we did in the first two sections, was the **sampling from theoretical distributions, known as Independent Identically Distributed (IID) sampling** in its maiden name.
 
-A FAE mintának ezek szerint két jellemzője van:
+Thus, the IID sample has two characteristics:
 
-- **Független**: a **mintaelemek kihúzása véletlenszerű**, tehát az, hogy mit húztam mondjuk 3-nak **nem függ** attól mit húztam 1-nek és 2-nak.
-- **Azonos Eloszlású**: A minta minden eleme **ugyan abból az eloszlásból** (pl. $N(80,20)$ vagy $Exp(0.0125)$) származik, nincs közben váltás arra nézve, hogy épp milyen eloszlásból húzzuk ki véletlenszerűen az értékeket.
+- **Independent**: the **selection of sample elements is random**, meaning that what I select for the 3rd element **does not depend** on what I selected for the 1st and 2nd elements.
+- **Identically Distributed**: Each sample element comes from the **same distribution** (e.g., $N(80,20)$ or $Exp(0.0125)$), with no change in the distribution from which values are randomly drawn.
 
-Ezt a FAE mintavételt **valós statisztikai adatsorok, azaz sokaságok esetén is el lehet végezni**, nem csak elméleti eloszlások esetén.<br>
-Mondjuk meg akarom ismerni a kb. 4,5 millió magyar munkavállaló havi bruttó átlagkeresetét. Nyilván a NAV-nál megvan mind a 4,5 millió dolgos magyar *en_ber* kereseti adata tételesen (tehát ezek az értékek nem egy exponenciális eloszlással vannak megadva pl., hanem tételesen fel vannak sorolva egy táblában valahol), csak hát tudjuk mikor adják ki ezeket az adatokat bárkinek is. Ezért inkább azt csináljuk, hogy mondjuk a népességnyilvántartótól elkérjük a 4,5 millió magyar munkavállaló lakcímét, beöntjük a címeket tartalmazó cetliket egy kalapba, és becsukott szemmel, random húzunk 100 címet *visszatevéssel*, azaz egy kihúzott címet visszateszünk mindig a kalapba, és nem rakjuk félre. Majd mind a 100 címre elmegyünk és megkérdezzük az emberek havi bruttó keresetét. Ezzel a **véletlen, visszatevéses mintavétellel a magyar munkavállalók sokaságából** valójában **FAE mintavételezést végeztünk**. Miért is?
+This IID sampling **can also be done with real statistical data, i.e., populations**, not just theoretical distributions.<br>
+For instance, I want to know the average gross monthly salary of approximately 4.5 million Hungarian employees. Obviously, the Hungarian Tax Authority (NAV) has all the detailed salary data of the 4.5 million Hungarian workers (these values are not given by an exponential distribution, for example, but are listed individually in a table somewhere), but we know when they release these data to anyone. Therefore, we do the following: we request the addresses of these 4.5 million Hungarian employees from the population registry, place the slips containing the addresses into a hat, and randomly draw 100 addresses *with replacement*, meaning we always put the selected address back into the hat, not setting it aside. We then visit all 100 addresses and ask people their gross monthly salary. With this **random sampling with replacement**, we are actually **performing an IID sampling from the Hungarian workforce population**. Why?
 
-1. A **mintaelemek függetlenek**, hiszen "*becsukott szemmel*", véletlenszerűen húztuk ki a minta elemeket.
-2. Mivel **visszatevéses volt a mintavétel, így a kersetek eloszlása nem változott meg a mintavétel során**. Tehát végig ugyan azt az elméleti kereseteloszlást mintavételeztünk. Pont úgy, mint amikor mindig ugyan abból az elvi sűrűségfüggvényből generáltuk a mintaelemeket az eddig elvégzett mintavételeink során.
+1. The **sample elements (observations) are independent**, as we randomly drew them, "*blindfolded*".
+2. Since it was **sampling with replacement, the distribution of salaries did not change during the sampling**. In other words, we sampled from the same theoretical salary distribution throughout, just like when we generated sample elements from the same theoretical density function in the previous sampling exercises.
 
-Tehát, bízunk abban, hogy ami mondjuk a **mintából számolt átlagkereset és a teljes sokaság átlagekeresete között áll az ugyan az az MVH, mint amivel találkoztunk az eloszlások elvi átlaga és a belőlük generált minták tapasztalati átlaga esetében is!!**<br>
-Persze a gyakorlatban **nem mindig tudunk ilyen szép FAE mintavételt végezni**, mert
+Therefore, we trust that the **sampling error between the sample mean salary and the true population mean salary will be the same as the error encountered between the theoretical means of distributions and the sample means generated from them!!**<br> In practice, we **can't always perform such neat IID sampling**, because:
 
-1. **Nem tudunk visszatenni** elemeket. Ez a **kisebbik gond**. Hiszen, ha a **minta mérete a sokaság méretéhez képest nagyon kicsi** (pl. 100 főt választunk kis a 4,5 millióból és nem 2 milliót :)), akkor a **visszatevéses és visszatevés nélküli mintavétel nagyjából ugyan az**, mert nagyon kicsi lesz az esélye annak, hogy a visszatevéses esetben valakit tényleg kétszer beválasztunk a mintába.
-2. **Nem tudunk ténylegesen véletlenszerűen kiválasztani elemeket**. Ez a **nagyobb baj**. És sajnos gyakori is. Pl. *nem kapunk címjegyzéket, amiből sorsolni lehet a mintánkba emberkéket*. Mert ekkor a mintavételi hiba mellé bejön az úgynevezett **nem mintavételi hiba**. Ezek olyan tényezők, amik "*emberi gyarlóság*" miatt kerülnek a rendszerbe. Pl. nagyon tetszenek a vörös hajú lányok, így aránytalanul sokat kérdezek meg belőlük ahhoz képest ahányan a sokaságban vannak. Vagy, lusta vagyok lemenni 500 fő alatti településre, így az alacsonyabb keresetű társadalmi rétegből is kevesebb embert kérdezek meg, mint ahányat kéne a sokasági elemszámuk alapján. Tehát, szakszóval azt mondom, hogy a **minta nem lesz reprezentatív hajszínre és település méretre**. Ezekkel a **nem mintavételi hibákkal most nem foglalkozunk, feltesszük, hogy nincsenek**. Mert **kiszámolásuk és korrigálásuk elég bonyolult**, <a href="https://tatk.elte.hu/mesterszakok/survey" target="_blank">komplett mesterszakok</a> foglalkoznak a kérdéssel.
+1. We **cannot replace elements**. This is the **smaller issue**. If the **sample size is very small compared to the population size** (e.g., selecting 100 people out of 4.5 million, not 2 million), the **sampling with and without replacement is pretty much the same**, because the chance of selecting someone twice in the replacement case is very small.
+2. We **cannot truly select elements randomly**. This is the **bigger problem**, and unfortunately, it is quite common. For example, we might *not get a directory of addresses from which we can randomly select people for our sample*. In this case, non-sampling errors come into play. These are factors that are introduced due to "*human shortcomings*". For example, I might like red-haired girls a lot, so I ask disproportionately many of them compared to their proportion in the population. Or, I might be too lazy to go to a village with fewer than 500 people, so I ask fewer people from lower-income social strata than the proportion they should have based on their population size. So, in technical terms, I can say that the **sample will not be representative of hair color or settlement size**. We will **ignore these non-sampling errors for now, assuming there are none**. This is because **calculating and correcting them is quite complicated**, and <a href="https://tatk.elte.hu/mesterszakok/survey" target="_blank">complete master's programs</a> deal with this specific topic alone.
 
-Szóval, első körben nézzük meg **hogyan tudunk Pythonban egy ismert sokaságból FAE mintát venni**. A <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a> fájlban a 2022-es LIDL Balaton átúszás résztvevőinek *neve, neme és percben mért időeredménye* található. Olvassuk be a táblát R data frame-be!
+So, first let’s see **how we can take an IID sample from a known population in R**. In the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a> file, the participants' *name, sex, and time results measured in minutes* from the 2022 LIDL Balaton Swim are listed. Let’s load the table into an R data frame!
 
 ```{r}
 library(readxl)
@@ -559,15 +558,15 @@ swimming = read_excel("LIDLBalaton2022.xlsx")
 str(swimming)
 ```
 
-Szuper, úgy látszik megvan mind az $N=9751$ versenyző időeredménye hiánytalanul. **Ez lesz most akkor a sokaságunk.**
+Great, it looks like we have all $N=9751$ contestants' time results, without missing values. **This will be our population.**
 
-Számoljunk ki az időeredményekre három statisztikai mutatót:
+Let’s calculate three statistical measures for the time results:
 
-- Az **átlag**os időt Jele: $\bar{Y}$ vagy $\mu$
-- Az egyéni idők **szórás**át Jele: $\sigma$
-- A 3 óra (180 perc) felett teljesítők **arányát** Jele: $P$
-  * Itt a számolásnál azt a trükköt sütjük el, hogy a `swimming.PERC > 180` parancs egy `bool` tömböt ad vissza aszerint, hogy a `swimming.PERC > 180` logikai állítás kire `True` és `False`.
-  * A `numpy` csomag `sum` függvénye pedig egy ilyen tömbre `True = 1` és `False = 0` kódolásokkal végzi el az összegzést: azaz megadja a *kedvező esetek*, a Balatont 180-an percnél hosszabb idő alatt átúszók *darabszámát*.
+- The **mean** time denoted as $\bar{Y}$ or $\mu$
+- The **standard deviation** of individual times denoted as $\sigma$
+- The **proportion** of people who completed the swim in more than 3 hours (180 minutes), denoted as $P$
+  * For this calculation, we use the trick that the command `swimming$TIME > 180` returns a `logical` vector indicating whether the `swimming$TIME > 180` logical condition is `TRUE` or `FALSE`
+  * The `sum` function then sums this array with `TRUE = 1` and `FALSE = 0`, essentially giving us the **count of favorable cases**: the number of swimmers who completed the swim in more than 180 minutes.
 
 ```{r}
 PopMean = mean(swimming$TIME)
@@ -579,23 +578,23 @@ PopStd
 PopProp
 ```
 
-Meg is vagyunk, **ezek akkor a statisztikai mutatóink valós, sokasági értékei**:
+We’re all set, these are **the population’s true statistical measures**:
 
-- $\bar{Y}=\mu=167.5$ perc
-- $\sigma = 44.1$ perc
+- $\bar{Y}=\mu=167.5$ minutes
+- $\sigma = 44.1$ minutes
 - $P = 0.3295=32.95\%$
 
-Ezek alapján a **sokaság, azaz a teljes adatsor esetén a következő jelölési konvenciókkal élünk**:
+Based on this, the **following notation conventions apply to the population (i.e., the entire data set)**:
 
-- Elemszám $N$
-- Sokaságból számított statisztikai mutatók együttes jelölése: $\theta$
-  * Tehát $\theta$ egy általános jelölés egy sokasági mutatószámra.
-  * Állhat mögötte átlag ($\bar{Y}=\mu$), szórás ($\sigma$), arány ($P$), de akár medián ($Me$), módusz ($Mo$) stb. is!
+- NUmber of Elements $N$
+- The joint notation for population-based statistical measures: $\theta$
+  * So $\theta$ is a general notation for a population statistic.
+  * It can represent mean ($\bar{Y}=\mu$), standard deviation ($\sigma$), proportion ($P$), but also median ($Me$), mode ($Mo$), etc.!
   
-Általános szabály, hogy a "*sokasági dolgokat*" vagy **nagy** vagy **görög betűvel jelöljük**.
+The general rule is that we use either **capital or Greek letters** for "*population-related things*".
 
-Akkor most **vegyünk a Balaton 2022-es átúszóinak a sokaságából** egy $n=100$ elemű **mintát!** R-ben létezik egy `sample` c. függvény, amivel egy **vektor típusú objektumból tudunk mintát venni**. Ezért azt fogjuk csinálni, hogy a data frame sorindexeiből (`rownames`) veszünk egy véletlen mintát, utána szögletes zárójeles szűrés segítségével választjuk ki az eredeti data frame-ből az így kisorsolt mintaelemeket, és mentjük el őket egy külön data frame-be. A `sample` függvénynek a `size` paraméterében meg lehet mondani, hogy **hány elemű mintánk** legyen. A `replace = TRUE` paraméter beállítással pedig azt mondjuk meg gépállatnak, hogy **visszatevéses véletlen, azaz FAE mintát** szeretnénk.<br>
-Itt is érdemes a mintavétel előtt elsütni a `set.seed` függvényt, amit azonos számra (pl. továbbra is 1992-re) beállítva *ugyan azt a véletlen mintát fogjuk kapni*.
+Now, let’s **take** a $n=100$ **sample from the population of swimmers in the 2022 Balaton Swim**! In R, there is a `sample` function that allows us to **take a sample from a vector-type object**. So, what we will do is randomly select a sample from the row indices of the data frame (`rownames`), then use square bracket filtering to select the corresponding rows from the original data frame and save them in a separate data frame. The `size` parameter of the `sample` function lets us specify the desired **sample size**. With the `replace = TRUE` setting, we instruct the machine spirit that we want **sampling with replacement, i.e., an IID sample**.<br>
+It's also a good idea to use the `set.seed` function before sampling, so by setting it to the same number (e.g., still 1992), we will *get the same random sample every time*.
 
 ```{r}
 set.seed(1992)
@@ -604,19 +603,19 @@ swimming_sample <- swimming[selected_into_sample,]
 str(swimming_sample)
 ```
 
-Olybá néz ki megvan az $n=100$ elemű FAE mintánk! :)
+Looks like we have our $n=100$ FAE sample! :)
 
-Mielőtt nekiugrunk, és kiszámoljuk a minta alapján az időeredmények átlagát, szórását és a 3 órán felül úszók arányát, itt is szögezzünk le **jelölési konvenciót a mintára vonatkozóan**:
+Before we proceed and calculate the sample’s mean time, standard deviation, and the proportion of swimmers who swam in more than 3 hours, let’s establish a **notation convention for the sample**:
 
-- Elemszám $n$
-- A mintából számított statisztikai mutatók együttes jelölése: $\hat{\theta}$
-  * Tehát $\hat{\theta}$ egy általános jelölés egy sokasági mutatószámra.
-  * Általánosságban a "*kalap*", a $\hat{}$ mindig a mintából **becsült** érték jele.
-  * Állhat $\hat{\theta}$ mögött átlag ($\bar{y}$), szórás ($s^*$), arány ($p$), de akár medián ($me$), módusz ($mo$) stb. is!
-  
-Általános szabály, hogy a "*mintából számolt dolgokat*" vagy **kis betűvel** vagy **kalappal jelöljük**.
+- Sample Size $n$
+- The joint notation for sample-based statistical measures: $\hat{\theta}$
+  * So $\hat{\theta}$ is a general notation for a statistic calculated from the sample.
+  * In general, the "*hat*" symbol $\hat{}$ always refers to an **estimated value** from the sample.
+  * It can represent the mean ($\bar{y}$), standard deviation ($s^*$), proportion ($p$), but also median ($me$), mode ($mo$), etc.!
 
-Na, akkor nézzük meg **a statisztikai mutatóink** $n = 100$ elemű **mintából számítva/becsülve**!
+The general rule is that we use either **lowercase letters** or **hats** for "*sample-based calculations*".
+
+Now, let’s see the **statistical measures calculated/estimated from** our $n = 100$ **sample**!
 
 ```{r}
 SampleMean = mean(swimming_sample$TIME)
@@ -628,31 +627,31 @@ SampleStd
 SampleProp
 ```
 
-Meg is vagyunk, **ezek akkor a statisztikai mutatóink mintából becsült értékei**:
+Here we go, these are **the estimated statistical measures from our sample**:
 
-- $\bar{y}=160.81$ perc
-- $s^* = 36.74$ perc
+- $\bar{y}=160.81$ minutes
+- $s^* = 36.74$ minutes
 - $p = 0.27=27\%$
 
-Ezek sem egyeznek pontosan a mutatók valós, sokasági értékével, de *nem térnek el nagyon durván* a valóságtól. Most is abban bízunk, hogy a **becsült és valós értékek közti eltérés a MVH miatt van, és akkor most ráfordulunk ennek az MVH-nak a  meghatározására!**
+These don't exactly match the true population values, but they are *not drastically different* from the reality. Again, we trust that the **difference between the estimated and true values is due to sampling error alone, and now we will focus on calculating (or at least estimating) this sampling error!**
 
-Ehhez a **0. lépés, hogy nagyon-nagyon sok, pl. $10000$ db 100 elemű FAE mintát veszünk** a sokaságunkból, és mindegyik mintában kiszámoljuk az *átlagot, szórást és arányt*.
+**Step 0 is to take a large number, say $10000$ FAE samples of size 100** from our population, and for each sample, we will calculate the *mean, standard deviation, and proportion*.
 
-### 4.1. Ismételt Mintavételezés (*Resampling*)
+### 4.1. The Method of Resampling
 
-Amit még ebben az anyagban megnézünk az az volna, **hogyan generálunk le $10000$ db 100 elemű FAE mintát** a 2022-es Balaton átúszók sokaságából.
+What we will still look at in this chapter is how to **generate $10000$ IID samples of size $100$ from the population** of 2022 Balaton swimmers.
 
-Természetesen a kódunk alapja egy $10000$ iteráción végiszaladó `for` ciklus lesz. Ami némileg érdekes, hogy miképpen tároljuk el a mintavételezett adatokat. A számításokhoz igazából csak a `TIME` oszlopra van szükség, így egy olyan data frame-t generálunk, aminek $10000$ sorában lesznek a különböző mintavételek, míg $100$ oszlopában a $100$ db mintaelem minden egyes mintavételezési körben.
+Naturally, the basis of our code will be a `for` loop running through $10000$ iterations. What's somewhat interesting is how we store the sampled data. For the calculations, we only need the `TIME` column, so we generate a data frame where the $10000$ rows will contain the various samples, while the $100$ columns will store the $100$ sample elements for each sampling round.
 
-Ehhez először létrehozunk egy kiinduló $100$ elemű mintát csak a `TIME` oszlop értékeiből. Ne feledjük a `set.seed` függvényt most sem.
+First, we create an initial sample of $100$ elements from the values in the `TIME` column only. Don’t forget the `set.seed` function here either.
 
 ```{r}
 set.seed(1992)
 samples <- sample(swimming$TIME, size=100, replace = TRUE)
 ```
 
-És ezek után egy `for` ciklust indítunk, ami $10000-1$ lépést megy (mert az első minta meglett az előbb), és minden lépésben generálunk egy új $100$ elemű mintát, és ezt egy új sorban hozzáfűzzük az előző mintákhoz a `rbind` függvénnyel. Arra kell figyelni, hogy a `set.seed`-ben a véletlen magot mindig valami más számra kell állítani, hogy ne ugyan azt a mintát vegyük ki $10000$-szer. Legegyszerűbb mindig a ciklusváltozót (iteráció sorszáma) hozzáadni a kezdeti $1992$-es maghoz: mindig más, de könnyen reprodukálható így a szimuláció eredménye.<br>
-Végül, az eredményeket egy data frame-be konvertáljuk, és annak sor- és oszlopneveit átnevezzük valami beszédesre. A paste0 függvény sima szövegösszefűzést csinál csak itt az R-ben. :)
+After this, we start a `for` loop that goes for $10000 - 1$ steps (since the first sample was obtained earlier). In each step, we generate a new sample of size $100$ and append it in a new row to the previous samples using the `rbind` function. One thing to note is that in `set.seed`, we always need to set the random seed to a different number, so that we don’t select the same sample $10000$ times. The simplest solution is to always add the loop variable (the iteration `index`) to the initial seed value of $1992$: this way, it’s always a different seed, but still allows for reproducibility of the simulation results.<br>
+Finally, we convert the results to a data frame and rename its row and column names to something meaningful. The `paste0` function simply concatenates text strings in R. :)
 
 ```{r eval=FALSE}
 for (index in 1:(10000-1)) {
@@ -675,11 +674,11 @@ head(samples)
 ```
 
 
-Kicsit hosszabb volt a futásidő, de akkor ezzel meg is vagyunk, van az időeredményekből $10000$ db $n=100$ elemű mintánk! :) Csak, hogy ne kelljen ezt a hosszú mintagenerálási időt végigvárni, utolsó lélegzetünkkel **mentsük el az eredményünket tartalmazó data frame-t egy Excel fájlba**. Ezt a `writexl` csomag (`writexl` tesója) `writexl` függvényével tudjuk elérni. Első paramétere a data frame, amit ki akarunk iratni az Excel fájla, a második paraméter a fájlneve (idézőjelek között `charater` adattípusban) annak az Excel fájlnak, amit létre akarunk hozni (*xlsx* kiterjesztést ne felejtsük le).
+The runtime was a bit longer (as expected), but we’re done now — we have $10000$ samples of size $n = 100$ from the time results! :) Just so we don't have to wait for this long sample-generation process every time, with our last breath, let’s **save the data frame containing our results to an Excel file**. This can be achieved using the `write_xlsx` function from the `writexl` package (little sibling of the `readxl` package). The first parameter is the data frame to be written to the Excel file, and the second parameter is the file name (in `character` data type, enclosed in quotation marks) of the Excel to be created (don’t forget the *.xlsx* extension).
 
 ```{r eval=FALSE}
 library(writexl)
 write_xlsx(samples, "SwimmingSamples.xlsx")
 ```
 
-Ha minden igaz, akkor a bállított *working directory*-ban létre is jött az Excel fájlunk! :)
+If everything went well, our Excel file was created in our *working directory*! :)

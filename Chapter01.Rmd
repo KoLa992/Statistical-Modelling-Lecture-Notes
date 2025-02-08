@@ -1,7 +1,7 @@
 ---
 title: "Introduction to R"
 author: "László Kovács"
-date: "06/02/2025"
+date: "08/02/2025"
 output:
   html_document:
     toc: true
@@ -526,118 +526,118 @@ mean(this)
 
 ### 6.2. Selecting Rows and Column in a Dataframe
 
-Ki tudjuk választani 42. sor 7. oszlopát igen sokféleképpen:
+Naturally, in a data table, the most basic operation is selecting specific rows and columns.
+
+We can select the 42nd row and 7th column in many different ways.
 
 ```{r}
-COVID[42,7] # ez kicsit mátrixműveletes logika: [sor,oszlop] hivatkozás
+COVID[42,7] # this is a bit of matrix operation logic: [row,column] references
 
-COVID[42,"COVID19_CasesPerMillion"] # az oszlopot szám helyett a nevével is lehet hivatkozni
+COVID[42,"COVID19_CasesPerMillion"] # the column can also be referenced by its name instead of its number
 
-COVID$COVID19_CasesPerMillion[42] # itt eleve azt mondom, hogy kiszedjük a COVID19_CasesPerMillion nevű oszlopot (vagyis listaelemet) a listából a $ jellel, és annak nézzük meg a 42. elemét 
+COVID$COVID19_CasesPerMillion[42] # here I’m specifically saying that we extract the column (or list element) named COVID19_CasesPerMillion from the list using the $ symbol and check its 42nd element 
 ```
 
-Ki tudjuk választani az egész 42. sort:
+We can select the entire 42nd row.
 
 ```{r}
-COVID[42,] # ilyenkor az oszlop hivatkozást hagyjuk simán üresen, de a vesszőt még írjuk be!
+COVID[42,] # in this case, we simply leave the column reference empty, but we still write the comma!
 ```
 
-Vagy az egész 7. oszlopot:
+Or the entire 7th column.
 
 ```{r}
-COVID[,7] # ilyenkor a sor hivatkozást hagyjuk simán üresen, de a vesszőt még írjuk be!
+COVID[,7] # in this case, we simply leave the row reference empty, but we still write the comma!
 
 COVID[,"COVID19_CasesPerMillion"]
 
 COVID$COVID19_CasesPerMillion
 ```
 
-Több sort és oszlopot is ki tudunk választani, ha a [] közti hivatkozásokba vektorokat rakunk:
+We can also select multiple rows and columns if we place vectors in the references between the `[]` signs.
 
 ```{r}
 COVID[c(1,50,60,80),c(1,4,7)]
 
 COVID[c(1,50,60,80),c("CountryName","Prop_UrbanPop","COVID19_CasesPerMillion")]
 
-COVID[20:30,c("CountryName","Prop_UrbanPop","COVID19_CasesPerMillion")] # Ha a kiválasztandó sorok követik egymást, akkor így is lehet
+COVID[20:30,c("CountryName","Prop_UrbanPop","COVID19_CasesPerMillion")] # if the rows to be selected are consecutive, it can be done like this
 
-COVID[20:30,1:4] # Ha a kiválasztandó oszlopok követik egymást, akkor így is lehet
+COVID[20:30,1:4] # if the columns to be selected are consecutive, it can be done like this
 
 ```
 
-Ami a legszebb ebben az egészben, hogy a **kiválasztandó sorokat logikai feltételekkel is ki tudjuk jelölni**. Magyarul tudjuk **szűrni** az adattáblát!
+The most beautiful thing about all this is that **we can also designate the rows to be selected using logical conditions**. In other words, we can **filter** the data table!
 
 ### 6.3. Examples for Logical Filtering in Dataframes
 
-Adjuk meg azon országok neveit, ahol 100 felett volt 2020.03.26-án az egymillió főre jutó COVID esetszám:
+Provide the names of those countries where the COVID case count per million exceeded 100 on 26/03/2020!
 
 ```{r}
 COVID[COVID$COVID19_CasesPerMillion > 100, c("CountryName", "COVID19_CasesPerMillion")]
 ```
 
-Adjuk meg azon országok neveit, ahol 100 felett volt 2020.03.26-án az egymillió főre jutó COVID esetszám, **és** a városi népesség aránya legfeljebb 60%:
+Provide the names of those countries where the COVID case count per million exceeded 100 on 26/03/2020, **and** the proportion of the urban population is at most 60%!
 
 ```{r}
 COVID[COVID$COVID19_CasesPerMillion > 100 & COVID$Prop_UrbanPop <= 60,
       c("CountryName", "Prop_UrbanPop", "COVID19_CasesPerMillion")]
 ```
 
-Adjuk meg azon országok neveit, ahol az államforma abszolút monarchia, **vagy** a városi népesség aránya 35% alatti:
+Provide the names of those countries where the form of government is an absolute monarchy, **or** the proportion of the urban population is below 35%!
 
 ```{r}
-# először megnézzük, hogy milyen lehetséges értékei vannak a ConstitutionalForm változónak a unique függvénnyel
-
+# first, we check what possible values the ConstitutionalForm variable has using the unique function
 unique(COVID$ConstitutionalForm)
 
-# a unique függvény eredményéből látjuk, hogy az abszolút monarchiák "Absolute monarchy" néven futnak a táblában
-
+# from the result of the unique function, we see that absolute monarchies are listed as "Absolute monarchy" in the table
 COVID[COVID$ConstitutionalForm == "Absolute monarchy" | COVID$Prop_UrbanPop < 35,
       c("CountryName", "Prop_UrbanPop", "ConstitutionalForm")]
 ```
 
-Adjuk meg Belgium, Magyarország és Horvátország népsűrűségét és 2020.03.26-i COVID esetszámait:
+Provide the population density and COVID case counts on 2020.03.26 for Belgium, Hungary, and Croatia!
 
 ```{r}
 COVID[COVID$Country %in% c("Belgium", "Hungary", "Croatia"),
       c("CountryName", "PopDens", "COVID19_CasesPerMillion")]
 ```
 
-Adjuk meg azon országok nevét, államformáját és 2020.03.26-i COVID esetszámait, amik **nem** köztársaságok! Az eredményt mentsük el egy új, `NemKozt` nevű `data frame`-be, és az eredménynek csak az első 6 sorát jelenítsük meg:
+Provide the names, forms of government, and COVID case counts on 2020.03.26 for countries that are **not** republics! Save the result in a new data frame called `NonRep`, and display only the first 6 rows of the result!
 
 ```{r}
-NemKozt <- COVID[COVID$ConstitutionalForm != "Republic",
+NonRep <- COVID[COVID$ConstitutionalForm != "Republic",
       c("CountryName", "ConstitutionalForm", "COVID19_CasesPerMillion")]
-# Figyeljük meg, hogy a "!=" a "nem egyenlő" jele
+# note that "!=" is the "not equal" symbol
 
-head(NemKozt)
+head(NonRep)
 ```
 
-Adjuk meg azon országok nevét, amiknek az államformája **nem** köztársaság és **nem** is abszolút monarchia:
+Provide the names of those countries whose form of government is **not** a republic and **not** an absolute monarchy!
 
 ```{r}
 COVID[!(COVID$ConstitutionalForm %in% c("Absolute monarchy", "Republic")),
       c("CountryName", "ConstitutionalForm")]
-# Figyeljük meg, hogy a "!" általánosan a "tagadás" jele
+# note that "!" is generally the "negation" symbol
 ```
 
-Persze, hogy ha bevetjük a `unique` függvényt, akkor gyorsan rájövünk, hogy ezek egyszerűen az alkotmányos monarchiák, de most a *tagadás* jelét (szép szóval opratátorát) akartam megmutatni. :)
+Of course, if we use the `unique` function, we quickly realize that these are simply the constitutional monarchies, but I wanted to show the *negation* symbol (or operator, to use a nice term). :)
 
 ```{r}
 unique(COVID$ConstitutionalForm)
 
-KeresettAllamforma <- unique(COVID$ConstitutionalForm)[2]
+TargetForm <- unique(COVID$ConstitutionalForm)[2]
 
-COVID[COVID$ConstitutionalForm == KeresettAllamforma,
-      c("CountryName", "ConstitutionalForm")] # csak, hogy lássuk: így is lehet :)
+COVID[COVID$ConstitutionalForm == TargetForm,
+      c("CountryName", "ConstitutionalForm")] # just to show: this works too :)
 ```
 
-A fenti szűrések R kódja alapján remélhetőleg érződik már, hogy milyen kódokkal lehet logikai műveleteket kijelölni az R utasításokban:
+Hopefully, based on the above filtering examples in R code, it's already clear what kinds of codes can be used to designate logical operations in R instructions:
 
 ```{r, echo=FALSE}
 
-x <- data.frame("Kód" = c("<", ">", "==", "!=","<=", ">=", "&", "|", "%in%", "!"),
-                "Jelentés" = c("Kisebb","Nagyobb", "Egyenlő", "Nem Egyenlő","Legfeljebb", "Legalább",
-                               "ÉS", "VAGY", "TARTALMAZ", "TAGADÁS"))
+x <- data.frame("Code" = c("<", ">", "==", "!=","<=", ">=", "&", "|", "%in%", "!"),
+                "Meaning" = c("Lesser","Greater", "Equal", "Not Equal","At Most", "At Least",
+                               "AND", "OR", "INCLUDES", "NEGATION"))
 
 knitr::kable(
   x, align = "cc"
@@ -682,10 +682,10 @@ Packages can also be installed with the buttons located in the down right corner
 
 ## 8. Writing Your Own Functions in R
 
-Sokszor meg tudja könnyíteni az éltünk, hogy ha gyakran ismétlődő utasítás-sorozatainknak írunk egy saját R függvényt, és így nem kell mindig ugyan azt a 4-5 sort folyamatosan újra és újra lemásolni, hanem csak használjuk a függvényt!
+Often it can make our lives easier if we write a custom R function for frequently repeated instruction sequences, so we don't always have to copy the same 4-5 lines over and over again, but simply use the function!
 
-Nézzünk egy egyszerű példát! Mondjuk írjuk meg a saját, buta **atlag** névre hallgató függvényünket, ami *két szám átlagát adja meg*.<br>
-A logika hasonló, mint ahogy egy mezei objektumot létrehozunk R-ben: megadjuk az objektum nevét és egy ebbe a névbe mutató nyíllal megmondjuk, hogy ez az objektum biza egy *függvény* lesz, aminek két bemeneti paramétere van egy $x$ és egy $y$ szám. Utána pedig *kapcsos zárójelek* között leírjuk, hogy mit csinál a függvény, és a végén egy `return` paranccsal megadjuk, hogy mi legyen a függvény eredménye, azaz szakszóval **visszatérési értéke**.
+Let’s see a simple example! Let's write our own silly function called **atlag**, which *returns the average of two numbers*. <br>
+The logic is similar to creating an ordinary object in R: we specify the object's name and use an arrow pointing to that name to indicate that this object will indeed be a *function* with two input parameters, an $x$ and a $y$ number. Then, between *curly braces*, we describe what the function does, and at the end, using a `return` command, we specify the function's result, or in technical terms, its **return value**.
 
 ```{r}
 avg <- function(x, y){
@@ -694,13 +694,14 @@ avg <- function(x, y){
 }
 ```
 
-Ha a fenti kódot lefuttatjuk, akkor azt látjuk, hogy az R Studio jobb felső részébben megjelenik a **Functions** részlegben az `avg` névre hallgató saját függvényünk.
+If we run the above code, we see that in the top right part of R Studio, the function named `avg` appears under the **Functions** section.
 
 <center>
 ![](sajatfv.jpg){width=60%}
 </center>
+<br>
 
-Ezek után pedig simán tudjuk már használni is.
+After this, we can simply use it.
 
 ```{r}
 testresult <- avg(3, 5)
@@ -708,9 +709,9 @@ testresult <- avg(3, 5)
 testresult
 ```
 
-Tök jó, kiszámolta, hogy 3 és 5 átlaga 4. :)
+Cool, it calculated that the average of 3 and 5 is 4. :)
 
-A függvényt egyébként megírhatjuk úgy is, hogy azt mondjuk, hogy csak egy darab $x$ névre hallgató bemeneti paramétere van, de arról azt gondoljuk, hogy `vector` adattípusú, és az átlagolás során az $x$ 1. és 2. elemeire hivatkozunk a `[]` jelek használatával.
+We can also write the function so that it only has a single input parameter called $x$, which we assume is of type `vector`, and during averaging, we refer to the 1st and 2nd elements of $x$ using the `[]` symbols.
 
 ```{r}
 avg <- function(x){
@@ -719,7 +720,7 @@ avg <- function(x){
 }
 ```
 
-Próbáljuk is ki a függvényt.
+Let's try the function.
 
 ```{r}
 input_data <- c(3, 5)
@@ -729,4 +730,4 @@ testresult <- avg(input_data)
 testresult
 ```
 
-Ez is 4, hát ez elképesztőő! :)
+It’s 4 again — amazinggg! :)
