@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Chapter 4 - <a href="Chapter04.html" target="_blank">Simulations and Sampling</a>
 
-## Chapter 5 - Basic Concepts of Estimation Theory
+## Chapter 5 - <a href="Chapter05.html" target="_blank">Basic Concepts of Estimation Theory</a>
 
 ## Chapter 6 - Estimating Parameters of Probability Distributions
 
