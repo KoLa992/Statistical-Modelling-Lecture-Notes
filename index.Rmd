@@ -1,13 +1,13 @@
 ---
 title: |
   <center>
-  ![](statistics-review.jpg){width=40%}<br> 
+  ![](d2145c70c04c.png){width=35%}<br> 
   <br>Statistical Modelling Lecture Notes<br>
   Corvinus University of Budapest<br>
   Data Science in Business BSc<br><br>
   </center> 
 output: html_document
-date: '08/02/2025'
+date: '09/02/2025'
 ---
 
 ```{r setup, include=FALSE}
@@ -21,4 +21,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Chapter 3 - <a href="Chapter03.html" target="_blank">Probability Distributions</a>
 
 ## Chapter 4 - <a href="Chapter04.html" target="_blank">Simulations and Sampling</a>
+
+## Chapter 5 - Basic Concepts of Estimation Theory
+
+## Chapter 6 - Estimating Parameters of Probability Distributions
+
+## Chapter 7 - Confidence Intervals
 
