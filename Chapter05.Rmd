@@ -1,7 +1,7 @@
 ---
 title: "Basic Concepts of Estimation Theory"
 author: "László Kovács"
-date: "09/02/2025"
+date: "19/02/2025"
 output:
   html_document:
     toc: true
@@ -19,9 +19,9 @@ text-align: justify}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 1. Ismétlés: Balaton átúszás eredmények és ezek FAE mintái
+## 1. Revision: Time Results of the Balaton Swimmers and their IID Samples
 
-Folytassuk ott a dolgainkat, ahol a Chapter 04-ben abbahagytuk. Töltsük be egy `pandas` data frame-be a <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a> fájl adatait. Ebben az Excelben a 2022-es LIDL Balaton átúszás résztvevőinek *neve, neme és percben mért időeredménye* található. Ez az adatsor lesz most nekünk a **sokaságunk**.
+Let’s continue where we left off in Chapter 04. Load the data from the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a> file into a data frame. This Excel file contains the **name, gender, and time result in minutes** of the participants of the **2022 LIDL Balaton swim**. This dataset will now serve as our **population**.
 
 ```{r}
 library(readxl)
@@ -29,15 +29,15 @@ swimming = read_excel("LIDLBalaton2022.xlsx")
 str(swimming)
 ```
 
-Oké, meg is vagyunk! A sokságnak $N=9751$ eleme van, tehát ennyi versenyző úszta át 2022-ben a Balatont. A sokaságnak alapvetően egy ismérvével, **az időeredménnyel** (`PERC` oszlop) **fogunk foglalkozni, és ennek három** statisztikai mutatóját vagy szebben fogalmazva **statisztikai paraméterét fogjuk megvizsgálni**:
+Okay, we are all set! The population consists of $N=9751$ elements, meaning this many competitors swam across Lake Balaton in 2022. We will **focus on** one variable of the population, **the time result** (`TIME` column), and **examine** three statistical measures, or more precisely, **three statistical parameters**:
 
-- Az **átlag**os időt Jele: $\bar{Y}$ vagy $\mu$
-- Az egyéni idők **szórás**át Jele: $\sigma$
-- A 3 óra (180 perc) felett teljesítők **arányát** Jele: $P$
+- The **mean** time, denoted as $\bar{Y}$ or $\mu$
+- The **standard deviation** of individual times, denoted as $\sigma$
+- The **proportion of swimmers who completed the swim in more than 3 hours (180 minutes)**, denoted as $P$
 
-Ahogy a <a href="Chapter04.html" target="_blank">Chapter 04</a> ezt tisztáztuk, egy **teljes statisztikai** adatsor, azaz **sokaság statisztikai mutatóit/paramétereit együttesen $\theta$-val jelöljük**.
+As we clarified in <a href="Chapter04.html" target="_blank">Chapter 04</a>, a **complete statistical** dataset's, i.e., a **population’s statistical measures/parameters, are collectively denoted as $\theta$**.
 
-Akkor hát **számoljuk is ki ezeket** a $\theta$-kat! Még kiszámoljuk az időeredmények varianciáját (szórásnégyzetét) is, mert erre is szükségünk lesz a későbbiekben.
+So, let’s **calculate these $\theta$ values**! Additionally, we will calculate the variance (the squared standard deviation) of the time results, as we will need it later.
 
 ```{r}
 classic_var <- function(x){
@@ -54,7 +54,7 @@ PopStd
 PopProp
 ```
 
-Meg is vagyunk! Akkor **következő lépésben vegyünk is egy $n=100$ elemű FAE** (tehát visszatevéses véletlen) **mintát ebből a sokaságból** egy $1992$-es véletlen mag mellett. Majd **számoljuk is ki a három vizsgált statisztikai paraméter értékét a mintában**.
+Done! Now, in the **next step, let’s take an $n=100$-element IID** (i.e., random sampling with replacement) **sample from this population**, using a random seed of $1992$. Then, we will **calculate the three examined statistical parameters for this sample**.
 
 ```{r}
 set.seed(1992)
@@ -71,18 +71,18 @@ SampleStd
 SampleProp
 ```
 
-Ezek szerint összefoglalva statisztikai **paramétereink mintából becsült értékei**:
+Summarizing the **sample-based estimates of our statistical parameters**:
 
-- $\bar{y}=160.8$ minutes
-- $s^* = 36.7$ minutes
-- $p = 0.27=27\%$
+- $\bar{y} = 160.8$ minutes
+- $s^ = 36.7$ minutes*
+- $p = 0.27 = 27\%$
 
-Szintén a <a href="Chapter04.html" target="_blank">Chapter 04</a> szerepelt, hogy a **statisztikai paraméterek mintából becsült értékeit együttesen $\hat{\theta}$-val jelöljük**. A $\hat{\theta}$-ok **speciális elnevezése: becslőfüggvény** a *valódi, sokasági* $\theta$-hoz. Szóval, a mintaátlag ($\bar{y}$) a sokasági átlag $\bar{Y}=\mu$ *becslőfüggvénye*, a mintából számolt szórás ($s^*$) a valós, sokasági szórás ($\sigma$) *becslőfüggvénye* és a mintából számított 3 órán túli úszók aránya ($p$), a sokasági arány ($P$) *becslőfüggvénye*.
+As mentioned in <a href="Chapter04.html" target="_blank">Chapter 04</a>, the **sample-based estimates of statistical parameters are collectively denoted as $\hat{\theta}$**. The $\hat{\theta}$ values have a special name: **ESTIMATORS** for the true population $\theta$. Thus, the sample mean ($\bar{y}$) is the *estimator* of the population mean $\bar{Y} = \mu$, the sample standard deviation ($s^*$) is the *estimator* of the true population standard deviation ($\sigma$), and the sample proportion of swimmers exceeding 3 hours ($p$) is the *estimator* of the population proportion ($P$).
 
-A feladatunk pedig az lenne, hogy rájöjjünk: **Hogyan tudunk egyetlen egy db $n$ elemű minta $\hat{\theta}$ becslőfüggvény értékeiből következtetni a teljes $N$ elemű sokaság valós $\theta$ paraméter értékeire?** Ez a **statisztikai becsléselmélet alapfeladata**. Azt is körbejártuk a <a href="Chapter04.html" target="_blank">Chapter 04</a>, hogy ha a mintavételünk tényleg rendes FAE mintavétel, akkor ami $\hat{\theta}$ és a valós $\theta$ között áll az nem más, mint a **mintavételi hiba (MVH)**. A feladatunk tehát konkrétabban nézve az **MVH kiszámítása vagy legalábbis valamilyen közelítése**.
+Our task now is to figure out: **How can we infer the true $\theta$ parameter values of the full $N$-element population from a single $n$-element sample’s $\hat{\theta}$ estimates?** This is the **fundamental problem of statistical estimation theory**. We also discussed in <a href="Chapter04.html" target="_blank">Chapter 04</a> that if our sampling method is truly an IID sample, the only thing standing between $\hat{\theta}$ and the true $\theta$ is the **sampling error**. Thus, our specific goal is to **calculate (or at least approximate) the sampling error**.
 
-Ahhoz, hogy **elinduljunk az MVH számítás rögös útján egy olyan trükkel élünk, ami kihasználja, hogy most éppen ismerjük a teljes Balatont átúszó sokaságot**. Nyilván a gyakorlatban azért kell becsléselmélettel meg MVH számítással foglalkozni, mert a sokaságot nem tudjuk megismerni. :) De most mivel megvannak a sokasági adatok, így **kivehetünk a sokasági időeredményekből nagyon-nagyon sok, mondjuk $10000$ db $n=100$ elemű mintát**.<br>
-Ezt meg is tettük a <a href="Chapter04.html" target="_blank">Chapter 04 legvégén</a>. Most csak **visszatöltjük az eredményt tartalmazó Excel táblát egy data frame-be**. Az Excel fájl, amit ebben a jegyzetben használok <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/SwimmingSamples.xlsx" target="_blank">innen</a> elérhető.
+To begin our journey into sampling error calculation, we will **use a trick that takes advantage of the fact that we currently know the entire population of Balaton swimmers**. Of course, in real-world applications, estimation theory and MVH calculations are necessary because we don’t have access to the entire population. :) But since we have the population data, we can **draw a very large number of samples—say, $10000$ samples of size $n=100$—from the population’s time results**.<br>
+We already did this at the <a href="Chapter04.html" target="_blank">end of Chapter 04</a>. Now, let’s simply **reload the Excel table containing the results into a data frame**. The Excel file used in this note can be accessed <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/SwimmingSamples.xlsx" target="_blank">here</a>.
 
 ```{r}
 samples_100 <- as.data.frame(read_excel("SwimmingSamples.xlsx"))
@@ -90,24 +90,24 @@ rownames(samples_100) <- paste0("Sample",1:10000) # indicate in the rownames tha
 head(samples_100)
 ```
 
-Oké, az eredményből látjuk is, hogy úgy néz ki a data frame, hogy **1 sor tartalmaz 1 db 100 elemű mintát és a mintaelemeket** (tehát a mintába besorsolt versenyző percben mért időeredményét) **az oszlopkban tároljuk**.
+Okay, looking at the results, we can see that the data frame is structured so that **each row contains a single 100-element sample**, and the **sample elements** (i.e., the competitors’ time results in minutes) **are stored in the columns**.
 
-Ez a tárolási forma azért is kényelmes, mert a data frame "*szeletelésével*" bármikor tudunk $n<100$ elemű mintákat is előállítani. Hiszen a mintavétel a pitonkának köszönhetően teljesen véletlenszerű volt, így **ha kiválasztom a tábla első $20$ oszlopát az olyan, mintha lenne $10000$ db $n=20$ elemű mintám is!**<br>
-Ezt most tegyük is akkor meg!
+This storage format is convenient because by *slicing* the data frame, we can easily create samples of size $n<100$ as well. Since the sampling was completely random (thanks to R), if we **select only the first $20$ columns of the table, it’s as if we have $10000$ samples of size $n=20$ as well**!<br>
+Let’s go ahead and do that now!
 
 ```{r}
 samples_20 <- samples_100[,1:20]
 str(samples_20)
 ```
 
-Szuper, olybá tűnik akkor jók vagyunk! :)
+Great, it looks like we’re all set! :)
 
-## 2. A torzítatlanság fogalma
+## 2. The Concept of Bias
 
-Na hát akkor vizsgáljuk meg először a $10000$ db $n=100$ elemű mintát alaposabban ahhoz, hogy megértsük: **hogyan is viselkednek a $\hat{\theta}$ becslőfüggvények a valós $\theta$ paraméterekhez képest**.
+Well, let’s first examine the $10000$ samples of size $n=100$ in more detail to understand: **How the estimators $\hat{\theta}$ behave compared to the true population parameters $\theta$.**
 
-Először **számoljuk ki mindegyik $100$ elemű mintában a három** statisztikai mutatónk, azaz **becslőfüggvényünk értékét**: átlag, szórásnyégyzet (variancia) és a 180 percen felül teljesítők aránya. A szórás kapcsán kényelmesebb lesz a gyökjel nélkül vizsgálni a dolgokat, ezért veszünk varianciát.<br>
-Szerencsénkre, a `numpy` csomag statisztikai függvényei `axis = 1` paraméter beállítással soronként és NEM oszloponként számolják ki az átlagot, varianciát, összegeket, így **minden mintára ki tudjuk számolni a becslőfüggvények értékét 1-1 új oszlopban**. **Figyeljünk** arra, hogy mivel a data frame oszlopai folyamatosan bővülnek, így manuálisan le kell szorítani a `numpy` statisztikai függvények alkalmazását mindig az első 100 oszlopra az `iloc` metódussal!
+First, **let’s calculate the values of our three** statistical measures, that is, the **estimators** in **each of the $100$-element samples**: mean, variance (squared standard deviation), and the proportion of those who completed the swim in more than 180 minutes. When dealing with standard deviation, it will be more convenient to analyze the squared value, so we will consider variance.<br>
+Fortunately, by using the base R statistical functions within an `apply` function with the 2nd input parameter of $1$, we compute the mean, variance, and proportions row-wise instead of column-wise. This way, we can **calculate the values of the estimators for each sample in separate new columns**. **Be careful** that since the data frame columns are continuously expanding, we must **manually restrict the application of statistical functions to the first 100 columns**!
 
 ```{r}
 samples_100$sample_mean <- apply(samples_100[,1:100], 1, mean)
@@ -117,9 +117,9 @@ samples_100$sample_prop <- apply(samples_100[,1:100], 1, function(x) mean(x>180)
 head(samples_100[,97:103])
 ```
 
-Oké, olybá tűnik, hogy mind a $10000$ db mintára megvan mindhárom becslőfüggvény a `MintaVetelek100Elem` data frame utolsó három oszlopában.
+Okay, it seems that for all $10000$ samples, the three estimators are stored in the last three columns of the `samples_100` data frame.
 
-Következő lépésként **vegyük a mintaátlagos és a mintaarányok átlagát, és vessük össze az eredményeke a valós sokasági átlaggal és aránnyal!**
+As the next step, let’s **take the mean of the sample means and sample proportions and compare these results to the true population mean and proportion!**
 
 ```{r}
 mean_of_means <- mean(samples_100$sample_mean)
@@ -129,22 +129,22 @@ c(mean_of_means, PopMean)
 c(mean_of_props, PopProp)
 ```
 
-Hoppá, a **kétféle értékek egészen közel vannak egymáshoz!** Sőt, némi **kerekítéssel a becslőfüggvények átlaga megegyezik az adott paraméter valós sokasági értékével!**
+Wow, the two types of values are **quite close to each other!** In fact, **with some rounding, the average of the estimators exactly matches the true population parameter value!!**
 
 ```{r}
 c(round(mean_of_means,1), round(PopMean,1))
 c(round(mean_of_props*100, 1), round(PopProp*100, 1))
 ```
 
-Amit itt tapasztalunk az a **TORZÍTATLANSÁG jelensége**. Eszerint, **ha az összes lehetséges mintából számolt $\hat{\theta}$-ok átlaga** (vagy más szóval várható értéke) **megegyezik a valós, sokasági $\theta$ értékével, akkor a $\hat{\theta}$ becslőfüggvény torzítatlan**. A **torzítatlanság esetünkben azért teljesül csak kerekítésekkel, mert mi csak $10000$ db minta alapján vizsgálódunk, és nem vettük ki az összes lehetséges mintát**, mivel azt valószínűleg nem bírta volna el a RAM-unk az $N=9751$ elemű sokaság esetén. :)
+What we observe here is the **phenomenon of UNBIASEDNESS**. According to this, **if the mean (or expected value) of the $\hat{\theta}$ estimators computed from all possible samples matches the true population parameter $\theta$, then the estimator $\hat{\theta}$ is unbiased**. The **reason unbiasedness only holds approximately in our case (with some rounding) is that we only examined $10000$ samples rather than all possible samples**, because our RAM would probably not have handled that for a population of $N=9751$ elements. :)
 
-A **fenti fogalom matematikai formalizmussal** az alábbi formát ölti. A képletben az $E()$ függvény az átlagolás, azaz *várható érték* jele, ami az angolban ugyebár *expected value* álnéven fut ... innen az *E*. :) $$E(\hat{\theta})=\theta$$
+The **above concept in mathematical formalism** takes the following form. In the equation, the function $E()$ represents averaging, meaning *expected value*. $$E(\hat{\theta})=\theta$$
 
-Ha a **fenti egyenlőség teljesül az összes lehetséges tetszőleges $n$ elemű mintában, akkor $\hat{\theta}$ torzítatlan becslése $\theta$-nak**.
+If the **above equality holds for all possible arbitrary $n$-element samples, then $\hat{\theta}$ is an unbiased estimator of $\theta$.**
 
-Ebből kiindulva pedig megadhatjuk a **torzítottság fokának (angolul Bias, rövidítve $Bs$)** definícióját is, ami nem más, mint a **becslőfüggvények** ($\hat{\theta}$-ok) **várható értékének különbsége** a valós, **sokasági** $\theta$ **értéktől**:$$Bs=E(\hat{\theta})-\theta$$ 
+From this, we can define the **degree of bias (abbreviated as $Bs$)**, which is simply the difference between the expected value of the estimators ($\hat{\theta}$) and the true population parameter $\theta$:$$Bs=E(\hat{\theta})-\theta$$ 
 
-Láthatjuk, hogy $10000$ db mintát vizsgálva az **átlag és arány**, mint $\theta$ paraméterek esetében elég kicsi ez a $Bs$. Mindkét esetben **1 tizedesre kerekítve $0$ a torzítás**.
+Looking at the $10000$ samples, the bias ($Bs$) for the **mean and proportion** is quite small. In both cases, **when rounded to one decimal place, the bias is $0$.**
 
 ```{r}
 # Bs(Mean)
@@ -153,9 +153,9 @@ round(mean_of_means - PopMean, 1)
 round(mean_of_props - PopProp, 1)
 ```
 
-Oké, a kis $10000$ db $n=100$ mintás kísérletünk alapján azt mondhatjuk, hogy a **mintaátlag és mintaarány torzítatlan becslőfüggvényei a valós sokasági átlagnak és sokasági aránynak**.
+Okay, based on our small experiment with $10000$ samples of size $n=100$, we can say that **the sample mean and sample proportion are unbiased estimators of the true population mean and proportion**.
 
-De mi a helyzet a szórás frontján? Konkrétan, **első körben vizsgáljuk meg, hogy a mintákból számolt szórásnégyzetek torzítatlan becslései-e a sokasági szórásnégyzetnek, azaz varianciának!**
+But what about standard deviation? Specifically, **let’s first examine whether the sample variances are unbiased estimators of the population variance!**
 
 ```{r}
 mean_of_vars <- mean(samples_100$sample_var)
@@ -166,30 +166,29 @@ c(mean_of_vars, PopVar)
 round(mean_of_vars - PopVar, 1)
 ```
 
-Jajj! Olybá tűnik, hogy **a válasz NEM**! A **mintából számolt varianciák, azaz ${(s^*)}^2$-ek átlaga a valós, sokasági varianciához képest esetünkben $23$-gyel alacsonyabb érték!** Tehát, a **mintavariancia, mint becslőfüggvény lefelé torzít a valós sokasági szóráshoz képest!** Kellemetlen. Hiszen, ez **azt jelenti, hogy egy mintából számolt variancia a valós soksági értékhez képest jó eséllyel kisebb lesz**. Ez azért szerencsétlen, mert eszerint a **vizsgált ismérvünk szóródásáról, indagozásáról egy mintából nézve a valósághoz képest jellemzően kisebb értéket látunk**.<br>
-Tehát, pl. egy részvény árfolyamának szóródását (kockázat) az árfolyamadatok egy mintájából nézve a valósághoz képest jellemzően kisebbnek látjuk. **A "kockázat" alulbecslése pedig egy olyan probléma, amivel kezdeni kell valamit!**
+Oh no! It seems that the **answer is NO**! The **mean of the sample variances ${(s^*)}^2$ is $23$ units lower than the true population variance!** This means that **the sample variance, as an estimator function, systematically underestimates the true population variance!** That’s unfortunate because it implies that the variance calculated from a sample is likely to be smaller than the true population variance. This is problematic because it means that **when we estimate the variability (dispersion) of a variable from a sample, we typically see a smaller value than the reality**.<br>
+For example, when estimating the volatility (risk) of a stock price from a sample of price data, we will generally perceive it to be lower than its true value. **Underestimating "risk" is a problem that needs to be addressed!**
 
-A **jelenség matematikailag** az alábbi módon írható le: $$E\left({(s^*)}^2 \right) < \sigma^2$$
+The **phenomenon** can be **mathematically** expressed as follows: $$E\left({(s^*)}^2 \right) < \sigma^2$$
 
-Azaz: $$Bs\left({(s^*)}^2\right) < 0$$
+That is: $$Bs\left({(s^*)}^2\right) < 0$$
 
-### 2.1. Az aszimptotikus torzítatlanság fogalma
+### 2.1. The Concept of Asimptotically Unbiased Estimators
 
-Ami valamilyen szinten menti a helyzetet az az a tény, hogy bár a **sokasági variancia alapból torzítottan becsülhető a mintavarianciákkal**, de a becslés viszont **aszimptotikusan torzítatlan**. Ez azt jelenti, hogy **mintaelemszám növelésével a torzítás mértéke ($|Bs|$) csökken, konkrétan $0$-ba tart**. Azaz: $$\lim_{n \rightarrow \infty}{Bs\left({(s^*)}^2\right)}=0$$
+What somewhat mitigates the situation is the fact that **although the population variance is inherently biased when estimated using sample variances**, the estimation is, however, **asymptotically unbiased**. This means that **as the sample size increases, the magnitude of the bias ($|Bs|$) decreases** and specifically approaches $0$. That is: $$\lim_{n \rightarrow \infty}{Bs\left({(s^*)}^2\right)}=0$$
 
-Próbáljuk **szemléltetni a jelenséget!** A data frame-k **1. fejezet végén bemutatott oszlopkiválasztásával** $10000$ db $n=\{10,20,30,...,90,100\}$ elemű minta esetén kiszámoljuk a mintavarianciák $Bs({(s^*)}^2)$ értékét a valós sokasági varianciához ($\sigma^2$) képest.<br>
-Természetesen, technikailag ezt egy `for` ciklus segítségével tudjuk megoldani:
+Let’s **illustrate this phenomenon!** Using the **column selection method presented at the end of Section 1**, we calculate the bias $Bs({(s^*)}^2)$ of the sample variances for $10000$ samples of sizes $n={10,20,30,...,90,100}$ relative to the true population variance ($\sigma^2$).<br>
+Technically, this can be accomplished using a `for` loop:
 
-- A ciklus minden iterációjában kiválasztjuk a megfelelő elemszámú mintákat a `MintaVetelek100Elem` data frame-ből
-- Kiszámoljuk minden elemszám esetén ${(s^*)}^2$-et mind a $10000$ db mintára
-- Kiszámoljuk és egy `list`-ben eltároljuk $Bs({(s^*)}^2)$, mint $E({(s^*)}^2)$ és a valós, sokasági variancia, $\sigma^2$ különbsége
+- In each iteration of the loop, we select the appropriate sample sizes from the `samples_100` data frame.
+- For each sample size, we compute ${(s^*)}^2$ for all $10000$ samples.
+- We compute and store in a vector the bias $Bs({(s^)}^2)$ as the difference between $E({(s^)}^2)$ and the true population variance $\sigma^2$.
 
 ```{r}
-# Üres vektor létrehozása Bs-ek tárolására
+# Create an empty vector to store the Bs values
 list_of_Bs = c()
-# Vizsgált elemszámok listájának létrehozása
-# 10 és 100 közötti egész számok felsoroltatása a 'seq' függvényben 10-es lépésközzel
-# Felső határ 101 a nyílt intervallum miatt
+# Create the sequence of the examined sample sizes
+# Enumerate the integers between 10 and 100 with the 'seq' function with a step size of 10
 sample_sizes <- seq(10, 100, 10)
 
 for (current_sample_size in sample_sizes) {
@@ -200,26 +199,25 @@ for (current_sample_size in sample_sizes) {
   list_of_Bs <- c(list_of_Bs, current_Bs)
 }
 
-# Eredmény megtekintése 
+# Look at the results
 list_of_Bs
 ```
 
-Szépen láthatjuk, hogy **a $Bs$ értékek abszolút értéke** az elég hatalmas $200.5$-től indulva **szépen lefut** az $n=100$ esetben **korábban is mért $23$-be**. Az eredmények még látványosabbak egy vonaldiagramon ábrázolva.
+We can clearly see that the **absolute values of $Bs$** start from a rather large $200.5$ and **gradually decrease, reaching the previously measured $23$** at $n=100$. The results become even more striking when visualized in a line chart.
 
 ```{r}
-# Vizsgált elemszámok és a mért Bs-ek data frame-be rendezése
-# Ahol az elemszámok a sorindexek
+# Create a data frame from the sample sizes and the corresponding Bs values
 BsData <- data.frame(sample_size = sample_sizes,
                      value_of_Bs = abs(list_of_Bs))
 
-# Ábrázolás ggplot vonaldiagramon
+# Show the results on a line chart with 'ggplot'
 library(ggplot2)
 ggplot(BsData, aes(x=sample_size, y=value_of_Bs)) + geom_line()
 ```
 
-Szépen, gyakorlatilag exponenciális ütemben csökken a $Bs$ abszolút érték, bár a **csökkenés nagysága $n=90$-ről $n=100$-ra már nem túl jelentős**! Ez azt jelenti, hogy **varianciák esetén a torzítás mértéke függ az $n$ elemszámtól!** Minél nagyobb az elemszám, annál kisebb a torzítás mértéke, tehát az $|Bs|$.
+The absolute value of $Bs$ decreases at an almost exponential rate, although **the reduction from $n=90$ to $n=100$ is not particularly large**! This indicates that **for variances, the degree of bias depends on the sample size $n$!** The larger the sample size, the smaller the degree of bias - meaning $|Bs|$ - decreases.
 
-## 3. A korrigált mintavariancia
+## 3. The Corrected Sample Variance
 
 A 2.1. fejezetben tapasztalt tényt, miszerint a mintavariancia $(s^*)^2$ a valós, sokasági $\sigma^2$-nek **aszimptotikusan torzítatlan becslése** fel lehet használni a **variancia torzítási probléma megoldására**.
 
