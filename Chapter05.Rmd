@@ -388,9 +388,9 @@ For **the mean and proportion, we do have a solution**. In these two cases, **SE
 - $SE(\bar{y})=\frac{\sigma}{\sqrt{n}}$
 - $SE(p)=\sqrt{\frac{P(1-P)}{n}}$
 
-Both formulas follow from the fact that if I have an IID sample, then the sample observations $y_i$ are considered as random variables with a standard deviation of $\sigma$, then their sum, $\sum_{i=1}^n{y_i}$ has a variance of $$Var(\sum_{i=1}^n{y_i})=\sum_{i=1}^n{Var(y_i)}=n \times \sigma$$
+Both formulas follow from the fact that if I have an IID sample, then the sample observations $y_i$ are considered as random variables with a standard deviation of $\sigma$, then their sum, $\sum_{i=1}^n{y_i}$ has a variance of $$Var(\sum_{i=1}^n{y_i})=\sum_{i=1}^n{Var(y_i)}=n \times \sigma^2$$
 
-**Because the $y_i$ random variables are independent due to the random sampling**. Since the sample means are defined as $\bar{y}=\frac{\sum_{i=1}^n{y_i}}{n}$, their variance follows from the result obtained above: $$Var(\bar{y})=\frac{Var(\sum_{i=1}^n{y_i})}{n^2}=\frac{n\sigma^2}{n^2} = \frac{\sigma}{n}$$
+**Because the $y_i$ random variables are independent due to the random sampling**. Since the sample means are defined as $\bar{y}=\frac{\sum_{i=1}^n{y_i}}{n}$, their variance follows from the result obtained above: $$Var(\bar{y})=\frac{Var(\sum_{i=1}^n{y_i})}{n^2}=\frac{n\sigma^2}{n^2} = \frac{\sigma^2}{n}$$
 
 And of course the **square root of the sample mean's variance is** the standard deviation of the sample means, so the **standard error of the mean**: $$\sqrt{Var(\bar{y})}=SE(\bar{y})=\frac{\sigma}{\sqrt{n}}$$
 
