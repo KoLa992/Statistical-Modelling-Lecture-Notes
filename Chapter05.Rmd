@@ -1,7 +1,7 @@
 ---
 title: "Basic Concepts of Estimation Theory"
 author: "László Kovács"
-date: "19/02/2025"
+date: "21/02/2025"
 output:
   html_document:
     toc: true
@@ -37,7 +37,7 @@ Okay, we are all set! The population consists of $N=9751$ elements, meaning this
 
 As we clarified in <a href="Chapter04.html" target="_blank">Chapter 04</a>, a **complete statistical** dataset's, i.e., a **population’s statistical measures/parameters, are collectively denoted as $\theta$**.
 
-So, let’s **calculate these $\theta$ values**! Additionally, we will calculate the variance (the squared standard deviation) of the time results, as we will need it later.
+So, let’s **calculate these $\theta$ values**! However, we need to be careful! When calculating the sample variance and standard deviation, **the built-in R functions, `var` and `sd` DO NOT calculate the variance** (and standard deviation) **that we know from the Fundamentals of Statistics course!!** So, we'll write our own R function called `classic_var` that calculates the variance of our variable as we've learnt: $\frac{\sum_{i=1}^{N}{(Y_i - \bar{Y})^2}}{N}$. The standard deviation is simply `sqrt(classic_var)`. What the built in `var` and `sd` functions calculate, will be discussed in *Section 3*.
 
 ```{r}
 classic_var <- function(x){
@@ -54,7 +54,7 @@ PopStd
 PopProp
 ```
 
-Done! Now, in the **next step, let’s take an $n=100$-element IID** (i.e., random sampling with replacement) **sample from this population**, using a random seed of $1992$. Then, we will **calculate the three examined statistical parameters for this sample**.
+Done! Now, in the **next step, let’s take an $n=100$-element IID** (i.e., random sampling with replacement) **sample from this population**, using a random seed of $1992$. Then, we will **calculate the same three statistical parameters for this sample**.
 
 ```{r}
 set.seed(1992)
@@ -74,14 +74,14 @@ SampleProp
 Summarizing the **sample-based estimates of our statistical parameters**:
 
 - $\bar{y} = 160.8$ minutes
-- $s^ = 36.7$ minutes*
+- $s^ = 36.7$ minutes
 - $p = 0.27 = 27\%$
 
 As mentioned in <a href="Chapter04.html" target="_blank">Chapter 04</a>, the **sample-based estimates of statistical parameters are collectively denoted as $\hat{\theta}$**. The $\hat{\theta}$ values have a special name: **ESTIMATORS** for the true population $\theta$. Thus, the sample mean ($\bar{y}$) is the *estimator* of the population mean $\bar{Y} = \mu$, the sample standard deviation ($s^*$) is the *estimator* of the true population standard deviation ($\sigma$), and the sample proportion of swimmers exceeding 3 hours ($p$) is the *estimator* of the population proportion ($P$).
 
 Our task now is to figure out: **How can we infer the true $\theta$ parameter values of the full $N$-element population from a single $n$-element sample’s $\hat{\theta}$ estimates?** This is the **fundamental problem of statistical estimation theory**. We also discussed in <a href="Chapter04.html" target="_blank">Chapter 04</a> that if our sampling method is truly an IID sample, the only thing standing between $\hat{\theta}$ and the true $\theta$ is the **sampling error**. Thus, our specific goal is to **calculate (or at least approximate) the sampling error**.
 
-To begin our journey into sampling error calculation, we will **use a trick that takes advantage of the fact that we currently know the entire population of Balaton swimmers**. Of course, in real-world applications, estimation theory and MVH calculations are necessary because we don’t have access to the entire population. :) But since we have the population data, we can **draw a very large number of samples—say, $10000$ samples of size $n=100$—from the population’s time results**.<br>
+To begin our journey into sampling error calculation, we will **use a trick that takes advantage of the fact that we currently know the entire population of Balaton swimmers**. Of course, in real-world applications, estimation theory and sampling error calculations are necessary because we don’t have access to the entire population. :) But since we have the population data, we can **draw a very large number of samples—say, $10000$ samples of size $n=100$—from the population’s time results**.<br>
 We already did this at the <a href="Chapter04.html" target="_blank">end of Chapter 04</a>. Now, let’s simply **reload the Excel table containing the results into a data frame**. The Excel file used in this note can be accessed <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/SwimmingSamples.xlsx" target="_blank">here</a>.
 
 ```{r}
@@ -219,22 +219,21 @@ The absolute value of $Bs$ decreases at an almost exponential rate, although **t
 
 ## 3. The Corrected Sample Variance
 
-A 2.1. fejezetben tapasztalt tényt, miszerint a mintavariancia $(s^*)^2$ a valós, sokasági $\sigma^2$-nek **aszimptotikusan torzítatlan becslése** fel lehet használni a **variancia torzítási probléma megoldására**.
+The fact observed in Section 2.1, namely that the sample variance $(s^*)^2$ is an **asymptotically unbiased estimator** of the true population variance $\sigma^2$, can be used to **solve the variance bias problem**.
 
-Ugyebár azt tudjuk az szimptotikusan torzítatlanságból, hogy minél nagyobb az elemszám, annál kisebb a torzítás mértéke. Sőt, azt is meg lehet mondani, hogy **a mintavarianciák várható értéke, $E\left((s^*)^2\right)$ arányaiban $\frac{n-1}{n}$-nel tér el a sokasági varianciától, $\sigma^2$-től**. Azaz igaz a következő egyenlőség: $$\frac{E\left((s^*)^2\right)}{\sigma^2}=\frac{n-1}{n}$$
+From asymptotic unbiasedness, we know that the larger the sample size, the smaller the bias. Moreover, we can also state that the **expected value of the sample variances, $E\left((s^*)^2\right)$, deviates proportionally by $\frac{n-1}{n}$ from the population variance**, $\sigma^2$. That is, the following equality holds: $$\frac{E\left((s^*)^2\right)}{\sigma^2}=\frac{n-1}{n}$$
 
-Újrahasznosítva a $Bs$-ek meghatározására alkalmazott `for` ciklusos megoldásunkat, a **fenti összefüggés helyessége is ellenőrizhető $n=\{10,20,30,...,90,100\}$ elemszámok mesetén**. 
+By reusing our `for` loop solution for determining $Bs$, we can **verify the correctness of this relationship for sample sizes $n={10,20,30,...,90,100}$.**
 
 ```{r}
-# Üres vektor létrehozása a (várható érték) / (sokasági variancia) hányadosok tárolására
+# Empty vector to store the (expected value) / (population variance) ratios
 quotients_sample_population <- c()
-# Üres lista létrehozása az (n-1)/n hányadosok tárolására
+# Empty vector to store the (n-1)/n ratios
 quotients_sample_size <- c()
-# Vizsgált elemszámok listájának létrehozása
-# 10 és 100 közötti egész számok felsoroltatása a 'seq' függvényben 10-es lépésközzel
+# Vector of sample sizes examined
 sample_sizes <- seq(10, 100, 10)
 
-# Ciklus indítása
+# Starting 'for' loop
 for (current_sample_size in sample_sizes) {
   current_samples <- samples_100[,1:current_sample_size]
   current_samples$sample_var <- apply(current_samples, 1, classic_var)
@@ -245,129 +244,126 @@ for (current_sample_size in sample_sizes) {
                              round((current_sample_size-1) / current_sample_size,3))
 }
 
-# Eredmények összefűzése data frame-be 
+# Put the results into a data frame 
 quotients_df <- data.frame("quotients_sample_size" = quotients_sample_size,
                            "quotients_sample_vs_population" = quotients_sample_population)
 quotients_df
 ```
 
-Szuper, **aránylag szépen kijön a kétféle hányadosok közötti egyezőség**! :) Persze itt is van némi **eltérés, mivel csak $10000$ db mintát vizsgálunk és nem az összes lehetségeset**, de ez még így is látványos egyezés! Így már **érthető, hogy a $Bs$ abszolút értéke miért nem csökkent már látványosan $n=90$-ről $n=100$-ra: az $\frac{n-1}{n}$ hányados mindkét esetben már elég kicsit volt, így a torzítás mértéke is!**
+Awesome, the **agreement between the two ratios is quite evident**! :) Of course, there is **some deviation, since we are only examining $10000$ samples instead of all possible ones**, but even so, the match is quite striking! This also explains **why the absolute value of $Bs$ did not significantly decrease from $n=90$ to $n=100$: the ratio $\frac{n-1}{n}$ was already quite small in both cases, so the bias was as well!**
 
-Viszont, ha a $\frac{E\left((s^*)^2\right)}{\sigma^2}=\frac{n-1}{n}$ egyenlőség igaz, akkor azt átrendezve a következő összefüggésre jutunk: $$\sigma^2=\frac{n}{n-1} \times E\left((s^*)^2\right)$$
+However, if the equality $\frac{E\left((s^*)^2\right)}{\sigma^2}=\frac{n-1}{n}$ holds, then by rearranging it, we obtain the following formula: $$\sigma^2=\frac{n}{n-1} \times E\left((s^*)^2\right)$$
 
-Konstans szorzót egy átlagolás ($E(...)$) eredményén alkalmazni ugyan az, mintha minden kiátlagolandó elemet felszoroztam volna azzal a szorzóval. Tehát az $\frac{n}{n-1}$ bevihető a várható érték függvényen belülre: $$\sigma^2= E\left(\frac{n}{n-1} \times (s^*)^2\right)$$
+Applying a constant multiplier to the result of an expectation ($E(...)$) is the same as multiplying each element being averaged by that multiplier. Therefore, the factor $\frac{n}{n-1}$ can be moved inside the expected value function: $$\sigma^2= E\left(\frac{n}{n-1} \times (s^*)^2\right)$$
 
-Mindezek alapján pedig azt mondjatjuk, hogy **az $s^2=\frac{n}{n-1} \times (s^*)^2$ módon KORRIGÁLT MINTAVARIANCIA már TORZÍTATLANUL becsli a valós sokasági varianciát, azaz $\sigma^2$-t!** Hiszen $\sigma^2= E\left(s^2\right)$.
+Based on all this, we can conclude that the **corrected sample variance, calculated as $s^2=\frac{n}{n-1} \times (s^*)^2$, is an UNBIASED estimator of the true population variance $\sigma^2$!** Since $\sigma^2= E\left(s^2\right)$.
 
-Tyűha, ez nagyon szépen hangzik! :) **Próbáljuk ki! Számoljuk ki a $10000$ db $n=100$ elemű mintában a korrigált mintavarianciákat, és nézzük meg azok átlagát (várható értékét)!**
+Wow, this sounds really nice! :) Let's try it out! **Let's compute the corrected sample variances for $10000$ samples of size $n=100$, and examine their mean (expected value)!**
 
 ```{r}
-# Elemszám megadása külön változóban
+# sample size in a separate R object
 n <- 100
 
-# Korrigált varianciák
+# Corrected variances
 samples_100$corr_sample_var = (n/(n-1)) * samples_100$sample_var
 
-# Torzítatlanság ellenőrzése
+# Check Unbiasedness
 mean_of_corr_vars <- mean(samples_100$corr_sample_var)
 
 c(mean_of_corr_vars, PopVar)
 round(mean_of_corr_vars - PopVar, 1)
 ```
 
-Győzelem! :) Ha **nem is szűnt meg teljesen a dolog, de láthatóan nagyon alacsony, majdnem elhanyagolható lett a $Bs$ mértéke**! Ha **lenne több mintánk, akkor a korrekció ki is nullázná a $Bs$-t**.
+Victory! :) Even if the **bias has not completely disappeared, its magnitude $Bs$ has become visibly very low, almost negligible**! If we had **more samples, the correction would completely eliminate $Bs$.**
 
-Ezek alapján akkor jó lenne, ha **lenne valami beépített függvényünk** az `std` helyett, ami **mintaadatok esetén alapból a KORRIGÁLT SZÓRÁS $s = \sqrt{s^2}=\sqrt{\frac{n}{n-1} \times (s^*)^2}$ értékét számolja**!
+So, it would be great if **we had a built-in function** in for this. Truth is that we have: **the built-in `var` and `sd` functions automatically calculates the CORRECTED variance and standard deviation**, using the formula $s = \sqrt{s^2}=\sqrt{\frac{n}{n-1} \times (s^*)^2}$!
 
-Nos, **valójában az** `std` **tud korrigált szórást számolni egy extra paraméter segítségével**. Ahhoz, hogy **megértsük a paraméter működését egy picit végig kell gondolni a korrigált szórás képletének a működését**.
+To sum up then: by default, the sample standard deviation $s^*$ is computed using the following formula: $$s^*=\sqrt{\frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n}}$$
 
-Alapból a mintaadatok $s^*$ szórását az alánbbi képlettel számoljuk: $$s^*=\sqrt{\frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n}}$$
+That is, we check how much each sample element $y_i$ deviates from the sample mean $\bar{y}$, then square these deviations, sum them up, divide the sum by the sample size $n$, and finally take the square root of the entire fraction.<br>
+The square of this value is the plain, *uncorrected* variance: $$(s^*)^2=\frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n}$$
 
-Azaz, megnézzük, hogy minden $y_i$ mintaelem mennyivel tér el a minta $\bar{y}$ átlagától, majd ezen eltéréseket négyzetre emelve összeadjuk és az összeget leosztjuk a minta $n$ elemszámával, végül gyököt vonunk az egész hányadosból.<br>
-Ennek az értéknek a négyzete a sima, *nem korrigált* variancia: $$(s^*)^2=\frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n}$$
+If we multiply the variance formula above by $\frac{n}{n-1}$, we can simplify as follows: $$s^2=\frac{n}{n-1} \times \frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n} = \frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n-1}$$
 
-Ha a fenrti variancia képletet beszorozzuk $\frac{n}{n-1}$-gyel akkor a következő egyszerűséítéseket tehetjük: $$s^2=\frac{n}{n-1} \times \frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n} = \frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n-1}$$
+Thus, the **corrected sample standard deviation is computed just like the uncorrected one, except that in the denominator we divide by $n-1$ instead of $n$:** $$s=\sqrt{\frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n-1}}$$
 
-Tehát, a **minta korrigált szórását úgy számoljuk ki mint a nem korrigáltat, csak a NEVEZŐBEN $n-1$-gyel osztunk, nem pedig $n$-nel**: $$s=\sqrt{\frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n-1}}$$
-
-Ezt az **eltérést a nevezőben** a `ddof = 1` **paraméter beállítással jelezzuk** a `numpy` csomag `std` függvényében. Könnyen kitalálható, hogy alapértelmezésben `ddof = 0` beállítással fut az `std` függvény. :)
-
-Lássuk is a dolgot akcióban!
+Let’s see it in action with the built-in `var` function!
 
 ```{r}
-# Korrigált varianciák 'sd'-vel
+# Corrected variances with 'sd'
 samples_100$corr_sample_var_function <- apply(samples_100[,1:100], 1, var)
 
-# Torzítatlanság ellenőrzése
+# Check bias
 mean_of_corr_vars_fun <- mean(samples_100$corr_sample_var_function)
 
 c(mean_of_corr_vars_fun, PopVar)
 round(mean_of_corr_vars_fun - PopVar, 1)
 ```
 
-Királyság! Tökéletesen ugyan ott vagyunk, mint az előbb a manuális számolással! :)
+Awesome! We end up exactly where we were earlier with the manual calculation! :)
 
-**Szépen szakszavakkal összefoglalva** tehát az a fő tanulságunk, hogy
+In summary, **using proper statistical terminology**:
 
-1. A **sima mintavariancia ($(s^*)^2$) a sokasági variancia $\sigma^2$ TORZÍTOTT becslőfüggvénye**
-2. A **korrigált mintavariancia ($s^2$)** viszont **a sokasági variancia $\sigma^2$ TORZÍTATLAN becslőfüggvénye**
+1. The **plain, uncorrected sample variance ($(s^*)^2$) is a BIASED estimator** of the population variance $\sigma^2$
+2. The **corrected sample variance ($s^2$) is an UNBIASED estimator** of the population variance $\sigma^2$
 
-## 4. A medián torzítatlansága
+## 4. Bias of the Median
 
-**Stat. 1-en nagyon fontos mutatónk volt a medián**, mint a vizsgált ismérv felezőpontja, hiszen nem volt érzékeny a kilógó értékekre az adatsorban, mint az átlag. **Nézzük meg** itt a Balaton átúszás 100 elemű mintáinak példáján, hogy ez a statisztikai paraméter **torzítatlanul becsülhető-e!**
+In the **Fundamentals of Statistics course, the median was a very important measure**, as it represents the midpoint of the observed variable and is not sensitive to outlier values in the dataset, unlike the mean. **Let’s examine whether this statistical parameter can be estimated without bias**, using the example of the 100-element samples from the Balaton swim dataset!
 
 ```{r}
-# Sokasági medián átúszási idő
+# Population median swimming time
 PopMedian <- median(swimming$TIME)
 
-# Mintabeli mediánok kiszámítása
+# Get the sample medians
 samples_100$sample_median <- apply(samples_100[,1:100], 1, median)
 
-# Mintabeli mediánok átlaga
+# Mean of the sample medians
 mean_of_medians <- mean(samples_100$sample_median)
 
-# Torzítatlanság ellenőrzése
+# Check Bias
 c(mean_of_medians, PopMedian)
 round(mean_of_medians - PopMedian, 1)
 ```
 
-Olybá tűnik, hogy a medián a mintabeli mediánokkal **torzítatlanul becsülhető** A $Bs(me) = E(me) - Me$ eltérés olyan minimális, hogy simán elhihető, hogy megszűnik, ha az összes lehetséges $n=100$ elemű mintát vizsgálnánk és nem csak $10000$-et.
+It appears that the median can be **estimated in an unbiased way** using the sample medians. The deviation $Bs(me) = E(me) - Me$ is so minimal that it is entirely plausible that it would disappear if we examined all possible $n=100$ element samples instead of just $10000$.
 
-## 5. A Standard Hiba (*SH*) fogalma
+## 5. The Concept of Standard Error (*SE*)
 
-Szép és jó, hogy megállapítottuk, hogy a mintaátlag, mintaarány, korrigált mintavariancia és mintamedián **torzítatlan becslőfüggvény**ei a nekik megfelelő sokasági $\theta$ paramézereknek, de **mire jó ez nekünk a gyakorlatban, amikor csak egyetlen egy darab mintavételünk van?**
+It’s nice and all that we established that the sample mean, sample proportion, corrected sample variance, and sample median are **unbiased estimators** of their corresponding population parameters, $\theta$, but **what good is this to us in practice when we only have a single sample?**
 
-Hiszen, mint a 3-4. fejeuetekben tapasztaltuk, a torzítatlanság csak annyit mond, hogy ha van **nagyon-nagyon sok mintavételünk**, akkor a vizsgált statisztikai mutatónk/paraméterünk mintából számított értékei (becslőfüggvények) **átlagosan eltalálják a mutató valós, sokasági értékét**. De sajnos ebbe a **definícióba nagyon sok minden belefér**, és igazából **önmagában a mintavételi hibáról (MVH) nem mond semmit**.<br>
-Ezt a problémát nagyon jól érzékelteti a következő *favicc*.
+As we experienced in Chapters 3-4, unbiasedness only means that if **we have a very, very large number of samples**, then the values of our statistical metric/parameter calculated from the sample (the estimators) **on average hit the true population value**. However, unfortunately, **this definition allows for a lot of variation**, and in reality, it **tells us nothing about the sampling error**!<br>
+This problem is well illustrated by the following *bad joke*.
 
-> "Egy mérnök, egy fizikus és egy statisztikus együtt mennek vaddisznóra vadászni. Alig tesznek meg néhány lépést az erdőben, máris észrevesznek 150 méterre egy hatalmas példányt.<br>
->  A mérnök felemeli a puskáját, céloz és lő, de három méterrel mellétalál jobbra. A fizikus így okoskodik:<br>
->  "Egy kis szellő fúj balról, ha kicsit balra célzok, akkor eltalálom."<br>
->  Ő is célbaveszi a szarvast, lő és három méterrel balra elvéti. A statisztikus felugrik, és örvendezni kezd:<br>
->  "Megvan! Megvan! Eltaláltuk!"
+> "An engineer, a physicist, and a statistician go hunting for wild boars together. After taking just a few steps into the forest, they spot a massive boar 150 meters away.<br>
+>  The engineer raises his rifle, aims, and shoots, but misses by three meters to the right. The physicist thinks:<br>
+>  "A slight wind is blowing from the left, so if I aim a little to the left, I’ll hit it."<br>
+>  He takes aim at the boar, fires, and misses by three meters to the left. The statistician jumps up and starts celebrating:<br>
+>  "We got it! We got it! We hit it!"
 >
-> `r tufte::quote_footer('-- Méltán Ismeretlen Szerző')`
+> `r tufte::quote_footer('-- Rightfully Unknown Author')`
 
-Ugyebár kedvenc viccbéli statisztikus azért örvendez, mivel a három méterrel jobbra és balra hibázó két lövés átlagban pont telibe kapta szegény vaddisznónkat!<br>
-Na, hát erről szól a **torzítatlanság** is:
+Our beloved statistician in the joke is celebrating because the two shots that missed by three meters to the right and left, on average, hit the poor boar dead center!<br>
+Well, this is what **unbiasedness** is all about:
 
-- Le akarunk vadászni *lövésekkel*, azaz *mintavételekkel* egy statisztikai paraméter sokasági értékét, $\theta$-t.
-- Az első lövés, az 1. mintavételből származó becslőfüggvényünk értéke $\hat{\theta}_1$
-- A második lövés, a 2. mintavételből származó becslőfüggvényünk értéke $\hat{\theta}_2$
-- Ezek átlagban, azaz várható értékben eltallálják a keresett valós értéket, $\theta$-t: $E(\hat{\theta})=\theta$
-- Íme: ez a *torzítatlan becslés* definíciója :)
+- We want to hunt down a statistical parameter (i.e., a population value, $\theta$) using *shots*, that is, *samples*.
+- The first shot is the estimate $\hat{\theta}_1$ from the first sample
+- The second shot is the estimate $\hat{\theta}_2$ from the second sample.
+- On average, that is, in expected value, these estimates hit the true value $\theta$: $E(\hat{\theta})=\theta$.
+- Voilà! This is the definition of an *unbiased estimate* :)
 
-Az statisztikai "$\hat{\theta}$"-os vadászat és a vaddisznó vadász közti **analógia az alábbi ábrán szemléltethető**. **FONTOS** :)
+The **analogy** between statistical "$\hat{\theta}$"-hunting and wild boar hunting can be **illustrated in the following diagram**. **IMPORTANT** :)
 
 <center>
 ![](BiasBoar.jpg){width=50%}
 </center>
 
-<br>A fenti ábrán bejelöltem **zölddel** egy **tetszőleges $\hat{\theta}_i$ és a valós, sokasági $\theta$ közti távolság**ot. Valójában **ez az a távolság, amire kíváncsiak vagyunk egy tetszőleges FAE mintából számolt becslés és a keresett mutató sokasági értéke közötti távolság**! Hiszen a gyakorlatban **csak egy db mintavételünk van, és az egyetlen egy megfigyelt mintából kimókolt $\hat{\theta}$ és $\theta$ közti távolságot kéne kiszámolni**! Ez lenne ugyebár a **MVH**, amit kersünk!<br>
-Nos, a **torzítatlanságnak hála** van egy módszer, amivel ezt a **távolságot ki lehet számolni**! Hiszen, ha a torzítatlanság miatt $E(\hat{\theta})=\theta$, akkor ez azt jelenti, hogy **a sok-sok mintából számolt $\hat{\theta}_i$ értékek szórása épp a keresett zöld távolság**. Hiszen mi is a **szórás általános értelmezése**? Egy **véletlenszerűen kiválasztott elem az adatsorból várhatóan mennyivel tér el az átlagtól**. Hogyan fordul ez le a $\hat{\theta}$-ok adatsorára? Ha a **sok-sok lehetséges mintavételből kiválasztok egyet, akkor a kiválasztott mintából számolt $\hat{\theta}$  várhatóan szórásnyival tér el** a $\hat{\theta}$-ok átlagától, azaz a *torzítatlanság* miatt épp a **valós, sokasági $\theta$ értékétől**.<br>
-Ebből az okfejtésből kiindulva **a$\hat{\theta}$-ok szórását standard mintavételi hibának, röviden csak standard hibának, "SH"-nak nevezzük**.
+<br>In the above diagram, I have marked in **blue** the **distance between an arbitrary $\hat{\theta}_i$ and the true population parameter $\theta$.** In reality, **this is the distance we are interested in: the difference between an estimator from a given IID sample and the true population parameter**! Because in practice, **we only have a single sample, and we need to compute the distance between the one observed $\hat{\theta}$ and the true $\theta$!** This is what we are looking for: the sampling error)!<br>
 
-Akkor ezen felbuzdulva **számoltassuk ki** az R állattal az **átlag és arány standard hibáit**, mint a $\hat{\theta}$-ként funkcionáló **mintaátlagok és minatarányok szórása**! Itt sima szórást kell stámolni, semmi korrekció nem kell az `std` függvényben.
+Now, **thanks to unbiasedness**, we have a method to **calculate this distance**! Since, due to unbiasedness, $E(\hat{\theta})=\theta$, this means that the **standard deviation of the estimators $\hat{\theta}_i$ across many samples is precisely the blue distance we are seeking**. After all, what is the **general interpretation of standard deviation**? It tells us **how much a randomly selected value from a dataset is expected to deviate from the mean**. How does this translate to the set of $\hat{\theta}$ values? If we **randomly select one of the many possible samples, the estimator $\hat{\theta}$ from that sample is expected to deviate from the mean of the $\hat{\theta}$s by the standard deviation**. And the **mean of the $\hat{\theta}$s, due to unbiasedness, is precisely the true population value $\theta$.**<br>
+From this reasoning, the **standard deviation of the $\hat{\theta}$ values is called the standard error of estimation**, or simply **standard error** (**SE**).
+
+So, let's take advantage of this and have R **calculate the standard errors of the mean and proportion**, which correspond to the **sample means' and sample proportions' standard deviation**! Here, we simply compute the standard deviation, without any correction, using our `classic_var` function defined in Section 1.
 
 ```{r}
 SE_mean <- sqrt(classic_var(samples_100$sample_mean))
@@ -377,22 +373,30 @@ SE_mean
 SE_prop
 ```
 
-Mivel az **átlag és arány torzítatlan becslések**, így a **szórásként kiszámolt standard hibát a következőképpen lehet értelmezni**:
+Since the **sample mean and sample proportion are unbiased estimators**, the **computed standard error can be interpreted as follows**:
 
-- 100 elemű minták esetén **egy konkrét mintaátlag várhatóan $4.4$ perccel tér el az átlagok átlagától, azaz a valós, sokasági átlagos átúszási időtől**.
-- **Egy konkrét 100 elemű mintában a Balatont 3 órán túl átúszók aránya várhatóan $4.72$ százalékponttal tér el a teljes sokaság hasonló arányától**.
+- For 100-element samples, **a specific sample mean is expected to deviate by $4.4$ minutes from the mean of means, that is, from the true population mean swim time**.
+- **In a specific 100-element sample, the proportion of people who swam across Lake Balaton in over 3 hours is expected to deviate by $4.72$ percentage points from the proportion in the full population**.
 
-Hasonlóan működik a dolog ezen a szinten a varianciákra és mediánokra is. HF kiszámolni és értelmezni az eredményeket. :)
+This same principle applies to variances and medians as well. Homework: Compute and interpret the results. :)
 
-Viszont, **olybá tűnik, hogy nem vagyunk sokkal előrébb**. Mivel, bár a standard hiba megadja, hogy egy mintából számolt becslés várhatóan mennyivel tér el a valóságtól, de a **standard hiba (SH) kiszámolásához sok-sok mintavételre van szükség, hiszen ezekből a mintákból számolt $\hat{\theta}$-k szórásaként tudjuk az SH értéket megahtározni**!<br>
-Az kéne, hogy **az SH-t egyetlen egy mintavételből is valahogy ki tudjuk számolni**!
+However, it **seems that we are not much further ahead**. While the standard error tells us how much a sample-based estimate is expected to deviate from reality, the **standard error (SE) calculation requires many samples because we determine it as the standard deviation of $\hat{\theta}$ values across samples**!<br>
+What we need is a way to **compute SE from just a single sample**!
 
-Erre **az átlag és az arány esetében van megoldásunk**. Ugyanis e két mutató esetében a **SH kifejezhető zárt formulával is**:
+For **the mean and proportion, we do have a solution**. In these two cases, **SE can be expressed in a closed formula**:
 
-- $SH(\bar{y})=\frac{\sigma}{\sqrt{n}}$
-- $SH(p)=\sqrt{\frac{P(1-P)}{n}}$
+- $SE(\bar{y})=\frac{\sigma}{\sqrt{n}}$
+- $SE(p)=\sqrt{\frac{P(1-P)}{n}}$
 
-Tehát, a **két standard hiba a sokasági szórás ($\sigma$) és a keresett sokasági arány ($P$) és a mintaelemszám $n$ ismeretében megahtározahtó**. Próbáljuk is ki a dolgot.
+Both formulas follow from the fact that if I have an IID sample, then the sample observations $y_i$ are considered as random variables with a standard deviation of $\sigma$, then their sum, $\sum_{i=1}^n{y_i}$ has a variance of $$Var(\sum_{i=1}^n{y_i})=\sum_{i=1}^n{Var(y_i)}=n \times \sigma$$
+
+**Because the $y_i$ random variables are independent due to the random sampling**. Since the sample means are defined as $\bar{y}=\frac{\sum_{i=1}^n{y_i}}{n}$, their variance follows from the result obtained above: $$Var(\bar{y})=\frac{Var(\sum_{i=1}^n{y_i})}{n^2}=\frac{n\sigma^2}{n^2} = \frac{\sigma}{n}$$
+
+And of course the **square root of the sample mean's variance is** the standard deviation of the sample means, so the **standard error of the mean**: $$\sqrt{Var(\bar{y})}=SE(\bar{y})=\frac{\sigma}{\sqrt{n}}$$
+
+And the **standard error of the proportion is just a special case for the formula just above**. As when we calculate a proportion of some observations, then we code the $y_i$ observations that are favorable for the proportion as $1$s and the rest of the $y_i$ observations as $0$s. So, in this case $y_i \sim Bernoulli(P)$ ($P$ is the expected value of the distribution, so the proportion of the $y_i=1$ cases), and the standard deviation of a Bernoulli distribution is $\sigma = \sqrt{P(1-P)}$
+
+Thus, **both standard errors can be determined if we know the population standard deviation ($\sigma$) and the true population proportion ($P$) along with the sample size ($n$).** Let's test this out!
 
 ```{r}
 n <- 100
@@ -404,12 +408,17 @@ c(SE_mean, SE_mean_formula)
 c(SE_prop, SE_prop_formula)
 ```
 
-Olybá tűnik, hogy **nagyjából egyezik a két érték**. :) A minimális eltérés megint abbók fakad, hogy nem az összes lehetséges mintát vizsgáltuk, csak $10000$ db-ot, amikor a $SH$-kat a $\hat{\theta}$-ok szórásaként számoltuk ki.
+It appears that the **two values match quite closely**. :) The slight discrepancy is again due to the fact that we did not examine all possible samples, only 10,000 when calculating the $SE$ as the standard deviation of $\hat{\theta}$ values.
 
-Viszont, itt **megint az a probléma, hogy a $SH$ kiszámításhoz olyan dolgokat kell ismerni, amiket egyetlen egy mintavétel esetén nem ismerünk**: sokasági szórás ($\sigma$) és a sokasági arány ($P$).<br>
-**NODE!** Ezeket az ismeretlenek legalább tudjuk **helyettesíteni az egy mintavételből számolt torzítatlan becslésükkel**: a $P$-t helyettesítjük $p$-vel, a $\sigma$-t pedig a korrigált szórással, $s$-el (hiszen egy torzítatlan becslése kell).
+However, we have the **same problem again: to compute SE, we need to know values that we do not have in a single sample**. Namely, the population standard deviation ($\sigma$) and the population proportion ($P$).<br>
+**BUT!** At least we can substitute these unknowns with their unbiased estimates from the single sample: We replace $P$ with $p$ and $\sigma$ with the corrected sample standard deviation, $s$ (since it provides an unbiased estimate).
 
-Ennyi ismerettel pedig akkor pl. az $5.$ mintánk alapján a $SH(\bar{y}) \approx \frac{s}{\sqrt{n}}$ és $SH(p) \approx \sqrt{\frac{p(1-p)}{n}}$ **közelítő képletekkel** meg tudjuk már határozni a $SH$-kat.
+With this knowledge, we can **approximate SE** using the following formulas for a single sample:
+
+- $SE(\bar{y}) \approx \frac{s}{\sqrt{n}}$
+- $SE(p) \approx \sqrt{\frac{p(1-p)}{n}}$
+
+Let's try thes things out for the $5$-th sample of $n=100$ observations.
 
 ```{r}
 n <- 100
@@ -421,54 +430,54 @@ SE_mean_fifth
 SE_prop_fifth
 ```
 
-Nem tűpontos a $SH$ közelítése, de azért **nagyságrendileg látszik, hogy jó nyomon járunk már egy mintavétel alapján is!** :)
+The approximation isn't perfect, but it's **clear that we are on the right track with just a single sample!** :)
 
-Sajnos **hasonló közelítő képleteink a varianciák més mediánok esetén NINCSENEK**. Ott majd más trükkökkel próbáljuk kiszámolni az $SH$-kat egy mintavétel alapján. De erről majd pár anyaggal később. :)
+Unfortunately, **we do NOT have similar approximation formulas for variances and medians**. We will try other tricks to estimate $SE$ for those later in the course. :)
 
-Most még egy **fontos elnevezés: a $SH^2$-et gyakran nevezi a szaknyelv a becslőfüggvény VARIANCIÁJÁNAK**. Én nem szeretem ezt az elnevezést, mert könnyű összekeverni a minta vagy éppen a sokasági adatok varianciájával, de sok helyen használják ezt az elnevezést, így fontos tudni! Tehát, ha valahol **olyat olvastok, hogy a mintaátlagok varianciája ennnyi vagy a mintaarányok varianciája amannyi, akkor ott a költő az adott mutatók $SH^2$-re gonfolt**. Jelölni pedig az elnevezés alapján logikus módon így szokás a dolgot: $SH^2(\hat{\theta})=Var(\hat{\theta})$
+One last important **naming convention: The squared SE value ($SE^2$) is often called the variance of the estimator**. I don’t personally like this term, as it’s easy to confuse it with the variance of the sample or population observations. However, it is widely used, so it's important to know! If you **see something like "the variance of sample means is X" or "the variance of sample proportions is Y," the author is referring to $SE^2$.**
+This is typically denoted as follows: $SE^2(\hat{\theta})=Var(\hat{\theta})$
 
-Ennek kapcsán talán fontos megemlékezni **összefoglalásként arról, hogy itt a becsléselméletben milyen különböző szórásokkal, illetve varianciákkal találkoztunk**:
+To summarize, here are the **different types of standard deviations and variances we have encountered in estimation theory**:
 
-- **Sokasági szórás**: A sokaság elemeinek várható eltérése a sokaság átlagától. Jele: $\sigma$.
-  * Négyzete: sokasági variancia, $\sigma^2$
-- **Korrigálatlan mintaszórás**: Egy db minta elemeinek várható eltérése az egy db mintánk átlagától. Jele: $\sigma^*$
-  * Négyzete: korrigálatlan mintavariancia, $(s^*)^2$
-- **Korrigált mintaszórás**: Ugyan az, mint a korigálatlan mintaszórás, csak *torzítatlan* becslést ad a valós, sokasági szóródásra. Jele: $s$
-  * Négyzete: korrigált mintavariancia, $s^2$
-- **Standard hiba**: Sok-sok mintából számolt becslőfüggvény, azaz $\hat{\theta}$ szórása. *Torzítatlanság esetén* egy konkrét mintából számolt becslőfüggvény eltérése a vizsgált $\theta$ paraméter valós, sokasági értékétől. Jele: $SH(\hat{\theta})$
-  * Négyzete: becslőfüggvény varianciája, $Var(\hat{\theta})$
+- **Population Standard Deviation**: Expected difference of an observation in the population from the population mean. Denoted as: $\sigma$.
+  * Squared: population variance, $\sigma^2$
+- **Uncorrected Sample Standard Deviation**: Expected difference of an observation in the sample from the sample mean. Denoted as: $s^*$
+  * Squared: uncorrected sample variance, $(s^*)^2$
+- **Corrected Sample Standard Deviation**: Same thing as the Uncorrected Sample Standard Deviation, it just provides an *unbiased* estimate for teh true population standard deviation. Denoted as: $s$
+  * Squared: corrected sample variance, $s^2$
+- **Standard error**: The standard deviation of an estimator, i.e., $\hat{\theta}$, calculated from many-many samples. *In the case of unbiasedness*, the difference of an estimator computed from a single sample from the true population value of the $\theta$ parameter. Denoted as: $SE(\hat{\theta})$
+  * Squared: becslőfüggvény varianciája, $Var(\hat{\theta})$
 
-### 5.1. A konzisztens becslés fogalma
+### 5.1. The Concept of Consistent Estimators
 
-A standard hibáik formulájából az is kikövetkeztethető a **mintaátlag és mintaarány** becslőfüggvények esetében, hogy ezek **konzisztens becslések is a valós sokasági átlagra, arányra**.
+The standard errors' formulas also imply that, the **sample mean and sample proportion** estimators are **consistent estimators for the true population mean and proportion**.
 
-Ugyanis, általánosságban **egy $\hat{\theta}$ becslőfüggvény akkor konzisztens, ha $SH$-ja, a mintaelemszám ($n$) növelésével $0$-ba tart**:$$\lim_{n \rightarrow \infty}{SH(\hat{\theta})} = 0$$
+In general, an **estimator $\hat{\theta}$ is consistent if its standard error ($SE$) approaches $0$ as the sample size ($n$) increases**:$$\lim_{n \rightarrow \infty}{SH(\hat{\theta})} = 0$$
 
-Azaz, a egyre nagyobb a mintaméret, akkor a vizsgált statisztikai mutatónk egy mintából számított értéke ($\hat{\theta}$) egyre közelebb lesz a mutató valós, sokasági értékéhez ($\theta$).
+That is, as the sample size grows, the value of the examined statistical measure computed from a single sample ($\hat{\theta}$) gets closer and closer to the true population value of the measure ($\theta$).
 
-Könnyen látható, hogy **mintaelemszám ($n$) függvényében, mind a mintaátlagok, mind a mintaarányok standard hibái $f(n) \sim \frac{1}{n}$ stílusú hiperbola függvények, amik a végtelenbe tartó $n$ nevező esetén $0$-ba tartanak**:$$\lim_{n \rightarrow \infty}{SH(\bar{y})} = \lim_{n \rightarrow \infty}{\frac{\sigma}{\sqrt{n}}} = 0$$
+It is easy to see that, **as a function of the sample size ($n$), both the standard errors of the sample means and sample proportions follow a hyperbolic function of the form $f(n) \sim \frac{1}{n}$, which approaches $0$ as $n$ tends to infinity**:$$\lim_{n \rightarrow \infty}{SH(\bar{y})} = \lim_{n \rightarrow \infty}{\frac{\sigma}{\sqrt{n}}} = 0$$
 
-és $$lim_{n \rightarrow \infty}{SH(p)} = \lim_{n \rightarrow \infty}{\sqrt{\frac{P(1-P)}{n}}} = 0$$
+and $$lim_{n \rightarrow \infty}{SH(p)} = \lim_{n \rightarrow \infty}{\sqrt{\frac{P(1-P)}{n}}} = 0$$
 
-**Rajzoljuk is ki a standard hiba függvényt mondjuk $SH(\bar{y})$ esetében** $n=\{10,20,...,200\}$ elemszámok mellett, és **látni fogjuk a hiperbola alakot**. Bár a dolog nem teljesen tiszta, mert a $0$-ba tartás sebesség a képlet alapján "*gyökös*". :) Az ábrázolást végző Python kód logikája teljesen egyezik azzal, amit a *2.1. fejezetben* is használtunk.
+Let’s **plot the standard error function for $SE(\bar{y})$**, in case of sample sizes $n={10,20,...,200}$, and we will see the **hyperbolic shape**. Although the concept is not entirely straightforward, since the rate of convergence to $0$ follows a "*square root*" pattern according to the formula. :) Logic of the R code used for visualization is entirely consistent with what was used in *Section 2.1.*
 
 ```{r}
-# Üres vektor létrehozása a különböző elemszámok mellett vett SH-k tárolására
+# Empty vector to store the SE values coming from different sample sizes
 list_SE <- c()
-# Vizsgált elemszámok listájának létrehozása
-# 10 és 200 közötti egész számok felsoroltatása a 'seq' függvényben 10-es lépésközzel
+# Vector of the sample sizes tested
 sample_sizes <- seq(10, 100, 10)
 
-# Ciklus indítása
+# Starting loop
 for (current_sample_size in sample_sizes) {
   list_SE <- c(list_SE, PopStd/sqrt(current_sample_size))
 }
 
-# Eredmények összefűzése data frame-be 
+# Put results into a single data frame
 SE_df <- data.frame("sample_size" = sample_sizes,
                     "Standard.Error" = list_SE)
 
-# Ábrázolás a ggplot-tal
+# Draw a ggplot :)
 ggplot(SE_df, aes(x=sample_size, y=Standard.Error)) + geom_line()
 ```
 
