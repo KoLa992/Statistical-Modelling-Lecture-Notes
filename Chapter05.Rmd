@@ -1,7 +1,7 @@
 ---
 title: "Basic Concepts of Estimation Theory"
 author: "László Kovács"
-date: "21/02/2025"
+date: "22/02/2025"
 output:
   html_document:
     toc: true
@@ -446,7 +446,7 @@ To summarize, here are the **different types of standard deviations and variance
 - **Corrected Sample Standard Deviation**: Same thing as the Uncorrected Sample Standard Deviation, it just provides an *unbiased* estimate for teh true population standard deviation. Denoted as: $s$
   * Squared: corrected sample variance, $s^2$
 - **Standard error**: The standard deviation of an estimator, i.e., $\hat{\theta}$, calculated from many-many samples. *In the case of unbiasedness*, the difference of an estimator computed from a single sample from the true population value of the $\theta$ parameter. Denoted as: $SE(\hat{\theta})$
-  * Squared: becslőfüggvény varianciája, $Var(\hat{\theta})$
+  * Squared: variance of the estimator, $Var(\hat{\theta})$
 
 ### 5.1. The Concept of Consistent Estimators
 
@@ -481,15 +481,15 @@ SE_df <- data.frame("sample_size" = sample_sizes,
 ggplot(SE_df, aes(x=sample_size, y=Standard.Error)) + geom_line()
 ```
 
-## 6. Az átlagos négyzetes hiba (*MSE*) fogalma
+## 6. The Concept of Mean Squared Error (*MSE*)
 
-Ugyebár arra jutottunk, hogy egy statisztikai paraméter becslőfüggvénynek a szórása, mint **standard hiba, csak akkor adja meg egy konkrét mintából számolt $\hat{\theta}$ várható eltérését a valós, sokasági $\theta$ értéktől, ha a becslőfüggvény torzítatlan**, mert ekkor egyezik meg $\theta$ a sok-sok mintából számolt $\hat{\theta}$-ok átlagával, $E(\hat{\theta})$-val.
+So, we have concluded that the standard deviation of an estimator, so the **standard error of the estimator, only gives the expected deviation of a specific sample-based $\hat{\theta}$ from the true population $\theta$ if the estimator is unbiased**, because in this case, $\theta$ matches the mean of the $\hat{\theta}$ values calculated from many samples, i.e., $E(\hat{\theta})$.
 
-Ha nem torzítatlan becslőfüggvényről beszélünk, akkor **manuálisan ki tudjuk számolni a sok-sok mintából megadott $\hat{\theta}$-ok várható eltérését a valós, sokasági $\theta$-tól**. **Ez a mutató lesz a $\hat{\theta}$ átlagos négyzetes hibája, angolul Mean Squared Error = MSE**. A számoláshoz simán a klasszikus variancia képletet kell alkalmazni a kövtekező módon: $$MSE(\hat{\theta})=\frac{\sum_{i=1}^K{(\hat{\theta}_i-\theta)^2}}{K}$$
+If we are dealing with a biased estimator, then we can **manually calculate the expected deviation of the $\hat{\theta}$ values from many samples from the true population $\theta$. This measure is called the Mean Squared Error (MSE)**. To calculate it, we simply apply the classical variance formula as follows: $$MSE(\hat{\theta})=\frac{\sum_{i=1}^K{(\hat{\theta}_i-\theta)^2}}{K}$$
 
-A képletben $K$ a mintavételek száma (nekünk most $10000$) $\hat{\theta}_i$ egyszerűen az $i$-edik mintából számolt $\hat{\theta}$ értéke.
+In this formula, $K$ represents the number of samples (which in our case is $10000$), and $\hat{\theta}_i$ is simply the $\hat{\theta}$ value computed from the $i$-th sample.
 
-**Számoljuk is ki az $MSE$-t, az egyetlen torzított becslőfüggvényre, a korrigálatlan mintavarianciára!** A képletnél muszáj R-ben a `mean` függvényt alkalmazni, és "*manuálisan*" lekódolni a formulát, mivel a beépített `sd` függvénnyel $\theta$ helyett $E(\hat{\theta})$-hoz viszonyítanánk, és a torzítottság miatt e két érték nem esik most egybe!
+Now, **let's compute the $MSE$ for the only biased estimator we know of: the uncorrected sample variance!** In R, we must use the `mean` function and *manually* implement the formula, because using the built-in `sd` function or even our `classic_var` function (from Section 1) would compare to $E(\hat{\theta})$ instead of $\theta$, and due to bias, these two values do not coincide!
 
 ```{r}
 MSE_Var <- mean((samples_100$sample_var - PopVar)^2)
@@ -497,14 +497,14 @@ MSE_Var <- mean((samples_100$sample_var - PopVar)^2)
 MSE_Var
 ```
 
-Királyság! Namármost. Ez **a $MSE$ érték** valójában a **becslés kétféje hibájának négyzetes összege**. Konkrétan $$MSE=SH^2+Bs^2$$
+Awesome! Now, **this $MSE$ value** is actually the **sum of the squared errors of two types of estimation errors**. Specifically: $$MSE=SE^2+Bs^2$$
 
-Ugyebár itt **egy $\hat{\theta}$ becslőfüggvény eltérését a valós $\theta$-tól két lépcsőben lehet megközelíteni**:
+Here, the **deviation of an estimator $\hat{\theta}$ from the true $\theta$ can be obtained in two steps**:
 
-1. $SH$: Mennyivel tér el egy konkrét minta $\hat{\theta}$-ja a becslések átlagától, $E(\hat{\theta})$-től.
-2. $Bs$: Mennyivel tér el a becslések átlaga a valós $\theta$-tól: $Bs = E(\hat{\theta}) - \theta$
+1. $SE$: How much does a specific sample’s $\hat{\theta}$ differ from the mean of the estimates, $E(\hat{\theta})$.
+2. $Bs$: How much does the mean of the estimates differ from the true $\theta$: $Bs = E(\hat{\theta}) - \theta$
 
-És ha kiszámoljuk a gyakorlatban, akkor látjuk, hogy az E$MSE$ tényleg **ennek a fenti kétféle hibának az összege**.
+And if we calculate this in practice, we can see that the $MSE$ really is the **sum of these two types of errors**.
 
 ```{r}
 Bs_Var <- mean(samples_100$sample_var) - PopVar
@@ -515,9 +515,9 @@ MSE_Var_Sum <- Bs_Var^2 + SE_Var^2
 c(MSE_Var, MSE_Var_Sum)
 ```
 
-Jé, tényleg jó az összeges logikánk is! :)
+Wow, our summation logic actually works! :)
 
-Természetesen, ahol **torzítatlan a becslés, ott a $Bs=0$ miatt az $MSE = SH^2$ azonosság áll**. Vegyük **pl. a mintaarányok esetét**.
+Of course, **when the estimation is unbiased, then $Bs=0$, so the identity $MSE = SH^2$ holds**. Let's take the **case of sample proportions, for example**.
 
 ```{r}
 MSE_Prop <- mean((samples_100$sample_prop - PopProp)^2)
@@ -528,34 +528,34 @@ c(MSE_Prop, SE_Prop^2)
 
 ExcellenT! :)
 
-### 6.1. Különböző becslőfüggvények összehasonlítása - Hatásosság
+### 6.1. Comparing Different Estimators of the Same Parameter- Efficiency
 
-Az $MSE$-t kiválóan lehet hasznosítani, mint egy olyan **mérőszámot, amivel választani tudunk egy $\theta$ sokasági paraméterre adott több lehetséges $\hat{\theta}$ becslőfüggvény alternatíva közül**. Kiváló **példa erre az $(s^*)^2$ és $s^2$, mint két alternatív becslőfüggény a sokasági variancia, $\sigma^2$ becslésére**.
+The $MSE$ is an excellent metric that can be used as a **measure to choose between multiple possible $\hat{\theta}$ estimator alternatives for a population parameter $\theta$.** A great **example of this is $(s^*)^2$ and $s^2$, as two alternative estimators for estimating the population variance**, $\sigma^2$.
 
-Mondhatnánk erre a kérdésre válaszként csípőből azt, hogy **"de hát a torzítatlan becslőfüggvény biztos jobb"**. Nos nem feltétlenül. Mert mi van **ha egy torzított becslés standard hibája annyival kisebb a torzítatlannál, hogy az ellensúlyozza a torzítás mértékét**, és a végén egy "lövés" (azaz $\hat{\theta}$ becslés) a torzított becslőfüggvényből közelebb esik a valós $\theta$-hoz, mint a torzítatlan becslésből származó "lövés".
+One might instinctively respond to this question by saying, **"but the unbiased estimator must be better"**. Well, not necessarily. Because **what if a biased estimator’s standard error is so much smaller than that of the unbiased estimator that it compensates for the bias**, and in the end, a single "shot" (i.e., an estimate $\hat{\theta}$) from the biased estimator is actually closer to the true $\theta$ than a "shot" from the unbiased estimator?
 
-Ezt nagyon jól lehet érzékeltetni az 5. fejezet vaddisznó vadászatos példáján egy másik nézőpontból: **mi van ha a torzítatlan becslésnek akkor a standard hibája, hogy egy konkrét "lövés" (azaz $\hat{\theta}$ becslés) jóval messzebb lesz a valós $\theta$-tól, mint egy torzított becslőfüggvényből származó becslés?**
+This can be well illustrated using another perspective on the wild boar hunting example from Section 5: **what if the unbiased estimator has such a large standard error that a specific "shot" (i.e., an estimate $\hat{\theta}$) is much farther from the true $\theta$ than an estimate from a biased estimator?**
 
 <center>
 ![](BiasBoarCompare.png){width=90%}
 </center>
 
-<br>Az ábrán látható, hogy **egy enyhén "balra" torzított becslőfüggvényből származó, de kis standard hibájú $\hat{\theta}_i$ becslések még eltalálják a vaddisznót, de a torzítatlan becslések, bár sok-sok mintavétel átlagában nagyon jól működnek, de egy konkrét $\hat{\theta}_i$ lövésnek akkora a standard hibája, hogy nagyon messzire elvéti azt a vaddisznót!**
+<br>The figure shows that **estimates $\hat{\theta}_i$ from a slightly "left-biased" estimator with a small standard error still hit the wild boar, while the unbiased estimator, despite working very well on average over many samples, have such a large standard error for a single estimate $\hat{\theta}_i$ that they completely miss the wild boar!**
 
-Tehát a fenti jelenség miatt, ha **egy adott $\theta$-ra több becslőfüggvény közül kell választanunk, akkor azt az $MSE$ alapján** szabad csak megtennünk, mert az egyszerre veszi figyelembe a torzítás mértékét és a standard hibát is.
+Thus, due to the above phenomenon, if **we need to choose between multiple estimators for a given $\theta$, we should base our decision on $MSE$**, as it simultaneously accounts for both the bias and the standard error.
 
-A szakkifejezés erre a **hatásosság**. Ha a $\theta_1$ és $\theta_2$ becslőfüggvényekre igaz az, hogy $MSE(\theta_1)<MSE(\theta_2)$, akkor $\theta_1$ becslőfüggvény **hatásosabb**, mint $\theta_2$!!
+The technical term for this is **efficiency**. If for two estimator functions, $\theta_1$ and $\theta_2$, it holds that $MSE(\theta_1)<MSE(\theta_2)$, then the estimator function $\theta_1$ is **more efficient** than $\theta_2$!!
 
-Lássuk a dolgot a gyakorlatban: **Mi a jobb becslés a sokasági varianciára? A korrigált vagy a korrigálatlan mintavariancia?**
+Let's see this in practice: **What is the better estimator for the population variance? The corrected or the uncorrected sample variance?**
 
 ```{r}
-# Torzított becslés = Korrigálatlan mintavar.
+# Biased Estimator = Uncorrected Sample Variance
 Bs_Var <-mean(samples_100$sample_var) - PopVar
 SE_Var <- sqrt(classic_var(samples_100$sample_var))
 
 MSE_Var <- Bs_Var^2 + SE_Var^2
 
-# Torzítatlan becslés = Korrigált mintavar.
+# Unbiased Estimator = Corrected Sample Variance
 SE_CorrVar = sqrt(classic_var(samples_100$corr_sample_var))
 
 MSE_CorrVar = 0 + SE_CorrVar^2
@@ -563,9 +563,9 @@ MSE_CorrVar = 0 + SE_CorrVar^2
 c(MSE_Var, MSE_CorrVar)
 ```
 
-Hoppá, olybá tűnik, hogy $MSE((s^*)^2) < MSE(s^2)$, tehát a **nem korrigált mintavariancia van közelebb a valós, sokasági $\sigma^2$-hez egy "átlagos" mintavétel esetén, hanem a sima korrigálatlan verzió**. Vagyis a **korrigálatlan mintavarianca HATÁSOSABB, mint a korrigált!!**<br>
-Ugyanakkor az **adatsor bizonytalanságának, szóródásának "rendszeres" alábecslése a legtöbb esetben nagyobb probléma, mint a némileg magasabb standard hiba**. Tehát, **bár összességében, azaz $MSE$-ben az $(s^*)^2$ mintavételi hibája kisebb, mint $s^2$-nek, de a kisebb hiba iránya "lefelé" van a torzítás miatt**, és ezt nem szeretjük itt most. Inkább **bevállalunk egy valamivel nagyobb, de "szimmetrikus" hibát**.<br>
-Ebből adódóan, **variancia esetében** sok gyakorlati alkalmazásban "*felülírjuk*" az $MSE$ döntését, és a **korrigált mintavarianciát használjuk a legtöbb esetben**. Vagy másképpen fogalmazva azt mondhatjuk, hogy variancia esetén nagyobb súlyt helyezünk $MSE$-ben a $Bs^2$-re, mint a $SH^2$-re, és nem egyenlő mértékben preferáljuk a csökkenésüket.<br>
-Pl. az **átlag standard hibájának $\frac{s}{\sqrt{n}}$ elvű közekítésénél ez azért is jogos, mert a korrigálatlan mintaszórás használata esetén egy mintaátlag távolságát a valós, sokasági átlagtól az "átlagos mintavételben" alábecsülnénk, ami azért kellemetlen**. :)
+Oops, it seems that $MSE((s^)^2) < MSE(s^2)$, meaning that **in an "average" sample, the uncorrected sample variance is actually closer to the true population variance $\sigma^2$ than the corrected version**. In other words, **the uncorrected sample variance is more efficient than the corrected one!!**<br>
+However, **systematic underestimation of a variable's dispersion and uncertainty is usually a bigger problem than a slightly higher standard error**. Therefore, **although overall, in terms of $MSE$, the sampling error of $(s^)^2$ is smaller than that of $s^2$, the direction of the smaller error is "downward" due to bias**, and this is undesirable in this case. Instead, **we prefer to accept a somewhat larger but "symmetric" error**.<br>
+As a result, **in the case of variance**, many practical applications "*override*" the $MSE$ decision, and the **corrected sample variance is used in most cases**. Or in other words, we can say that in the case of variance, we place more weight on $Bs^2$ than on $SE^2$ in the $MSE$, and we do not equally prefer their reduction.<br>
+For example, this is **also justified when approximating the standard error of the mean using $\frac{s}{\sqrt{n}}$, because if we were to use the uncorrected sample standard deviation, we would underestimate the expected distance of a sample mean from the true population mean in an "average sample", which is problematic**.
 
-Ugyanakkor, **két torzítatlan becslőfüggvény közül kell választanunk, akkor simán választhatjuk azt, aminek a standard hibája kisebb, hiszen ilyenkor ez egyben azt is jelenti, hogy az $MSE$-je is kisebb**, mivel $Bs^2=0$. **Ekkor de csakis ekkor** mondhatjuk, hogy a hatásosság kritériuma azt jelenti, hogy két becslőfüggvény közül az a hatásosabb, amelynek $SH$-ja kisebb.
+On the other hand, **if we need to choose between two unbiased estimators, we can simply choose the one with the smaller standard error, since in this case, it also means that its $MSE$ is smaller**, as $Bs^2=0$. **Only in this case** can we say that the efficiency criterion means that among two estimator functions, the one with the smaller $SE$ is the more efficient one.
