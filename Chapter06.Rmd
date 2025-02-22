@@ -1,0 +1,74 @@
+---
+title: "Estimating Parameters of Probability Distributions"
+author: "László Kovács"
+date: "22/02/2025"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Method of Moments
+
+General concept for Bernoulli and Poisson distributions.
+
+If we have $X \sim I(p)$ and $Y ~ P(\lambda)$, then we know that $E(X)=p$ and $E(Y)=\lambda$.
+
+We have an IID sample of size $n$ from both distributions with the sample observations defined as $y=(y_1,y_2,...,y_n)$ and  $x=(x_1,x_2,...,x_n)$ respectively. The sample means $\bar{x}$ and $\bar{y}$ are the "*sample versions*" of the expected values of two distributions. So we can simply say that the sample mean of $x$ (denoted as $\hat{x}$) is an estimator of $p$ (denoted as $\hat{p}$): $$\bar{x}=\hat{p}$$
+
+And of course, we can also say that the sample mean of $y$ is an estimator of $p$:$$\bar{y}=\hat{\lambda}$$
+
+A more advanced case for Binomial distribution. This time, we have two parameters to estimate: $n$ and $p$. So, now have $X \sim B(n,p)$. Here we need two equations to determine the two parameters. We can use the definitions for the expected value and variance: $E(X)=np$ and $Var(X)=np(1-p)$. These theoretical definitions can also be assumed to hold in the observed IID sample too. So, the two equations to solve for $n$ and $p$ are: $$\bar{x}=\hat{n}\hat{p}$$
+
+And of course: $$s^2=\hat{n}\hat{p}(1-\hat{p})$$
+
+We use the corrected sample variance, $s^2$ here of course, as we should not underestimate the second moment.
+
+To solve this system of two equations, we should first substitute the first equation into the second one: $$s^2=\bar{x} \times (1-\hat{p})$$
+
+This, we can solve for $\hat{p}$: $$\hat{p}=1-\frac{s^2}{\bar{x}}$$
+
+With $\hat{p}$, it's easy to obtain $\hat{n}$ from the first equation: $$\hat{n}=\frac{\bar{x}}{\hat{p}}$$
+
+In case of continuous distributions, let's see the exponential distribution. If we have $Y \sim Exp(\lambda)$, then the expected value is $E(X)=\frac{1}{\lambda}$, so if this is true in the sample as well, then the equation to solve is: $$\bar{x}=\frac{1}{\hat{\lambda}}$$
+
+This solution is just a reciprocal, so: $$\hat{\lambda}=\frac{1}{\bar{x}}=\frac{n}{\sum_{i=1}^{n}{x_i}}$$
+
+Normal distribution $Y \sim N(\mu, \sigma)$ is of course, easy... $\hat{\mu}=\bar{y}$ and $\hat{\sigma}^2=s^2$
+
+And an interesting trick: same principle as for the binomial case, but with the mean and median of the lognormal distribution! <a href="https://github.com/tamas-ferenci/omsz-kierkezesi-ido-percentilis?tab=readme-ov-file#az-orsz%C3%A1gos-ment%C5%91szolg%C3%A1lat-ki%C3%A9rkez%C3%A9si-statisztik%C3%A1inak-vizsg%C3%A1lata-a-90percentilis-becsl%C3%A9se" target="_blank">This example</a> should be translated and in included here!
+
+## 2. Maximum Likelihood Estimation
+
+General principles.
+
+### 2.1. Manually for Binomial Distribution
+
+The example of cars having accident in a fleet of $10$ cars from *Section 1*.
+
+### 2.2. Manually for Exponential Distribution
+
+Cancel survival data from <a href="Chapter03.html" target="_blank">Chapter 3</a>.
+
+### 2.3. Manually for Normal Distribution
+
+For the cancer survival data as well: to see a bad fit for the observed data!
+
+### 2.4. Compare Diferent Distributions Fitted on the Same Sample - Information Criterions
+
+Compare the normal and exponential distributions for the cancer survival data. AIC and BIC show that the exponential is a better fit, despite having one parameter instead of two.
+
+## 3. Automated Distribution Fitting with the `fitdistrplus` package
+
+Do the same tasks as in Sections 2.2 - 2.4. but with the `fitdistrplus` package!
