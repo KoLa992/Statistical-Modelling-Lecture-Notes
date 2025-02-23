@@ -317,7 +317,7 @@ However, we need to control for the fact that the normal distribution is more fl
 
 Hence the Information Criterion ($IC$). As all the $IC$s are **based on the negative log-likelihood, they always needs to be minimized**. So, the smaller $IC$ shows a better distribution fit.
 
-Akaike ($AIC$), with $p$ being the number of estimated paramteres: $$2p-2l(\theta)$$ 
+Akaike ($AIC$), with $p$ being the number of estimated parameters: $$2p-2l(\theta)$$ 
 
 It's easy to calculate in R.
 

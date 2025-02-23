@@ -479,7 +479,7 @@ ggplot(data = Surv, mapping = aes(x=SurvMonth)) + geom_histogram(aes(y = after_s
 <pre><code>## [1] TRUE</code></pre>
 <p>However, we need to control for the fact that the normal distribution is more flexible as it has two parameters instead of one. <em>!Note to self: describe over fitting!</em></p>
 <p>Hence the Information Criterion (<span class="math inline">\(IC\)</span>). As all the <span class="math inline">\(IC\)</span>s are <strong>based on the negative log-likelihood, they always needs to be minimized</strong>. So, the smaller <span class="math inline">\(IC\)</span> shows a better distribution fit.</p>
-<p>Akaike (<span class="math inline">\(AIC\)</span>), with <span class="math inline">\(p\)</span> being the number of estimated paramteres: <span class="math display">\[2p-2l(\theta)\]</span></p>
+<p>Akaike (<span class="math inline">\(AIC\)</span>), with <span class="math inline">\(p\)</span> being the number of estimated parameters: <span class="math display">\[2p-2l(\theta)\]</span></p>
 <p>It’s easy to calculate in R.</p>
 <pre class="r"><code>aic_exp &lt;- 2*1 + 2*expon_ml$value # as the exponential distribution has p=1 parameter
 aic_norm &lt;- 2*2 + 2*norm_ml$value # as the normal distribution has p=2 parameters</code></pre>
