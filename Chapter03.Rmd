@@ -1,7 +1,7 @@
 ---
 title: "Probability Distributions"
 author: "László Kovács"
-date: "08/02/2025"
+date: "23/02/2025"
 output:
   html_document:
     toc: true
@@ -272,9 +272,9 @@ Why it has a special place is the fact that every other $N(\mu,\sigma)$ distribu
 
 So, if we have a **normally distributed variable $Y$ and from its every $Y_i$ element, we subtract the mean and divide the result by the standard deviation, then the resulting $z$ variable with $z_i$ elements has a standard normal distribution**. This operation is called **normalization/standardization**.
 
-In matehematics, we denote by $\sim$ if a variable follows some kind of distribution. So what I can say is that $Y \sim N(\mu,\sigma)$ and $z \sim N(0,1)$.
+In mathematics, we denote by $\sim$ if a variable follows some kind of distribution. So what I can say is that $Y \sim N(\mu,\sigma)$ and $z \sim N(0,1)$.
 
-Let's calculate this tsandardaized $z$ variable for the price changes of the Tesla stock:
+Let's calculate this standardized $z$ variable for the price changes of the Tesla stock:
 
 ```{r}
 Tesla$z <- (Tesla$TESLA - mean(Tesla$TESLA))/sd(Tesla$TESLA)
@@ -377,31 +377,32 @@ library(psych)
 describe(Surv$SurvMonth)
 ```
 
-n R, the functions `dnorm`, `pnorm`, and `qnorm` have analogous functions for the exponential distribution: `dexp`, `pexp`, and `qexp`. Their usage and meaning are exactly the same as the normal distribution functions. The only difference, of course, is that for the exponential distribution, only the uniform $\lambda$ needs to be provided, instead of separate $\mu$ and $\sigma$ values, as was the case with the normal distribution.<br>
-In R, $\lambda$ can be provided in the function’s `rate` parameter. Based on the previously seen relationships, we can calculate it using either the mean or the standard deviation as their reciprocals. Which of these two logics we should follow will be discussed in later chapters. For now, let’s take $\lambda$ as the reciprocal of the standard deviation.<br> Thus, for the survival times, $\lambda=\frac{1}{\sigma}=\frac{1}{273.94}=0.00365$. Therefore, the individual survival times $Y_i$ follow an $Exp(0.00365)$ distribution: $Y_i \sim Exp(0.00365)$.
+In R, the functions `dnorm`, `pnorm`, and `qnorm` have analogous functions for the exponential distribution: `dexp`, `pexp`, and `qexp`. Their usage and meaning are exactly the same as the normal distribution functions. The only difference, of course, is that for the exponential distribution, only the uniform $\lambda$ needs to be provided, instead of separate $\mu$ and $\sigma$ values, as was the case with the normal distribution.<br>
+In R, $\lambda$ can be provided in the function’s `rate` parameter. Based on the previously seen relationships, we can calculate it using either the mean or the standard deviation as their reciprocals. Which of these two logics we should follow will be discussed in <a href="Chapter06.html" target="_blank">Chapter 6</a>. For now, let’s take $\lambda$ as the reciprocal of the mean.<br>
+Thus, for the survival times, $\lambda=\frac{1}{\bar{Y}}=\frac{1}{226.17}=0.00442$. Therefore, the individual survival times $Y_i$ follow an $Exp(0.00442)$ distribution: $Y_i \sim Exp(0.00442)$.
 
 Let’s now calculate a few probabilities related to the survival times:
 
 1. What is the probability that after chemotherapy, a person will survive exactly one year, i.e., $12$ months?
 
 ```{r}
-dexp(12, rate = 1/sd(Surv$SurvMonth))
+dexp(12, rate = 1/mean(Surv$SurvMonth))
 ```
 
-This is a fairly low probability, about $0.3\%$. We’re not surprised, because the likelihood of exactly one point occurring is low, given the large survival time range.
+This is a fairly low probability, about $0.4\%$. We’re not surprised, because the likelihood of exactly one point occurring is low, given the large survival time range.
 
 2. What is the probability that after chemotherapy, a person will survive more than five years, i.e., $60$ months?
 
 ```{r}
-1 - pexp(60, rate = 1/sd(Surv$SurvMonth))
+1 - pexp(60, rate = 1/mean(Surv$SurvMonth))
 ```
 
-The result is about $80\%$, which is quite a good outlook!
+The result is about $76.7\%$, which is quite a good outlook!
 
 What is the probability that, during the third year after chemotherapy, i.e., between $24$ and $36$ months, the person will pass away?
 
 ```{r}
-pexp(36, rate = 1/sd(Surv$SurvMonth)) - pexp(24, rate = 1/sd(Surv$SurvMonth))
+pexp(36, rate = 1/mean(Surv$SurvMonth)) - pexp(24, rate = 1/mean(Surv$SurvMonth))
 ```
 
 The calculation here is also based on $f(x)=P(Y_i=x)$, meaning **the value of the probability density function at $x$ equals the probability of $x$ occurring** in a random draw from the dataset. The probability $P(Y_i<x)$ can also be calculated for the exponential distribution using the improper integral $\int_{-\infty}^x{f(x)}dx$, i.e., it corresponds to the area under the density function up to $x$.
@@ -413,10 +414,10 @@ These visual interpretations can be viewed and tried out in the interactive plot
 Of course, we can also calculate *quantile values* for the exponential distribution. For example, let’s see what the time is where there is only a $1%$ probability that a chemotherapy-treated head and neck cancer patient will survive.<br> For the calculation, we need to rephrase the question: what is the time at which there is only a $99%$ probability that a chemotherapy-treated head and neck cancer patient will **not** survive. This is because the `qexp` function, like `qnorm`, works with cumulative probabilities of **being below** the value we are looking for.
 
 ```{r}
-qexp(0.99, rate = 1/sd(Surv$SurvMonth))
+qexp(0.99, rate = 1/mean(Surv$SurvMonth))
 ```
 
-The answer is approximately $1262$ months, or $105$ years! But this large value is fundamentally due to the long right tail of the distribution, as long-right-tailed distributions tend to have outlier values that extend upward, so the long-right-tailed density functions must account for these outliers.
+The answer is approximately $1042$ months, or $87$ years! But this large value is fundamentally due to the long right tail of the distribution, as long-right-tailed distributions tend to have outlier values that extend upward, so the long-right-tailed density functions must account for these outliers.
 
 Finally, let’s check how well this exponential density function fits the survival time histogram, just as we did for the normal distribution with a histogram-fitted `ggplot` line plot.
 
@@ -425,8 +426,8 @@ ggplot(Surv, aes(x=SurvMonth)) +
   geom_histogram(aes(y = after_stat(density))) +
   stat_function(
                 fun = dexp, 
-                args = list(rate = 1/sd(Surv$SurvMonth)),
+                args = list(rate = 1/mean(Surv$SurvMonth)),
                 col = 'red')
 ```
 
-It looks quite nice here, with only one odd point: the 150-200 month range. Way more data points fall into this bin than would be expected based on the $Exp(0.00365)$ distribution. But this could easily be due to the large number of bins (we see that `ggplot` used 30 by default). Based on what we learned in Chapter 2, we could fix this if needed. :)"
+It looks quite nice here, with only one odd point: the 150-200 month bin. Way more data points fall into this bin than would be expected based on the $Exp(0.00442)$ distribution. But this could easily be due to the large number of bins (we see that `ggplot` used 30 by default). Based on what we learned in Chapter 2, we could fix this if needed. :)"
