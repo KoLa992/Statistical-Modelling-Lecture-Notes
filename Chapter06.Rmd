@@ -1,7 +1,7 @@
 ---
 title: "Estimating Parameters of Probability Distributions"
 author: "László Kovács"
-date: "23/02/2025"
+date: "01/03/2025"
 output:
   html_document:
     toc: true
@@ -21,7 +21,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1. Method of Moments
 
-General concept is what we have used for normal distribution in case of the Tesla price change data in <a href="Chapter03.html" target="_blank">Chapter 3</a>. For a normal distribution $Y \sim N(\mu, \sigma)$ we say that the sample moments are the best estimators for the theoretical moments $\hat{\mu}=\bar{y}$ and $\hat{\sigma}^2=s^2$
+In <a href="Chapter05.html" target="_blank">Chapter 5</a>, we've covered the properties describing the behavior of **estimators for classical statistical measures**. Like how to **estimate the population mean, standard deviation, proportions, median etc. with their values calculated from sample data**.<br>
+What this chapter covers is **estimating the parameters of probability distributions from sample data alone**. Like we **assume that our observed sample data follows a specific probability distribution** (Binomial, Poisson, Normal, Exponential, etc.) and we want to **determine the parameter values that best fit our data**.<br>
+So, if we somehow know or suspect (e.g. from a histogram) that our data has Binomial Distributions, then what are the $n$ and $p$ parameter that best fit for our data. Or if our data is assumed to have Exponential distribution, then what is the $\lambda$ that best fits our observed sample data.
+
+We have two basic ways to solve this problem. The first way we cover is the simpler one: the **method of moments**. And We'll soon see that **actually we've used this method in previous chapters**, we just did not know it. :)
+
+The general concept is what we have used for normal distribution in case of the Tesla price change data in <a href="Chapter03.html" target="_blank">Chapter 3</a>. For a normal distribution $Y \sim N(\mu, \sigma)$ we say that the **sample moments are the best estimators for the theoretical moments**: $\hat{\mu}=\bar{y}$ and $\hat{\sigma}^2=s^2$
+
+In a more general sense, we calculate the **first non-centered moment and the second or above centered moments** from the observed sample data with the **formulas we've covered on the Fundamentals of Statistics course**.
 
 ### 1.1. Bernoulli and Poisson Distributions
 
