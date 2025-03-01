@@ -27,29 +27,56 @@ So, if we somehow know or suspect (e.g. from a histogram) that our data has Bino
 
 We have two basic ways to solve this problem. The first way we cover is the simpler one: the **method of moments**. And We'll soon see that **actually we've used this method in previous chapters**, we just did not know it. :)
 
-The general concept is what we have used for normal distribution in case of the Tesla price change data in <a href="Chapter03.html" target="_blank">Chapter 3</a>. For a normal distribution $Y \sim N(\mu, \sigma)$ we say that the **sample moments are the best estimators for the theoretical moments**: $\hat{\mu}=\bar{y}$ and $\hat{\sigma}^2=s^2$
+The concept is what we have used for normal distribution in case of the Tesla price change data in <a href="Chapter03.html" target="_blank">Chapter 3</a>. For a normal distribution $Y \sim N(\mu, \sigma)$ we say that the **sample moments are the best estimators for the theoretical moments**: $\hat{\mu}=\bar{y}$ and $\hat{\sigma}^2=s^2$
 
-In a more general sense, we calculate the **first non-centered moment and the second or above centered moments** from the observed sample data with the **formulas we've covered on the Fundamentals of Statistics course**.
+In a more general sense, we calculate the **first non-centered moment and the second or above centered moments** from the observed sample data with the **formulas we've covered on the Fundamentals of Statistics course**. The only modification is that we **divide with $n-1$ instead of $n$** as this why we have **unbiased estimates** for the second or above centered moments. We've seen this in the case of the variance in <a href="Chapter05.html" target="_blank">Section 3 of Chapter 5</a>.
+
+- First non-centered moment: $\hat{M_1}=\bar{y}=\frac{\sum_{i=1}^n{y_i}}{n}$
+- Second centered moment: $\hat{M_2}=s^2=\frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n-1}$
+- Third centered moment: $\hat{M_3}=\frac{\sum_{i=1}^n{(y_i-\bar{y})^3}}{n-1}$
+- Fourth centered moment: $\hat{M_4}=\frac{\sum_{i=1}^n{(y_i-\bar{y})^4}}{n-1}$
+
+Then, we **assume that these moments of the sample match with their theoretical values in the probability distribution** we want to fit on the observed data.
+
+- Theoretical first non-centered moment: $M_1=E(Y)$
+- Theoretical second centered moment: $M_2=\sigma^2=E((Y-E(Y)^2)$
+- Theoretical third centered moment: $M_3=E((Y-E(Y)^3)$
+- Theoretical fourth centered moment: $M_4=E((Y-E(Y)^4)$
+
+These **theoretical moments given above can be expressed with the parameters of the distribution** we want to fit on the observed sample. So, if the assume that these theoretical values are equal with their $\hat{M_i}$ values calculated from the sample, then we can **solve the system of equations $M_i = \hat{M_i}$ for the distribution parameters**. If **we have $p$ parameters to determine, we use the first $i=1,2,...,p$ moments** for the $M_i = \hat{M_i}$ equations.<br>
+Usually we examine probability distributions with a maximum of only two parameters, so usually only the mean and variance are used. But if we fit a distribution with $p=3$ parameters, then we can also utilize the third centered moment (skewness times $\sigma^3$) as well.
+
+Therefore, in the case of the $N(\mu, \sigma)$ distribution, we have that $E(Y)=\mu$ and $Var(Y)=\sigma^2$, so we can just say that $\hat{\mu}=\bar{y}$ and $\hat{\sigma}=s$. Because this is the solution of the $M_i = \hat{M_i}$ equations for $i=1,2$. And **this is what we did when we fitted the normal distribution on the Tesla price changes data** in <a href="Chapter03.html" target="_blank">Chapter 3</a>.
+
+Now, let's see the method of moments in action for other probability distributions!
 
 ### 1.1. Bernoulli and Poisson Distributions
 
-If we have $X \sim I(p)$ and $Y ~ P(\lambda)$, then we know that $E(X)=p$ and $E(Y)=\lambda$.
-
-We have an IID sample of size $n$ from both distributions with the sample observations defined as $y=(y_1,y_2,...,y_n)$ and  $x=(x_1,x_2,...,x_n)$ respectively. The sample means $\bar{x}$ and $\bar{y}$ are the "*sample versions*" of the expected values of two distributions. So we can simply say that the sample mean of $x$ (denoted as $\hat{x}$) is an estimator of $p$ (denoted as $\hat{p}$): $$\bar{x}=\hat{p}$$
-
-And of course, we can also say that the sample mean of $y$ is an estimator of $p$:$$\bar{y}=\hat{\lambda}$$
-
-Read the data in the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/insurance_examples.xlsx" target="_blank">insurance_examples.xlsx</a> file.
+Read the data in the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/insurance_examples.xlsx" target="_blank">insurance_examples.xlsx</a> file.<br>
+On the worksheet titled *CarInsurance_IsClaim*, we can find an insurance company's $500$ insured cars and the fact whether they caused an accident (claim) in the past year (1=yes and 0=no) in the *IsClaim* column.<br>
+On the worksheet titled *CarInsurance_NumberOfClaims*, we can find another insurance company's $400$ insured cars and the number of accidents (claims) they caused in the past year in the *NumClaims* column.<br>
+Read both wotksheets into two separate data frames using the `sheet` parameter in the `read_excel` function of the `readxl` package.
 
 ```{r}
 library(readxl)
 is_claim <- read_excel("insurance_examples.xlsx", sheet = "CarInsurance_IsClaim")
 num_claims <- read_excel("insurance_examples.xlsx", sheet = "CarInsurance_NumberOfClaims")
+
+# Check the results!
 str(is_claim)
 str(num_claims)
 ```
 
-Do the estimation with method of moments.
+Let's introduce the notation $IsClaim=X$ and $NumClaims=Y$. For $X$, a Bernoulli distribution is a good assumption as its outcomes can only be $0$ and $1$. For $Y$, Poisson distribution is a reasonable assumption as the number of claims can only be integers (discrete distribution) and there is no theoretical maximum value for the number of accidents to have in one year, so the outcomes can be any non negative integers $0,1,2,...,\infty$.
+
+With this reasoning, **we have $X \sim I(p)$ and $Y ~ P(\lambda)$, then we know that $E(X)=p$ and $E(Y)=\lambda$.**
+
+With the `is_claim` and `num_claims` data frames, **we have an IID sample of size $n$ from both distributions**. The sample observations defined as $y=(y_1,y_2,...,y_n)$ and  $x=(x_1,x_2,...,x_n)$ respectively. Of course, $n=500$ for $x$ and $n=400$ for $y$.<br>
+The sample means $\bar{x}$ and $\bar{y}$ are the "*sample versions*" of the expected values of two distributions. So we can simply say that the sample mean of $x$ (denoted as $\hat{x}$) is an estimator of $p$ (denoted as $\hat{p}$): $$\bar{x}=\hat{p}$$
+
+And of course, we can also say that the sample mean of $y$ is an estimator of $p$:$$\bar{y}=\hat{\lambda}$$
+
+And at this point, we can just do the estimation with the method of moments as described above for both variables.
 
 ```{r}
 p_estim <- mean(is_claim$IsClaim)
@@ -58,7 +85,8 @@ p_estim
 lambda_estim
 ```
 
-See the goodness of fit for the Bernoulli Distribution.
+We can see the goodness of fit for the Bernoulli Distribution by comparing the sample's observed frequencies with the **expected frequencies calculated from the mass function of the Bernoulli distribution**. The expected frequencies can simply be calculated as the probabilities of the sample values occurring in the fitted Bernoulli distribution times the sample size: $P(X=x_i) \times n$.<br>
+The mass function of the Bernoulli distribtion is not defined in R, but it's simply $p$ for the $1$s and $1-p$ for the $0$s.
 
 ```{r}
 observed_frequencies <- table(is_claim$IsClaim)
@@ -69,7 +97,9 @@ observed_frequencies
 expected_frequencies
 ```
 
-See the goodness of fit for the Poisson Distribution.
+It's a perfect fit, we've done well! :)
+
+See the goodness of fit for the Poisson Distribution too by comparing the sample's observed frequencies with the **expected frequencies calculated from the mass function of the Poisson distribution**. The formula for the expected frequencies is the same as before, $P(Y=y_i) \times n$, but now we can use the `dpois` R function for calculating the mass function values (the $P(Y=y_i)$ probabilities) for the Poisson distribution.
 
 ```{r}
 observed_frequencies <- table(num_claims$NumClaims)
@@ -82,16 +112,18 @@ expected_frequencies
 
 ### 1.2. Binomial Distribution
 
-A more advanced case for Binomial distribution. Let's say that we have an insurance portfolio for car fleets of small businesses with a maximum number of $n$ cars. The *CarInsurance_Fleet* sheet of the *insurance_examples.xlsx* file contains $150$ insured car fleets and the `NumClaims_Fleet` variable shows the number of cars with accidents reported in a given year for each fleet.
+A more advanced case for Binomial distribution as in this case, we have **two parameters to fit**. Let's say that we have an insurance portfolio for car fleets of small businesses with a maximum number of $m$ cars. The *CarInsurance_Fleet* sheet of the *insurance_examples.xlsx* file contains $150$ insured car fleets and the `NumClaims_Fleet` variable (column) shows the number of cars with accidents reported in a given year for each fleet.<br>
+Let's read the data on this worksheet to a data frame with the same function as before!
 
 ```{r}
 carinsurance_fleet <- read_excel("insurance_examples.xlsx", sheet = "CarInsurance_Fleet")
 str(carinsurance_fleet)
 ```
 
-If each car has a probability of $p$ to have an accident in a year, then we can say that the number of claims reported in a fleet (let's denote this variable as $X$) has a Binomial Distribution: $X \sim B(n,p)$
+If each car has a probability of $p$ to have an accident in a year, then we can say that the number of claims reported in a fleet (let's denote this variable as $X$) has a Binomial Distribution: $X \sim B(m,p)$<br>
+The **Binomial distribution is reasonable here as no car fleet can have more cars with accidents than their total number of $m$ cars**.
 
-This time, we have two parameters to estimate: $n$ and $p$. Here we need two equations to determine the two parameters. We can use the definitions for the expected value and variance: $E(X)=np$ and $Var(X)=np(1-p)$. These theoretical definitions can also be assumed to hold in the observed IID sample too. So, the two equations to solve for $n$ and $p$ are: $$\bar{x}=\hat{n}\hat{p}$$
+This time, we have two parameters to estimate: $m$ and $p$. Here we need two equations to determine the two parameters. We can use the definitions for the expected value and variance (first two moments): $E(X)=np$ and $Var(X)=np(1-p)$. These theoretical definitions can also be assumed to hold in the observed IID sample too. So, the **two equations to solve** for $n$ and $p$ are: $$\bar{x}=\hat{n}\hat{p}$$
 
 And of course: $$s^2=\hat{n}\hat{p}(1-\hat{p})$$
 
@@ -108,7 +140,7 @@ p_binom_estim <- 1-var(carinsurance_fleet$NumClaims_Fleet)/mean(carinsurance_fle
 p_binom_estim
 ```
 
-Great, we have that $\hat{p}=0.016$ for our data.
+Great, we have that $\hat{p}=0.078$ for our data.
 
 With $\hat{p}$, it's easy to obtain $\hat{n}$ from the first equation: $$\hat{n}=\frac{\bar{x}}{\hat{p}}$$
 
@@ -119,14 +151,14 @@ n_binom_estim <- mean(carinsurance_fleet$NumClaims_Fleet)/p_binom_estim
 n_binom_estim
 ```
 
-As $n$ most be an integer, we should round the result for $\hat{n}$. if we aim to be cautious, then we take the highest possible value on the maximum number of the claims, so we round $\hat{n}$ to $10$.
+As $n$ must be an integer, we should round the result for $\hat{n}$. if we aim to be cautious (in other words prudent), then we take the highest possible value on the maximum number of the claims, so we round $\hat{n}$ to $10$.
 
 ```{r}
 n_binom_estim <- ceiling(n_binom_estim)
 n_binom_estim
 ```
 
-See the goodness of fit for the Binomial Distribution.
+See the goodness of fit for the Binomial Distribution by comparing the sample's observed frequencies with the **expected frequencies calculated from the mass function of the Binomial distribution**. The formula for the expected frequencies is the same as before, $P(X=x_i) \times n$, but now we can use the `dbinom` R function for calculating the mass function values (the $P(X=x_i)$ probabilities) for the Binomial distribution.
 
 ```{r}
 observed_frequencies <- table(carinsurance_fleet$NumClaims_Fleet)
@@ -139,9 +171,11 @@ observed_frequencies
 expected_frequencies
 ```
 
+The fit is not so great as in the previous two cases, but the tendencies in the frequencies are similar in the observed and expected cases: most frequent value is $1$, then comes $0$ and $2$.
+
 ### 1.3. Exponential Distribution
 
-In case of continuous distributions, let's see the Exponential Distribution as an example.
+For the continuous distributions, let's see the Exponential Distribution as an example.
 
 Examine the chemotherapy survival times found in the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/CancerSurvival.xlsx\" target="_blank">CancerSurvival.xlsx</a> file again.
 
@@ -150,15 +184,15 @@ Surv <- read_excel("CancerSurvival.xlsx")
 str(Surv)
 ```
 
-If we remember from the histogram it has quite a long right tail, so the Exponential distribution would be a good fit.
+If we remember for the histogram of this data, it has quite a long right tail and the survival times can take any non negative real values (continuous distribution), so the Exponential distribution would be a good assumption here.
 
 ```{r}
 hist(Surv$SurvMonth)
 ```
 
-If we have $Y \sim Exp(\lambda)$, then the expected value is $E(X)=\frac{1}{\lambda}$, so if this is true in the sample as well, then the equation to solve is: $$\bar{x}=\frac{1}{\hat{\lambda}}$$
+If we have $Y \sim Exp(\lambda)$, then the expected value is $E(Y)=\frac{1}{\lambda}$, so if this is true in the sample as well, then the equation to solve is: $$\bar{y}=\frac{1}{\hat{\lambda}}$$
 
-This solution is just a reciprocal, so: $$\hat{\lambda}=\frac{1}{\bar{x}}=\frac{n}{\sum_{i=1}^{n}{x_i}}$$
+This solution is just a reciprocal, so: $$\hat{\lambda}=\frac{1}{\bar{y}}=\frac{n}{\sum_{i=1}^{n}{y_i}}$$
 
 So, as we did in <a href="Chapter03.html" target="_blank">Chapter 3</a>, let's take the reciprocal of the sample mean, and we'll have the same $Exp(0.00442)$ distribution again for the cancer survival times.
 
@@ -166,40 +200,109 @@ So, as we did in <a href="Chapter03.html" target="_blank">Chapter 3</a>, let's t
 1/mean(Surv$SurvMonth)
 ```
 
-**Issue**: why not $\hat{\lambda}=\frac{1}{s}$?
-
-### 1.4. Special Cases: Using Mean and Median
-
-And an interesting trick: same principle as for the binomial case, but with the mean and median of the lognormal distribution! <a href="https://github.com/tamas-ferenci/omsz-kierkezesi-ido-percentilis?tab=readme-ov-file#az-orsz%C3%A1gos-ment%C5%91szolg%C3%A1lat-ki%C3%A9rkez%C3%A9si-statisztik%C3%A1inak-vizsg%C3%A1lata-a-90percentilis-becsl%C3%A9se" target="_blank">This example</a> should be translated and in included here!
+Very nice same result as in <a href="Chapter03.html" target="_blank">Chapter 3</a>.<br>
+However, this logic raises an **issue**: why not have $\hat{\lambda}=\frac{1}{s}$? As for the Exponential distribution we also have that $\sqrt{M_2}=\sqrt{Var(Y)}=\frac{1}{\lambda}$. From the general principles of the method of moments, it follows that we only need the first non centered moment, $M_1$ if we only have $1$ parameter to estimate. But in the case of the Exponential distribution, it is an interesting question why is it a better choice to express $\hat{\lambda}$ from the sample mean than from the corrected sample standard deviation. The answer will come from the other method for estimating parameters of probability distributions: the maximum likelihood method!
 
 ## 2. Maximum Likelihood Estimation
 
-General principle. Let's **find those parameters** for a given probability distribution that **maximize the probability of all our observed data occurring in an IID sample** (i.e. random sample with replacement) from that given distribution. So, if the elements of the observed sample of size $n$ are denoted as $y=(y_1,y_2,...,y_n)$, and the parameters of the probability distribution we are looking for denoted as $\theta$, then we are looking for the $\theta$ that maximizes the probability of $y$ occurring from $n$ random draws from the examined distribution.<br>
+The **method of moments** has **one** great **advantage**: its **calculations are very-very simple**! However, it **does NOT consider every observation in our sample when estimating the distribution parameters**. It only uses calculated statistical measures of our sample, its moments.<br>
+The **maximum likelihood method uses every observation our sample directly when estimating the distribution parameters**. On the other hand, its **calculations are more complex** than those of the method of moments.<br>
+What makes the **complexity of the maximum likelihood method worthwhile is that it is the MOST EFFICIENT estimator of the parameters of any probability distribution**. Remember from <a href="Chapter05.html" target="_blank">Chapter 5</a> that if one estimator is more efficient than another then its mean squared error (bias and standard sampling error considered together) is lower. This definition means that the maximum likelihood method produces **estimates of distribution parameters** with the **LOWEST $MSE=Bs^2+SE^2$ values**. More on this property is covered on the lectures!
+
+Now, after seeing its benefits, let's see the **general principles of the maximum likelihood method**.
+
+The basic concept is quite simple: let's **find those parameters** for a given probability distribution that **maximize the probability of all our observed data occurring in an IID sample** (i.e. random sample with replacement) from that given distribution. So, if the elements of the observed sample of size $n$ are denoted as $y=(y_1,y_2,...,y_n)$, and the parameters of the probability distribution we are looking for denoted as $\theta$, then we are looking for the $\theta$ values that maximizes the probability of $y$ occurring in case of $n$ random draws from the examined distribution.<br>
 A mathematical formulation for this task is as follows: $$P(y|\theta) \rightarrow \max_{\theta}$$
 
-Here, the $P(y|\theta)$ probability is called as the **likelihood of the sample**. This is a **conditional probability** of the sample occurring and the condition is that we give some arbitrary values for the $\theta$ values. **We are looking for those $\theta$ conditions that maximize our $y$ sample occurring.**<br>
+Here, the $P(y|\theta)$ probability is called as the **likelihood of the sample**. This is the **probability** of our observed **sample occurring on the condition that we give some arbitrary values for $\theta$.** So, in other words, we are **looking for those $\theta$ conditions that maximize our $y$ sample occurring.**<br>
 To calculate this, we can **use the $f(x,\theta)$ mass/density functions of the discrete/continuous distributions**, as they **show the probability of an arbitrary number $x$ occurring in a random draw from the probability distribution with $\theta$ parameters**. So if we say that every $y_1,y_2,...,y_n$ observations of our sample are from the same probability distribution with the same mass/density function denoted as $f$, then this function can be used to give the **probability of the a specific $y_i$ sample observations occurring in a random draw as $f(y_i, \theta)$.**
 
-So, the **probability of each $y_i$ observation of our sample occurring for a random draw under some $\theta$ parameter conditions** is given as $f(y_i)=P(y_i|\theta)$ and this is the **likelihood of the $y_i$ observation**. The **likelihood of the whole sample is the probability of all the observed $y_i$ values ($y_1,y_2,...,y_n$) occurring all at once!** This is the **PRODUCT of the $P(y_i|\theta)$ probabilities if the $y_i$ values are independent**, and since **we assume that we work with IID** (independent, identically distributed) **samples, the independence of the $y_i$ values can also be assumed**, because of the first "I" in IID. :)<br>
+So, the **probability of each $y_i$ observation of our sample occurring for a random draw under some $\theta$ parameter conditions** is given as $$f(y_i)=P(y_i|\theta)$$
+
+This is the **likelihood of the $y_i$ observation**.
+
+The **likelihood of the whole sample is the probability of all the observed $y_i$ values ($y_1,y_2,...,y_n$) occurring all at once!** This is the **PRODUCT of the $P(y_i|\theta)$ probabilities if the $y_i$ values are independent**, and since **we assume that we work with IID** (independent, identically distributed) **samples, the independence of the $y_i$ values can also be assumed**, because of the first "I" in IID. :)
+
 Therefore, the **likelihood of our whole $y$ sample under the condition of some $\theta$ parameters in an IID sample of size $n$** is given as follows: $$L(\theta)=\prod_{i=1}^{n}{P(y_i|\theta)}=\prod_{i=1}^{n}{f(y_i, \theta)}$$
 
 And we need to **maximize this $L(\theta)$ by varying the $\theta$ conditions**. As this is what is the **direct expression of the maximum likelihood principle**: *find those parameters that maximize the probability of all our observed data occurring in an IID sample*.
 
-To solve this maximization task, we need to take the $\frac{\partial L(\theta)}{\partial\theta}$ derivatives and make them equal to $0$. However, **taking the derivative of a product-function that is $L(\theta)$ is rather painful**. Best to avoid this. :) And we can by **maximizing the log-likelihood function of the sample**, as **on a log-scale a multiplicative function becomes additive!** $$l(\theta)=\ln(L(\theta))=\ln\prod_{i=1}^{n}{f(y_i,\theta)}=\sum_{i=1}^{n}{\ln(f(y_i,\theta)})$$
+To **solve this maximization task**, we need to take the $\frac{\partial L(\theta)}{\partial\theta}$ derivatives and make them equal to $0$. However, **taking the derivative of a product-function that is $L(\theta)$ is rather painful**. Best to avoid this. :) And thankfully we can avoid this by **maximizing the log-likelihood function of the sample**, as **on a log-scale a multiplicative function becomes an additive one!** $$l(\theta)=\ln(L(\theta))=\ln\prod_{i=1}^{n}{f(y_i,\theta)}=\sum_{i=1}^{n}{\ln(f(y_i,\theta)})$$
 
 So, in practice, to **make our jobs easy, we maximize the log-likelihood function in $\theta$:** $$l(\theta) \rightarrow \max_{\theta}$$
 
-And we can simply do this maximization by taking the deriavtive of the log-likelihood according to $\theta$ and solve the equation of this derivative being equal to $0$: $$\frac{\partial l(\theta)}{\partial\theta}=0$$
+And we can simply do this maximization by **taking the derivative of the log-likelihood** according to $\theta$ and solve the equation of **this derivative being equal to $0$:** $$\frac{\partial l(\theta)}{\partial\theta}=0$$
 
-Now, let's see some **practical examples** for this maximum likelihood estimation process!
+Ok, great: we now know what to do to get maximum likelihood (ML) estimators. Let's see some **practical examples** for this maximum likelihood estimation process!
 
-### 2.1. Manually for Binomial Distribution
+### 2.1. Numerically for the Exponential Distribution
 
-The example of number of cars having accident in a fleet of $n$ cars from *Section 1*.
+Use the Cancer survival data from <a href="Chapter03.html" target="_blank">Chapter 3</a> again for a sample where Exponenetial distribution is reasonable assumption.
 
-Parameters to estimate: $n$ and $p$, so in this case: $\theta=(n,p)$
+The parameter to estimate for the Exponential distribution is $\lambda$. So, in the exponential case: $\theta=\lambda$.
 
-Write the negative log-likelihood function for our sample. Negative log-likelihood is necessary as unfortunately this stupid R can only minimize a function by default, and NOT maximize.
+Now, let's write the negative log-likelihood function for our sample as a custom R function. We need the **negative log-likelihood** as the **built-in methods for optimization in R can only minimize** a function, and NOT maximize. So, we'll **minimize the negative log-likelihood which is the same as maximizing the original log-likelihood**.<br>
+The input parameter of the function, `theta_expon` is treated as the value for the $\lambda$ parameter of course. We can use the `dexp` function for calculating the $P(y_i|\theta)=f(y_i,\theta)$ probabilities for the Exponential distribution. Then, we just apply the $l(\theta)=\sum_{i=1}^{n}{\ln(f(y_i,\theta)})$ formula.
+
+```{r}
+# function definition
+neg_log_likelihood_expon <- function(theta_expon){
+  log_lik_observations <- log(dexp(x = Surv$SurvMonth,
+                                   rate = theta_expon)) # log-probability of every observations occurring under the current parameters
+  return(-sum(log_lik_observations))
+}
+
+# function test on some random parameter combination
+neg_log_likelihood_expon(0.001)
+```
+
+Do the **optimization with R's built-in `optim` function**. The first parameter of this function is the starting $\lambda$ value for the optimization. This value can be any arbitrary starting value, but we should respect the constraint on the Exponential parameter: $\lambda>0$. We can *ignore the possible warnings*, it just means that R encountered some bad parameter values when trying out different $\lambda$ values during the optimization. R automatically ignores these cases, they won't cause any problems.
+
+```{r warning=FALSE}
+expon_ml <- optim(0.001, neg_log_likelihood_expon)
+expon_ml$par # optimal parameter value
+expon_ml$val # minimized negative log-likelihood of the sample
+```
+
+So, our result is $\hat{\lambda}_{ML}=0.00442$. Which is the **reciprocal of the sample mean and not the standard deviation**!
+
+```{r}
+1/mean(Surv$SurvMonth)
+1/sd(Surv$SurvMonth)
+```
+
+Since the **maximum likelihood method ensures that what we got is the efficient estimator** (it has the lowest $MSE$), we can **conclude that we need to take the reciprocal of the mean and NOT the standard deviation when estimating $\lambda$ of an exponential distribution**.
+
+### 2.3. Analitically for the Exponential Distribution
+
+The result of *Section 2.2.* can also be derived analytically by **taking the derivative of the log-likelihood** according to $\theta$ and solve the equation of **this derivative being equal to $0$:** $$\frac{\partial l(\theta)}{\partial\theta}=0$$
+
+The $P(y_i|\theta)=f(y_i,\theta)$ probabilities for the Exponential distribution (where $\theta = \lambda$) are given by the Exponential density function: $$f(y_i, \lambda)=\lambda e^{-\lambda y_i}$$
+
+The likelihood of the whole sample is the individual $y_i$ likelihoods multiplied together because of the $y_i$s independence (IID sample): $$L(\lambda)=\prod_{i=1}^n{\lambda e^{-\lambda y_i}}$$
+
+We can expand the product by using the fact that multiplication becomes additive in the power: $$L(\lambda)=\lambda^n e^{-\lambda \sum_{i=1}^n{y_i}}$$
+
+Taking the natural logarithm of the likelihood function to produce the log-likelihood: $$l(\lambda)=\ln(L(\lambda))=\ln(\lambda^n e^{-\lambda \sum_{i=1}^n{y_i}})$$
+
+Using logarithm properties we can make the expression additive, so its easier to derivative: $$l(\lambda)=n \times \ln(\lambda) - \lambda \times \sum_{i=1}^n{y_i}$$
+
+Taking the derivative according to $\lambda$: $$\frac{\partial l(\lambda)}{\partial\lambda}=\frac{n}{\lambda}-\sum_{i=1}^n{y_i}$$
+
+Setting this derivative to zero: $$\frac{n}{\lambda}=\sum_{i=1}^n{y_i}$$
+
+And finally, solving for $\lambda$ we have: $$\lambda=\frac{n}{\sum_{i=1}^n{y_i}}$$
+
+So we arrived to the same conclusion as in *Section 2.2*: **the maximum likelihood estimation (MLE) for $\lambda$ is the reciprocal of the sample mean**.
+
+### 2.4. Numerically for the Binomial Distribution
+
+Let's use the example of number of cars having accident in a fleet of $m$ cars from *Section 1*. We've discussed in *Section 1* that the Binomial distribution is a reasonable assumption for this data.
+
+The parameters to estimate for the Binomial distribution are $m$ and $p$, so in this case: $\theta=(m,p)$
+
+Now, let's write the negative log-likelihood function for our sample as a custom R function in this case as well.<br>
+The input parameter of the function, `theta_binom` is treated as a `vector` where the 1st value is the $m$ parameter and the 2nd value is the $p$ parameter. We can use the `dbinom` function for calculating the $P(y_i|\theta)=f(y_i,\theta)$ probabilities for the Binomial distribution. Then, we just apply the $l(\theta)=\sum_{i=1}^{n}{\ln(f(y_i,\theta)})$ formula.
 
 ```{r}
 # function definition
@@ -214,7 +317,7 @@ neg_log_likelihood_binom <- function(theta_binom){
 neg_log_likelihood_binom(c(8, 0.1))
 ```
 
-Do the optimization. We can *ignore the possible warnings*, it just had some very bad parameter combinations when trying out different $n$ and $p$ values during the optimization.
+Do the **optimization with R's built-in `optim` function**. The first parameter of this function are the starting $m$ and $p$ values for the optimization given in `vector` format. These values can be any arbitrary starting values, but we should respect the constraints on the Binomial parameters: like $m$ should be a positive integer and $p$ should be between $0$ and $1$. We can *ignore the possible warnings*, it just means that R encountered some bad parameter combinations when trying out different $m$ and $p$ values during the optimization. R automatically ignores these cases, they won't cause any problems.
 
 ```{r warning=FALSE}
 binom_ml <- optim(c(8, 0.1), neg_log_likelihood_binom)
@@ -222,45 +325,15 @@ binom_ml$par # optimal parameter values
 binom_ml$val # minimized negative log-likelihood of the sample
 ```
 
-So, our results are $\hat{n}_{ML}=8$ and $\hat{p}_{ML}=0.099$. We rounded up $\hat{n}_{ML}$ to the next integer as its value needs to be an integer. It's the same thing we did in *Section 1*.
+So, our results are $\hat{m}_{ML}=8$ and $\hat{p}_{ML}=0.099$. We rounded up $\hat{n}_{ML}$ to the next integer as its value needs to be an integer. It's the same thing we did in *Section 1*.
 
-### 2.2. Manually for Exponential Distribution
+### 2.5. Numerically for the Normal Distribution
 
-Cancel survival data from <a href="Chapter03.html" target="_blank">Chapter 3</a>.
+Let's **fit a normal distribution for the cancer survival data** used for the Exponential distribution in *Section 2.2.*! Of course, as the histogram of this data has a long right tail, we do NOT expect the symmetrical normal distribution to have a nice fit here, but **I just want to show a case where we fit a distribution to the data that is not reasonable based on the sample's histogram**! Let's see what happens here.
 
-Parameters to estimate: $\lambda$, so in this case: $\theta=\lambda$
+Parameters to estimate for the normal distribution are $\mu$ and $\sigma$, so in this case: $\theta=(\mu,\sigma)$
 
-Write the negative log-likelihood function for our sample.
-
-```{r}
-# function definition
-neg_log_likelihood_expon <- function(theta_expon){
-  log_lik_observations <- log(dexp(x = Surv$SurvMonth,
-                                   rate = theta_expon)) # log-probability of every observations occurring under the current parameters
-  return(-sum(log_lik_observations))
-}
-
-# function test on some random parameter combination
-neg_log_likelihood_expon(0.001)
-```
-
-Do the optimization. We can *ignore the possible warnings*, it just had some very bad parameter combinations when trying out different $n$ and $p$ values during the optimization.
-
-```{r warning=FALSE}
-expon_ml <- optim(0.001, neg_log_likelihood_expon)
-expon_ml$par # optimal parameter value
-expon_ml$val # minimized negative log-likelihood of the sample
-```
-
-So, our result is $\hat{\lambda}_{ML}=0.00442$. So, we need to take the reciprocal of the mean and NOT the standard deviation when estimating $\lambda$ of an exponential distribution.
-
-### 2.3. Manually for Normal Distribution
-
-For the cancer survival data as well: to see a bad fit for the observed data!
-
-Parameters to estimate: $\mu$ and $\sigma$, so in this case: $\theta=(\mu,\sigma)$
-
-Write the negative log-likelihood function for our sample in case of the normal distribution.
+Write the negative log-likelihood function for our sample in case of the normal distribution as a custom R function. The input parameter `theta_norm` is again treated as a `vector` like for the Binomial case in *Section 2.4.*
 
 ```{r}
 # function definition
@@ -275,7 +348,7 @@ neg_log_likelihood_norm <- function(theta_norm){
 neg_log_likelihood_norm(c(250, 250))
 ```
 
-Do the optimization. We can *ignore the warnings*, it just had some very bad parameter combinations when trying out different $n$ and $p$ values during the optimization.
+Do the optimization. We can *ignore the warnings* like before.
 
 ```{r warning=FALSE}
 norm_ml <- optim(c(250, 250), neg_log_likelihood_norm)
@@ -297,9 +370,15 @@ And **NOT the corrected sample standard deviation**.
 sd(Surv$SurvMonth)
 ```
 
-### 2.4. Compare Diferent Distributions Fitted on the Same Sample - Information Criterions
+This is **not a surprise** as we've seen in <a href="Chapter05.html" target="_blank">Section 6.1. of Chapter 5</a> that the uncorrected sample standard deviation has a lower $MSE$ than that of the corrected sample standard deviation. Now we know that this is **because the uncorrected sample standard deviation is a maximum likelihood estimation of the "true" standard deviation, so it must have a lower $MSE$ as the corrected version**, as the maximum likelihood method provides efficient estimates.
 
-Compare the normal and exponential distributions for the cancer survival data. Graphically and logically, its obvious that the exponenetial is a better fit.
+### 2.6. Analitically for the Normal Distribution
+
+TODO
+
+### 2.7. Compare Different Distributions Fitted on the Same Sample - Information Criterions
+
+Compare the normal and exponential distributions for the cancer survival data. Graphically and logically, its obvious that the exponential is a better fit.
 
 ```{r}
 library(ggplot2)
@@ -314,13 +393,13 @@ ggplot(data = Surv, mapping = aes(x=SurvMonth)) + geom_histogram(aes(y = after_s
   
 ```
 
-We can see that exponential fits better by having smaller minimized negative log-likelihood value, i.e.: smaller "*error*".
+We can see that exponential fits better by having smaller minimized negative log-likelihood value, i.e.: smaller "*error*" at th end of the optimization process.
 
 ```{r}
 expon_ml$value < norm_ml$value
 ```
 
-However, we need to control for the fact that the normal distribution is more flexible as it has two parameters instead of one. *!Note to self: describe over fitting!*
+However, we need to **control for the fact that the normal distribution is more flexible as it has two parameters instead of one**. *!Note to self: describe over fitting!*
 
 
 Hence the Information Criterion ($IC$). As all the $IC$s are **based on the negative log-likelihood, they always needs to be minimized**. So, the smaller $IC$ shows a better distribution fit.
@@ -373,7 +452,7 @@ summary(fit_expon)
 summary(fit_norm)
 ```
 
-You can see the standard errors, $SE$ for the estimated parameters! See that the $IC$s prefer the exponenetial fit.
+You can see the standard errors, $SE$ for the estimated parameters! See that the $IC$s prefer the exponential fit.
 
 And do a graphical comparison of the two fitted distributions on the histogram.
 
