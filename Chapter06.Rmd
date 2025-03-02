@@ -1,7 +1,7 @@
 ---
 title: "Estimating Parameters of Probability Distributions"
 author: "László Kovács"
-date: "01/03/2025"
+date: "02/03/2025"
 output:
   html_document:
     toc: true
@@ -19,7 +19,7 @@ text-align: justify}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 1. Method of Moments
+## 1. Method of Moments (MM)
 
 In <a href="Chapter05.html" target="_blank">Chapter 5</a>, we've covered the properties describing the behavior of **estimators for classical statistical measures**. Like how to **estimate the population mean, standard deviation, proportions, median etc. with their values calculated from sample data**.<br>
 What this chapter covers is **estimating the parameters of probability distributions from sample data alone**. Like we **assume that our observed sample data follows a specific probability distribution** (Binomial, Poisson, Normal, Exponential, etc.) and we want to **determine the parameter values that best fit our data**.<br>
@@ -203,7 +203,7 @@ So, as we did in <a href="Chapter03.html" target="_blank">Chapter 3</a>, let's t
 Very nice same result as in <a href="Chapter03.html" target="_blank">Chapter 3</a>.<br>
 However, this logic raises an **issue**: why not have $\hat{\lambda}=\frac{1}{s}$? As for the Exponential distribution we also have that $\sqrt{M_2}=\sqrt{Var(Y)}=\frac{1}{\lambda}$. From the general principles of the method of moments, it follows that we only need the first non centered moment, $M_1$ if we only have $1$ parameter to estimate. But in the case of the Exponential distribution, it is an interesting question why is it a better choice to express $\hat{\lambda}$ from the sample mean than from the corrected sample standard deviation. The answer will come from the other method for estimating parameters of probability distributions: the maximum likelihood method!
 
-## 2. Maximum Likelihood Estimation
+## 2. Maximum Likelihood (ML) Estimation
 
 The **method of moments** has **one** great **advantage**: its **calculations are very-very simple**! However, it **does NOT consider every observation in our sample when estimating the distribution parameters**. It only uses calculated statistical measures of our sample, its moments.<br>
 The **maximum likelihood method uses every observation our sample directly when estimating the distribution parameters**. On the other hand, its **calculations are more complex** than those of the method of moments.<br>
@@ -374,11 +374,45 @@ This is **not a surprise** as we've seen in <a href="Chapter05.html" target="_bl
 
 ### 2.6. Analitically for the Normal Distribution
 
-TODO
+We can derive the results for the two parameters of the Normal distribution we've seen in *Section 2.5.* analytically as well. Just like we did for the Exponential distribution in *Section 2.3.*<br>
+So, let's **take the derivative of the log-likelihood** according to **both $\theta$ parameters** and solve the equations of **these two derivatives being equal to $0$:** $$\frac{\partial l(\theta)}{\partial\theta_i}=0$$
+
+Where $\theta=(\mu, \sigma)$, so $\theta_1=\mu$ and $\theta_2=\sigma$.
+
+The $P(y_i|\theta)=f(y_i,\theta)$ probabilities for the Exponential distribution (where $\theta=(\mu, \sigma)$) are given by the Normal density function: $$f(y_i, \mu, \sigma)=\frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(y_i-\mu)^2}{2\sigma^2}\right)$$
+
+The likelihood of the whole sample is the individual $y_i$ likelihoods multiplied together because of the $y_i$s independence (IID sample): $$L(\mu, \sigma)=\prod_{i=1}^n{\frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(y_i-\mu)^2}{2\sigma^2}\right)}$$
+
+We can expand the product by using the fact that multiplication becomes additive in the power: $$L(\mu, \sigma)=\left(\frac{1}{2\pi\sigma^2}\right)^{-n/2} \exp\left(-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}\right)$$
+
+Taking the natural logarithm of the likelihood function to produce the log-likelihood: $$l(\mu, \sigma)=\ln(L(\mu, \sigma))=\ln\left(\left(\frac{1}{2\pi\sigma^2}\right)^{-n/2} \exp\left(-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}\right)\right)$$
+
+Using logarithm properties we can make the expression additive, so its easier to derivative: $$l(\mu, \sigma)=\frac{n}{2} \ln(2\pi\sigma^2)-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}$$
+
+Taking the derivative with respect to $\mu$ (remember $\sigma$ is treated as a constant term here): $$\frac{\partial l(\mu, \sigma)}{\partial\mu}=\sum_{i=1}^n{\frac{(y_i-\mu)^2}{\sigma^2}}$$
+
+We've used the chain rule to get the derivative of the $(y_i-\mu)^2$ part which is $2(y_i-\mu) \times (-1)$. We can simplify with $2$ in the division. And the $-1$ takes care of the $-$ before the sum.
+
+So, setting this derivative to zero, we have: $$0=\sum_{i=1}^n{(y_i-\mu)}$$
+
+And finally, solving for $\mu$ we get that: $$\mu=\frac{\sum_{i=1}^n{y_i}}{n}=\bar{y}$$
+
+Notice that we actually we just needed to maximize the $-\sum_{i=1}^n{(y_i-\mu)^2}$ part which is equivalent with minimizing $\sum_{i=1}^n{(y_i-\mu)^2}$ according to $\mu$. So, we can **get the maximum likelihood estimation for the Normal distribution's expected value by minimizing the squared error**. This is the **ordinary least squares** logic learnt on the *Fundamentals of Statistics* course!! That is, the **mean is the statistical measure that minimizes the standard deviation, i.e. it has minimal squared error when we substitute all observations with the mean**!
+
+Now, let's see the **maximum likelihood estimation of $\sigma$:** we need to take the derivative of the log-likelihood with respect to $\sigma$ (remember $\mu$ is treated as a constant term here): $$\frac{\partial l(\mu, \sigma)}{\partial\sigma}=-\frac{n}{2\sigma^2}+\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^4}}$$
+
+Setting this derivative to zero, we have: $$\frac{n}{2\sigma^2}=\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^4}}$$
+
+Multiplying both sides by $2\sigma^4$, we get: $$n \times \sigma^2=\sum_{i=1}^n{(y_i-\mu)^2}$$
+
+Solving for $\sigma^2$: $$\sigma^2=\frac{\sum_{i=1}^n{(y_i-\mu)^2}}{n}$$
+
+So, we've arrived at the same conclusion as in *Section 2.5*: the maximum likelihood estimation for the variance of a Normal distribution is the **uncorrected sample standard deviation**, where we divide by $n$ and NOT by $n-1$.
 
 ### 2.7. Compare Different Distributions Fitted on the Same Sample - Information Criterions
 
-Compare the normal and exponential distributions for the cancer survival data. Graphically and logically, its obvious that the exponential is a better fit.
+Compare the **normal and exponential distributions with the histogram of the cancer survival sample data**. Graphically and logically, its obvious that the exponential is a better fit because of the long right tail.<br>
+We apply the `ggplot` package here: we add two `stat_function` layers to the `geom_histogram`: one for the Normal (*red*) and another for the Exponential (*blue*) distribution.
 
 ```{r}
 library(ggplot2)
@@ -393,56 +427,74 @@ ggplot(data = Surv, mapping = aes(x=SurvMonth)) + geom_histogram(aes(y = after_s
   
 ```
 
-We can see that exponential fits better by having smaller minimized negative log-likelihood value, i.e.: smaller "*error*" at th end of the optimization process.
+We can see this result form the results of the maximum likelihood estimation as well. It can be concluded that **the Exponential distribution fits better on the observed data by having smaller minimized negative log-likelihood value**, i.e.: smaller "*error*" at the end of the optimization process. Or we can say that **the distribution with higher maximized log-likelihood has a greater probability to generate our observed data in an IID sampling** of $58$ observations.
 
 ```{r}
 expon_ml$value < norm_ml$value
 ```
 
-However, we need to **control for the fact that the normal distribution is more flexible as it has two parameters instead of one**. *!Note to self: describe over fitting!*
+However, it is NOT always enough to say that if one distribution has a better maximized log-likelihood value, it is a better fit for the data. we need to **control for the fact that the normal distribution is more flexible as it has two parameters instead of one**. So, what we need to consider is a phenomenon called **overfitting**. Overfitting means that **a distribution only fits our data better because it has more parameters, so its density/mass function is more flexible** and more of its properties can be customized. Remember from <a href="Chapter03.html" target="_blank">Chapter 3</a>: the expected value determines the maximum point of the Normal density function and the standard deviation determines its peakedness. While for the Exponential distribution, we only have $\lambda$ and it only influences its peakedness.  This means that **a distribution with more parameters has more chances to fit on the noise in the observed histogram and NOT on its main tendencies**. This is problematic, as we want to use the fitted distribution for predicting the statistical properties (e.g. percentiles) of unobserved data. And it **causes uncomfortable moments if we predict the noise of the data, not its main tendencies**. This phenomenon is called **overfitting** and we need to **control for this when selecting the best fitting distribution** for our data.
 
+Our **tools for controlling overfitting are the Information Criterion** ($IC$s). All the $IC$s are **based on the negative log-likelihood, they always needs to be minimized**. So, the smaller $IC$ shows a better distribution fit. However, every $IC$ **applies a penalty on the negative log-likelihood that is dependent on the number of estimated parameters** ($p$). The specific $IC$s differ on **how strong this penalty should be**. The logic is that a **distribution with more parameters is more likely to have a smaller negative log-likelihood** However, if the **penalty term** of the $IC$s are **applied**, then they need to **cause more negative log-likelihood decrease in order to get preferred than a distribution with fewer parameters**. Because the distribution with more parameter is more likely to fit on the noise in the data and not on its main tendencies. So, the $IC$s **level the playing field** between distributions with different number of parameters so to speak.
 
-Hence the Information Criterion ($IC$). As all the $IC$s are **based on the negative log-likelihood, they always needs to be minimized**. So, the smaller $IC$ shows a better distribution fit.
+We cover two specific $IC$s now.
 
-Akaike ($AIC$), with $p$ being the number of estimated parameters: $$2p-2l(\theta)$$ 
+The Akaike Information Criterion ($AIC$) is the one with the **most lenient penalty on the number of parameters** among all the $IC$s. It has many specific formulas, but the simplest one is the following with $p$ being the number of estimated parameters: $$AIC=2p-2l(\theta)$$ 
 
-It's easy to calculate in R.
+It's quite easy to calculate in R.
 
 ```{r}
 aic_exp <- 2*1 + 2*expon_ml$value # as the exponential distribution has p=1 parameter
 aic_norm <- 2*2 + 2*norm_ml$value # as the normal distribution has p=2 parameters
 ```
 
-And Bayes - Schwarz ($BIC$ or $SBC$): $$p\ln(n) - 2l(\theta)$$
+The Bayes - Schwarz Information Criterion ($BIC$ or $SBC$) has the **strictest penalty on the number of parameters** among all the $IC$s. It has many specific formulas, but the simplest one is the following: $$BIC=p\ln(n) - 2l(\theta)$$
 
-And implemented in R as follows.
+The $BIC$ can be implemented in R as follows.
 
 ```{r}
 bic_exp <- 1*log(nrow(Surv)) + 2*expon_ml$value # as the exponential distribution has p=1 parameter
 bic_norm  <- 2*log(nrow(Surv)) + 2*norm_ml$value # as the normal distribution has p=2 parameters
 ```
 
-When calculating these two values, AIC and BIC show that the exponential is a better fit, despite having one parameter instead of two.
+When calculating these two values, $AIC$ and $BIC$ show that the exponential is a better fit, despite having one parameter instead of two.
 
 ```{r}
 aic_exp < aic_norm
 bic_exp < bic_norm
 ```
 
+As the $BIC$ has a stronger penalty on $p$ in its formula, so we can state that for all distributions: $AIC < BIC$
+
+```{r}
+aic_norm < bic_norm
+aic_exp < bic_exp
+```
+
+It follows that **$BIC$ usually always prefers distributions with fewer parameters, than the $AIC$**. There are many more $IC$s in between the values of $AIC$ and $BIC$, we'll cover some later in this course.
+
+As I've briefly mentioned, **$IC$s have several specific formulas and R doesn't necessarily use the ones I just showed You**. It **does not matter which specific formulas You use as long as You apply them consistently**: like such that the $AIC<BIC$ relationship remains.
 
 ## 3. Automated Distribution Fitting with the `fitdistrplus` package
 
-Install and load the package to your R environment.
+**Fitting a distribution on observed data** with method of moments (MM) or maximum likelihood (ML) method can be **automatized** in R with the `fitdistrplus` package.<br>
+So, let's install and load the package to our R environment.
 
 ```{r eval=FALSE}
 install.packages("fitdistrplus")
-library(fitdistrplus)
+library(fitdistrplus) # possible warnings can be ignored
 ```
 ```{r echo=FALSE}
 library(fitdistrplus)
 ```
 
-Do the maximum likelihood fitting for normal and exponential distributions for the cancer survival data.
+The `fitdist` function of the package can do the distribution fitting with both the ML and MM methods.
+
+- First parameter of the function is the observed data in `vector` format (so select columns in your data frame with the `$` sign).
+- Second parameter is the name of the distribution we want to fit on the data in `character` format. Use the **distribution name that R uses in the `d`, `p` and `q` prefixed functions**! Like `norm` for the Normal distribution and `exp` for the Exponeential distribution and so on.
+- Third parameter is the method to use for distribution fitting. The `mle` code is for the maximum likelihood estimation, while the `mm` code is for method of moments.
+
+Let's apply the function for fitting for normal and exponential distributions for the cancer survival data. Save the results in separate R memory objects and use the `summary` function on these two new memory objects to see the results.
 
 ```{r}
 fit_expon <- fitdist(Surv$SurvMonth, "exp", method = "mle")
@@ -452,9 +504,11 @@ summary(fit_expon)
 summary(fit_norm)
 ```
 
-You can see the standard errors, $SE$ for the estimated parameters! See that the $IC$s prefer the exponential fit.
+Nice! We can see the estimated parameter $\lambda$ for the Exponential distribution and $\mu, \sigma$ for the Normal distribution, They are the same as in *Section 2*. Furthermore, You can also see the standard errors, $SE$ for these estimated parameters!
 
-And do a graphical comparison of the two fitted distributions on the histogram.
+See that we also have the $IC$s in the output of the `summary` function.  Just like with our manual calculations, both $IC$s prefer the exponential fit.
+
+We can also do a graphical comparison of the two fitted distributions on the histogram of the observed sample. We can use the `denscomp` function from the package, and the input parameter is a `list` that contains the results of the `fitdist` functions.
 
 ```{r}
 denscomp(list(fit_expon, fit_norm))
