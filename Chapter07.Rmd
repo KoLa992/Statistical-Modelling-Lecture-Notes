@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1. Revision: Standard Error of the Mean in the Time Results of the Balaton Swimmers
 
-Ugyebár a <a href="Chapter05.html" target="_blank">Chapter 5</a>-ben a 2022-es Balaton átúszás résztvevőinek időeredményeit vizsgáltuk mintavételi és becsléselméleti szempontból elég alaposan. Töltsük is be egy data frame-be ismét a <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a> fájl adatait. Ebben az Excelben megvan az összes résztvevő időeredménye a `TIME` oszlopban. Ez az adatsor lesz most nekünk tehát a **sokaságunk**.
+As you may recall, in <a href="Chapter05.html" target="_blank">Chapter 5</a>, we thoroughly examined the time results of the participants in the 2022 Balaton Swim event from a sampling and estimation theory perspective. Let's load the data from the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx\" target="_blank">LIDLBalaton2022.xlsx</a> file into a data frame again. This Excel file contains the time results of all participants in the `TIME` column. This dataset will now serve as our **population**.
 
 ```{r}
 library(readxl)
@@ -29,8 +29,8 @@ swimming = read_excel("LIDLBalaton2022.xlsx")
 str(swimming)
 ```
 
-Meg is van akkor mind az $N=9751$ részvevőnk. Ebben a tananyagban **most kizárólag az időeredmények átlagának becslésével** fogunk foglalkozni.<br>
-Úgyhogy **számoljuk is ki**, hogy az összes átúszó, azaz a **sokaság**, tekintetében mi az **időeredmények átlaga** ($\mu=\bar{Y}$). Ezen kívül majd jól jön még nekünk referenciaként az időeredméynek sokasági **szórása** ($\sigma$) is.
+So, we have all $N=9751$ participants in the swim. In this chapter, we will **focus exclusively on estimating the mean of the time results**.<br>
+So let's **calculate the mean of the time results** ($\mu=\bar{Y}$) **for** the entire **population** of swimmers. Additionally, it will be useful to have the population **standard deviation** ($\sigma$) as a reference. We must be careful because calculating the population standard deviation requires a custom function (we call it `classic_sd` now) to use the classical, uncorrected formula, which divides by $N$ instead of $N-1$.
 
 ```{r}
 classic_sd <- function(x){
@@ -43,11 +43,11 @@ PopStd <- classic_sd(swimming$TIME)
 c(PopMean, PopStd)
 ```
 
-Ezeka alapján tudjuk tehát, hogy egy átlagos Balaton átúszó $\mu=165.5$ perc alatt teljesítette a távot, amitől egy konkrét versenyző saját időeredménye várhatóan $\sigma=44.1$ perccel tér el.
+Based on this, we know that an average Balaton swimmer completed the distance in $\mu=165.5$ minutes, with an an individual swimmer’s own time result deviating by $\sigma=44.1$ minutes on average.
 
-**Az átlag becslése során** az a feladatunk, hogy **ezt a $\mu=165.5$ perces átlagot valahogy "megtippeljük"** egy visszatevéses véletlen (azaz FAE) **minta adatai alapján**.
+**When estimating the mean**, our task is to **"guess" this $\mu=165.5$ minute mean based on a** random **sample** drawn with replacement (IID) from the population.
 
-Tehát, **vegyünk is egy $n=100$ elemű mintát a Balatonátúszók sokaságából** a kedvenc $1992$-es véletlen magunk mellett, és nézzük meg, hogy **mennyi a mintaátlag, azaz $\bar{y}$ értéke**.
+So, let’s **take a sample of $n=100$ elements from the population of Balaton swimmers**, using our favorite random seed $1992$, and **check the sample mean**, i.e., the value of $\bar{y}$.
 
 ```{r}
 set.seed(1992)
@@ -59,12 +59,12 @@ SampleMean <- mean(swimming_sample$TIME)
 SampleMean
 ```
 
-Tehát ebben az $n=100$ elemű **mintában az átlagos átúszási idő $160.8$ perc**. A <a href="Chapter05.html" target="_blank">Chapter 5</a>-ben elvégzett okoskodásunk alapján a **mintaátlag alapján úgy tudjuk lehatárolni a sokasági átlag ($\mu$) értékét, hogy a mintaátlag értékre rámérem $\pm$ annak standard hibáját**. Hiszen a standard hiba megmutatja, hogy egy véletlenszerűen kiválasztott mintavétel átlaga várhatóan mennyivel tér el a valós sokasági átlagtól (mivel a $\bar{y}$ mintaátlag alapból egy torzítatéan becslőfüggvénye a $\mu$ sokasági átlagnak).<br>
-A gondolatmenet alapján tehát azt mondhatjuk, hogy a **sokasági átlag várhatóan mintaátlag $\pm$ standard hiba által lehatárolt intervallumban nyugszik**.
+In this $n=100$ **sample, the average crossing time is $160.8$ minutes**. Based on our reasoning in <a href="Chapter05.html" target="_blank">Chapter 5</a>, we can **bound the population mean ($\mu$) by adding and subtracting $\pm$ the standard error from the sample mean**. Since the standard error tells us how much a randomly selected sample mean is expected to deviate from the true population mean (since the sample mean $\bar{y}$ is inherently an unbiased estimator of the population mean $\mu$).<br>
+Following this reasoning, we can say that the **population mean is expected to lie within the interval defined by the sample mean $\pm$ the standard error**.
 
-Jó hír, hogy ugyebár az **átlag standard hibája sokasági szórás osztva gyök alatt mintaelemszám**, azaz $\frac{\sigma}{\sqrt{n}}$ képlettel számolható, aminek az értékét egy mintavétel alapján is meg tudjuk közelíteni, ha a sokasági szórást, annak torzítatlan becslésével a **korrigált mintaszórás**sal helyettesítjük. Tehát, az **egy szem $n=100$ mintából a standard hiba értéke az $\frac{s}{\sqrt{n}}$ képlettel megközelíthető**.
+Good news! The **standard error of the mean is calculated as the population standard deviation divided by the square root of the sample size**, i.e., using the formula $\frac{\sigma}{\sqrt{n}}$. This value can also be approximated from a single sample if we replace the population standard deviation with its unbiased estimate, the **corrected sample standard deviation**. Thus, **from a single $n=100$ sample, the standard error can be approximated using the formula $\frac{s}{\sqrt{n}}$.**
 
-Ez alapján akkor az alábbi számolást tudjuk elkövetni a mintánkon.
+Based on this, we can perform the following calculation on our sample.
 
 ```{r}
 n <- nrow(swimming_sample)
@@ -74,11 +74,11 @@ SE <- s/sqrt(n)
 c(SampleMean - SE, SampleMean + SE)
 ```
 
-Az eredményünk alapján a valós, sokasági átlag ($\mu$) várhatóan $160.6$ és $168.3$ perc között, azaz a $[160.6,168.3]$ intervallumban helyezkedik el. Nos, **az intervallumos becslésünk helyes is, hiszen a valós sokasági átlag uygebár $\mu=167.5$ perc, ami tényleg benne van a mintánk alapján lehatárolt intervallumban**.
+Our results indicate that the true population mean ($\mu$) is expected to be between $160.6$ and $168.3$ minutes, meaning it lies within the $[160.6,168.3]$ interval. Well, **our interval estimation is correct, as the true population mean is $\mu=167.5$ minutes, which is indeed within this interval defined by our sample**.
 
 ## 2. Distribution of Sample Means
 
-Na jó-jó, egy mintavétel esetén szerencsénk is lehetett. **Mennyire működik ez a standard hibás módszer jól sok-sok $n=100$ mintavétel esetében?** Töltsük csak be egy data frame-be azt a táblát, ami $10000$ db $n=100$ FAE mintavétel adatait tartalmazza! Az átlalam generált Excel, ami tartalmazza a $10000$ minta adatait <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/SwimmingSamples.xlsx" target="_blank">innen</a> érhető el. 
+Alright, alright, with a single sample, we might have just been lucky. **How well does this standard error method actually work with many $n=100$ samples?** Let’s load into a data frame the table that contains the data of $10000$ independent IID samples of size $n=100$! The Excel file I generated in <a href="Chapter04.html" target="_blank">Chapter 4</a>, which contains the $10000$ IID samples, can be accessed <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/SwimmingSamples.xlsx\" target="_blank">here</a>.
 
 ```{r}
 samples_100 <- as.data.frame(read_excel("SwimmingSamples.xlsx"))
@@ -86,10 +86,10 @@ rownames(samples_100) <- paste0("Sample",1:10000) # indicate in the rownames tha
 head(samples_100)
 ```
 
-Oké, az eredményből látjuk is, hogy úgy néz ki a data frame, hogy **1 sor tartalmaz 1 db 100 elemű mintát és a mintaelemeket** (tehát a mintába besorsolt versenyző percben mért időeredményét) **az oszlopkban tároljuk**.
+Okay, from the results, we can see that the data frame is structured so that **each row contains one 100-element sample, and the sample elements** (i.e., the time results of the selected swimmers in minutes) **are stored in the columns**.
 
-Akkor most **minden minta esetében számoljuk ki a $\bar{y} \pm SH$ intervallumot**, és nézzük meg, hogy a valós **sokasági átlag** ($\mu$) **beleesik-e** az intervallumba! Annyi **előnyt is adjunk magunknak, hogy a standard hibát a sokasági szórás, azaz $\sigma$ ismeretében számoljuk ki**. Tehát a $SH = \frac{\sigma}{\sqrt{n}}$ képletet alkalmazzuk. Ugye ez annyiban előny, hogy $\sigma$-t egy db 100 elemű minta vizsgálata esetén NEM ismerjük!<br>
-A számolás során figyeljünk arra, hogy a `apply` függvényeket `MARGIN = 1` paraméterrel hazsnáljuk, hiszen egy db minta elemei a sorokban vannak. Illetve, a számolást mindig szorítsuk le a data frame első $100$ oszlopára, hiszen a data frame oszlopait folyamatosan bővíteni fogjuk!
+Now, let’s **calculate the $\bar{y} \pm SE$ interval for each sample**, and check whether the **true population mean** ($\mu$) **falls within the interval**! Let’s **give ourselves a little advantage by calculating the standard error using the known population standard deviation**, $\sigma$. That is, we apply the formula $SE = \frac{\sigma}{\sqrt{n}}$. This is an advantage because, in practice, we do NOT know $\sigma$ from just one 100-element sample!<br>
+During the calculation, make sure to use the `apply` function with the parameter `MARGIN = 1` (2nd parameter of the function), since the elements of a single sample are in rows. Also, always restrict the calculation to the first $100$ columns of the data frame, as we will be continuously adding new columns to it!
 
 ```{r}
 SE <- PopStd / sqrt(n)
@@ -99,16 +99,16 @@ samples_100$MeanUpper <- apply(samples_100[,1:100], 1, mean) + SE
 head(samples_100[,101:102])
 ```
 
-Oké, akkor **meg is vannak** az átlag intervallumos **becslés**ének **alsó-felső határai**. **Számoljuk** akkor **ki a találati arányt**!<br>
-A számoláshoz azt a trükköt alkalmazzuk, amit a <a href="Chapter05.html" target="_blank">Chapter 5</a>-ben sütüttünk el: az `x>180` jellegű parancs egy `logical` tömböt ad vissza, amit kiátlagolva megkapjuk a "*kedvező esetek*", vagyis a $\mu$-t helyesen eltaláló intervallumok arányát.
+Okay, now we have the **lower and upper bounds of** the mean interval **estimate**. Now, let’s **calculate the hit rate**!<br>
+For this calculation, we use the trick we employed in <a href="Chapter05.html" target="_blank">Chapter 5</a>: a R command like `x > 180` returns a `logical` vector, and by averaging this vector, we get the proportion of "*favorable cases*", meaning the proportion of intervals that correctly include $\mu$.
 
 ```{r}
 mean((samples_100$MeanLower <= PopMean) & (samples_100$MeanUpper >= PopMean))
 ```
 
-Nos, olybá tűnik, hogy a $\bar{y} \pm SH$ módszer csak a **mintavételek kb. $68\%$-ban találja el a valós, sokasági átalgot, azaz $\mu$-t!** Gáz Géza! Azért ennél nagyobb találati arányt szeretnénk! Mondjuk legalább valami $90\%$ környékét.
+Well, it seems that the $\bar{y} \pm SE$ method **correctly captures the true population mean $\mu$ in only about $68%$ of the samples**! That’s not great! We’d like a much higher accuracy, say around $90%$.
 
-Ahhoz, hogy megértsük miért alakul gyéren ennek a módszernek találati aránya, **nézzünk csak rá az $\bar{y}$ mintaátlagok hisztogramjára!** Most a hisztogramon nem optimalizálom az osztályközök számát, elfogadom a `hist` alapbeállításait.
+To understand why this method’s hit rate is so poor, let’s **take a look at the histogram of the $\bar{y}$ sample means!** I won’t optimize the number of bins (like based on Sturge's Rule) for the histogram this time, I’ll just accept the default settings of `hist`.
 
 ```{r}
 samples_100$SampleMeans = apply(samples_100[,1:100], 1, mean)
@@ -116,27 +116,27 @@ samples_100$SampleMeans = apply(samples_100[,1:100], 1, mean)
 hist(samples_100$SampleMeans)
 ```
 
-Hoppácska! Dehát, **ez itt a világ legszebb normális eloszlása!**
+Whoa! This is the **most beautiful normal distribution ever!**
 
-Ami azért második elgondolásra **teljesen logikus, mivel a Centrális Határeloszlás Tétel (CHT) dolgozik a háttérben**. Ha nem ugrik be a CHT, akkor vissza a <a href="Chapter04.html" target="_blank">Section 3 in Chapter 4</a>! :)
+On second thought, this is **completely logical, since the Central Limit Theorem (CLT) is at work here**. If you don’t remember the CLT, go back to <a href="Chapter04.html" target="_blank">Section 3 in Chapter 4</a>! :)
 
-A **CHT** szerint ugyebár ha az **adatsor elemi véletlen hatások összegződéseként állnak elő**, akkor az **adatsor normális eloszlás**t követ. A $\bar{y}$ **mintaátlagok adatsora pedig pont olyan adatsor, ami a CHT feltételnek megfelel!** Hiszen a mintaátlag úgy jön ki, hogy a mintaelemeket összeadom és elosztom a minta elemszámával. **Mivel a mintavétel módja FAE, így biztos lehetek benne, hogy egy mintaelem, az egy véletlen húzás, egy véletlen hatás eredménye. Aztán meg ezeket adom össze**. Végén osztok $n$-bel, de az mindig ugyan annyi, így nem változtat a lényegen.
+According to the **CLT**, if a **variable arises as the sum of random effects**, then the **variable follows a normal distribution**. The **variable of $\bar{y}$ sample means perfectly fits the CLT conditions**! After all, the sample mean is obtained by summing the sample elements and dividing by the sample size. **Since the sampling method is IID, I can be sure that each sample element is a random draw, so a result of a random effect. Then, I sum them up.** Finally, I divide by $n$, but since $n$ is always the same (a constant), it doesn’t change the fundamental logic.
 
-Ha pedig a **sok-sok mintából számolt átlagok adatsora normális eloszlású, akkor azt is tudom, hogy milyen átlagú és milyen szórású normális eloszlást követ!**
+If the **variable of sample means from many samples follows a normal distribution, then we also know its mean and standard deviation!**
 
-- A **torzítatlanság** miatt tudom, hogy a mintaátlagok átlaga a sokasági átlag, azaz $\mu$.
-- Mintaátlagok szórása pedig ugye nem más, mint a **standard hiba**, tehát $\frac{\sigma}{\sqrt{n}}$
+- Due to **unbiasedness**, we know that the mean of the sample means is the population mean, i.e. $\mu$.
+- The standard deviation of the sample means is simply the **standard error**, i.e. $\frac{\sigma}{\sqrt{n}}$
 
-Ez pontosan az az eredmény, amit kaptunk volna, ha a CHT eredeti felírását végigosztjuk $n$-nel.
+This is exactly the result we would get if we divided the original CLT equation by $n$.
 
-Ugyebár a CHT eredeti felírása $X_1,X_2,...,X_n$ FAE valószínűségi változókra, ahol $\forall i$-re $E(X_i)=\mu$ és $Var(X_i)=\sigma^2$, valamint $n \rightarrow \infty$: $$\sum_{i=1}^n{X_i} \sim N(n \mu, \sqrt{n}\sigma)$$
+The original formulation of the CLT states that for independent, identically distributed (IID) random variables $X_1,X_2,\dots,X_n$ where $\forall i$: $E(X_i) = \mu$ and $Var(X_i) = \sigma^2$, and as $n \rightarrow \infty$:$$\sum_{i=1}^n{X_i} \sim N(n \mu, \sqrt{n}\sigma)$$
 
-Ezt leosztva $n$-nel pedig a következő eredményt kapjuk (alkalmazva, hogy konstans szorzó a várható értékből lineárisan, míg a varianciából négyzetesen kiemelhető): $$\frac{1}{n} \times \sum_{i=1}^n{X_i} \sim N\left(\mu, \frac{\sigma}{\sqrt{n}}\right)$$
+Dividing this by $n$ gives the following result (applying the rule that a constant factor can be factored out linearly from expected value and squared from variance): $$\frac{1}{n} \times \sum_{i=1}^n{X_i} \sim N\left(\mu, \frac{\sigma}{\sqrt{n}}\right)$$
 
-Szumma szummárom, akkor a **sok-sok mintából számolt mintaátlagok $\bar{y}$ adatsora az alábbi eloszlást követi**: $$\bar{y} \sim N\left(\mu,\frac{\sigma}{\sqrt{n}}\right)$$
+In summary, the **variable of sample means $\bar{y}$ from many samples follows the distribution**: $$\bar{y} \sim N\left(\mu,\frac{\sigma}{\sqrt{n}}\right)$$
 
-Ezt az illeszkedést simán letesztelhetjük grafikusan is a <a href="Chapter03.html" target="_blank">Section 1.3. of Chapter 3</a>-ban látott módon.<br>
-Figyeljük meg, hogy a `ggplot2` csomag `stat_function` függvényében az átlagot a korábban kiszámolt `SokasagiAtlag`, a szórást pedig a szintén az előbb kiszámolt `SE` objektumok segítségével adom meg! A `linewidth=1` paraméterbeállítással egy kicsit megnöveljük a sűrűségfüggvény piros vonalának vastagságát.
+We can easily test this fit graphically using the method shown in <a href="Chapter03.html" target="_blank">Section 1.3 of Chapter 3</a>.<br>
+Notice that in the `stat_function` of the `ggplot2` package, I specify the mean using the previously computed `PopMean` and the standard deviation using the previously computed `SE` objects! The `linewidth=1` setting slightly increases the thickness of the red density function line.
 
 ```{r}
 library(ggplot2)
@@ -149,7 +149,7 @@ ggplot(samples_100, aes(x=SampleMeans)) +
                 col = 'red', linewidth=1)
 ```
 
-Nagyon szép, az illeszkedés, olybá tűnik a **CHT ismét működik**! :)
+Very nice! The fit looks great: the **CLT is working once again**! :)
 
 ## 3. A sokasági átlag konfidencia-intervalluma
 
