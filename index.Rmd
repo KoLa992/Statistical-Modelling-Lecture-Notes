@@ -7,7 +7,7 @@ title: |
   Data Science in Business BSc<br><br>
   </center> 
 output: html_document
-date: '02/03/2025'
+date: '05/03/2025'
 ---
 
 ```{r setup, include=FALSE}
@@ -26,5 +26,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Chapter 6 - <a href="Chapter06.html" target="_blank">Estimating Parameters of Probability Distributions</a>
 
-## Chapter 7 - Confidence Intervals
+## Chapter 7 - <a href="Chapter07.html" target="_blank">Confidence Interval for the Mean in IID Samples</a>
+
+## Chapter 8 - Confidence Interval for Other Parameters in IID Samples. The Bootstrap Method.
+
+## Chapter 9 - Confidence Interval in SR and Stratified Samples
 

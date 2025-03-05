@@ -1,0 +1,604 @@
+---
+title: "Confidence Interval for the Mean in IID Samples"
+author: "László Kovács"
+date: "05/03/2025"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Revision: Standard Error of the Mean in the Time Results of the Balaton Swimmers
+
+Ugyebár a <a href="Chapter05.html" target="_blank">Chapter 5</a>-ben a 2022-es Balaton átúszás résztvevőinek időeredményeit vizsgáltuk mintavételi és becsléselméleti szempontból elég alaposan. Töltsük is be egy data frame-be ismét a <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a> fájl adatait. Ebben az Excelben megvan az összes résztvevő időeredménye a `TIME` oszlopban. Ez az adatsor lesz most nekünk tehát a **sokaságunk**.
+
+```{r}
+library(readxl)
+swimming = read_excel("LIDLBalaton2022.xlsx")
+str(swimming)
+```
+
+Meg is van akkor mind az $N=9751$ részvevőnk. Ebben a tananyagban **most kizárólag az időeredmények átlagának becslésével** fogunk foglalkozni.<br>
+Úgyhogy **számoljuk is ki**, hogy az összes átúszó, azaz a **sokaság**, tekintetében mi az **időeredmények átlaga** ($\mu=\bar{Y}$). Ezen kívül majd jól jön még nekünk referenciaként az időeredméynek sokasági **szórása** ($\sigma$) is.
+
+```{r}
+classic_sd <- function(x){
+  return(sqrt(mean((x-mean(x))^2)))
+}
+
+PopMean <- mean(swimming$TIME)
+PopStd <- classic_sd(swimming$TIME)
+
+c(PopMean, PopStd)
+```
+
+Ezeka alapján tudjuk tehát, hogy egy átlagos Balaton átúszó $\mu=165.5$ perc alatt teljesítette a távot, amitől egy konkrét versenyző saját időeredménye várhatóan $\sigma=44.1$ perccel tér el.
+
+**Az átlag becslése során** az a feladatunk, hogy **ezt a $\mu=165.5$ perces átlagot valahogy "megtippeljük"** egy visszatevéses véletlen (azaz FAE) **minta adatai alapján**.
+
+Tehát, **vegyünk is egy $n=100$ elemű mintát a Balatonátúszók sokaságából** a kedvenc $1992$-es véletlen magunk mellett, és nézzük meg, hogy **mennyi a mintaátlag, azaz $\bar{y}$ értéke**.
+
+```{r}
+set.seed(1992)
+selected_into_sample <- sample(rownames(swimming), size = 100, replace = TRUE)
+swimming_sample <- swimming[selected_into_sample,]
+
+SampleMean <- mean(swimming_sample$TIME)
+
+SampleMean
+```
+
+Tehát ebben az $n=100$ elemű **mintában az átlagos átúszási idő $160.8$ perc**. A <a href="Chapter05.html" target="_blank">Chapter 5</a>-ben elvégzett okoskodásunk alapján a **mintaátlag alapján úgy tudjuk lehatárolni a sokasági átlag ($\mu$) értékét, hogy a mintaátlag értékre rámérem $\pm$ annak standard hibáját**. Hiszen a standard hiba megmutatja, hogy egy véletlenszerűen kiválasztott mintavétel átlaga várhatóan mennyivel tér el a valós sokasági átlagtól (mivel a $\bar{y}$ mintaátlag alapból egy torzítatéan becslőfüggvénye a $\mu$ sokasági átlagnak).<br>
+A gondolatmenet alapján tehát azt mondhatjuk, hogy a **sokasági átlag várhatóan mintaátlag $\pm$ standard hiba által lehatárolt intervallumban nyugszik**.
+
+Jó hír, hogy ugyebár az **átlag standard hibája sokasági szórás osztva gyök alatt mintaelemszám**, azaz $\frac{\sigma}{\sqrt{n}}$ képlettel számolható, aminek az értékét egy mintavétel alapján is meg tudjuk közelíteni, ha a sokasági szórást, annak torzítatlan becslésével a **korrigált mintaszórás**sal helyettesítjük. Tehát, az **egy szem $n=100$ mintából a standard hiba értéke az $\frac{s}{\sqrt{n}}$ képlettel megközelíthető**.
+
+Ez alapján akkor az alábbi számolást tudjuk elkövetni a mintánkon.
+
+```{r}
+n <- nrow(swimming_sample)
+s <- sd(swimming_sample$TIME) # corrected st. deviation!
+SE <- s/sqrt(n)
+
+c(SampleMean - SE, SampleMean + SE)
+```
+
+Az eredményünk alapján a valós, sokasági átlag ($\mu$) várhatóan $160.6$ és $168.3$ perc között, azaz a $[160.6,168.3]$ intervallumban helyezkedik el. Nos, **az intervallumos becslésünk helyes is, hiszen a valós sokasági átlag uygebár $\mu=167.5$ perc, ami tényleg benne van a mintánk alapján lehatárolt intervallumban**.
+
+## 2. Distribution of Sample Means
+
+Na jó-jó, egy mintavétel esetén szerencsénk is lehetett. **Mennyire működik ez a standard hibás módszer jól sok-sok $n=100$ mintavétel esetében?** Töltsük csak be egy data frame-be azt a táblát, ami $10000$ db $n=100$ FAE mintavétel adatait tartalmazza! Az átlalam generált Excel, ami tartalmazza a $10000$ minta adatait <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/SwimmingSamples.xlsx" target="_blank">innen</a> érhető el. 
+
+```{r}
+samples_100 <- as.data.frame(read_excel("SwimmingSamples.xlsx"))
+rownames(samples_100) <- paste0("Sample",1:10000) # indicate in the rownames that each row is one sample
+head(samples_100)
+```
+
+Oké, az eredményből látjuk is, hogy úgy néz ki a data frame, hogy **1 sor tartalmaz 1 db 100 elemű mintát és a mintaelemeket** (tehát a mintába besorsolt versenyző percben mért időeredményét) **az oszlopkban tároljuk**.
+
+Akkor most **minden minta esetében számoljuk ki a $\bar{y} \pm SH$ intervallumot**, és nézzük meg, hogy a valós **sokasági átlag** ($\mu$) **beleesik-e** az intervallumba! Annyi **előnyt is adjunk magunknak, hogy a standard hibát a sokasági szórás, azaz $\sigma$ ismeretében számoljuk ki**. Tehát a $SH = \frac{\sigma}{\sqrt{n}}$ képletet alkalmazzuk. Ugye ez annyiban előny, hogy $\sigma$-t egy db 100 elemű minta vizsgálata esetén NEM ismerjük!<br>
+A számolás során figyeljünk arra, hogy a `apply` függvényeket `MARGIN = 1` paraméterrel hazsnáljuk, hiszen egy db minta elemei a sorokban vannak. Illetve, a számolást mindig szorítsuk le a data frame első $100$ oszlopára, hiszen a data frame oszlopait folyamatosan bővíteni fogjuk!
+
+```{r}
+SE <- PopStd / sqrt(n)
+
+samples_100$MeanLower <- apply(samples_100[,1:100], 1, mean) - SE
+samples_100$MeanUpper <- apply(samples_100[,1:100], 1, mean) + SE
+head(samples_100[,101:102])
+```
+
+Oké, akkor **meg is vannak** az átlag intervallumos **becslés**ének **alsó-felső határai**. **Számoljuk** akkor **ki a találati arányt**!<br>
+A számoláshoz azt a trükköt alkalmazzuk, amit a <a href="Chapter05.html" target="_blank">Chapter 5</a>-ben sütüttünk el: az `x>180` jellegű parancs egy `logical` tömböt ad vissza, amit kiátlagolva megkapjuk a "*kedvező esetek*", vagyis a $\mu$-t helyesen eltaláló intervallumok arányát.
+
+```{r}
+mean((samples_100$MeanLower <= PopMean) & (samples_100$MeanUpper >= PopMean))
+```
+
+Nos, olybá tűnik, hogy a $\bar{y} \pm SH$ módszer csak a **mintavételek kb. $68\%$-ban találja el a valós, sokasági átalgot, azaz $\mu$-t!** Gáz Géza! Azért ennél nagyobb találati arányt szeretnénk! Mondjuk legalább valami $90\%$ környékét.
+
+Ahhoz, hogy megértsük miért alakul gyéren ennek a módszernek találati aránya, **nézzünk csak rá az $\bar{y}$ mintaátlagok hisztogramjára!** Most a hisztogramon nem optimalizálom az osztályközök számát, elfogadom a `hist` alapbeállításait.
+
+```{r}
+samples_100$SampleMeans = apply(samples_100[,1:100], 1, mean)
+
+hist(samples_100$SampleMeans)
+```
+
+Hoppácska! Dehát, **ez itt a világ legszebb normális eloszlása!**
+
+Ami azért második elgondolásra **teljesen logikus, mivel a Centrális Határeloszlás Tétel (CHT) dolgozik a háttérben**. Ha nem ugrik be a CHT, akkor vissza a <a href="Chapter04.html" target="_blank">Section 3 in Chapter 4</a>! :)
+
+A **CHT** szerint ugyebár ha az **adatsor elemi véletlen hatások összegződéseként állnak elő**, akkor az **adatsor normális eloszlás**t követ. A $\bar{y}$ **mintaátlagok adatsora pedig pont olyan adatsor, ami a CHT feltételnek megfelel!** Hiszen a mintaátlag úgy jön ki, hogy a mintaelemeket összeadom és elosztom a minta elemszámával. **Mivel a mintavétel módja FAE, így biztos lehetek benne, hogy egy mintaelem, az egy véletlen húzás, egy véletlen hatás eredménye. Aztán meg ezeket adom össze**. Végén osztok $n$-bel, de az mindig ugyan annyi, így nem változtat a lényegen.
+
+Ha pedig a **sok-sok mintából számolt átlagok adatsora normális eloszlású, akkor azt is tudom, hogy milyen átlagú és milyen szórású normális eloszlást követ!**
+
+- A **torzítatlanság** miatt tudom, hogy a mintaátlagok átlaga a sokasági átlag, azaz $\mu$.
+- Mintaátlagok szórása pedig ugye nem más, mint a **standard hiba**, tehát $\frac{\sigma}{\sqrt{n}}$
+
+Ez pontosan az az eredmény, amit kaptunk volna, ha a CHT eredeti felírását végigosztjuk $n$-nel.
+
+Ugyebár a CHT eredeti felírása $X_1,X_2,...,X_n$ FAE valószínűségi változókra, ahol $\forall i$-re $E(X_i)=\mu$ és $Var(X_i)=\sigma^2$, valamint $n \rightarrow \infty$: $$\sum_{i=1}^n{X_i} \sim N(n \mu, \sqrt{n}\sigma)$$
+
+Ezt leosztva $n$-nel pedig a következő eredményt kapjuk (alkalmazva, hogy konstans szorzó a várható értékből lineárisan, míg a varianciából négyzetesen kiemelhető): $$\frac{1}{n} \times \sum_{i=1}^n{X_i} \sim N\left(\mu, \frac{\sigma}{\sqrt{n}}\right)$$
+
+Szumma szummárom, akkor a **sok-sok mintából számolt mintaátlagok $\bar{y}$ adatsora az alábbi eloszlást követi**: $$\bar{y} \sim N\left(\mu,\frac{\sigma}{\sqrt{n}}\right)$$
+
+Ezt az illeszkedést simán letesztelhetjük grafikusan is a <a href="Chapter03.html" target="_blank">Section 1.3. of Chapter 3</a>-ban látott módon.<br>
+Figyeljük meg, hogy a `ggplot2` csomag `stat_function` függvényében az átlagot a korábban kiszámolt `SokasagiAtlag`, a szórást pedig a szintén az előbb kiszámolt `SE` objektumok segítségével adom meg! A `linewidth=1` paraméterbeállítással egy kicsit megnöveljük a sűrűségfüggvény piros vonalának vastagságát.
+
+```{r}
+library(ggplot2)
+
+ggplot(samples_100, aes(x=SampleMeans)) +
+  geom_histogram(aes(y = after_stat(density))) +
+  stat_function(
+                fun = dnorm, 
+                args = list(mean = PopMean, sd = SE),
+                col = 'red', linewidth=1)
+```
+
+Nagyon szép, az illeszkedés, olybá tűnik a **CHT ismét működik**! :)
+
+## 3. A sokasági átlag konfidencia-intervalluma
+
+Nézzük akkor meg **mi a valószínűsége, hogy egy véletlenszerűen kiválasztott érték egy $N(\mu, SE)$ eloszlásban a $\mu \pm SE$ intervallumba esik!**
+
+```{r}
+pnorm(PopMean+SE, mean=PopMean, sd=SE) - pnorm(PopMean-SE, mean=PopMean, sd=SE)
+```
+
+Hoppáré! Ez is éppen kb. $68\%$! Tehát, **az, hogy egy $\bar{y} \pm SH$ becslés csak a mintavételek $68\%$-ban pontos nagyjából egy valószínűségszámítási szükségszerűség**.
+
+Kérdés, hogy **mit tehetünk ez ellen? Mihez kezdhetünk, ha mondjuk nem $68\%$-os, hanem valami jobb, mondjuk $95\%$-os megbízhatóságú intervallumbecslést szeretnénk adni a sokasági átlagra (vagy más néven sokasági várható értékre)?**
+
+Az okoskodáshoz a <a href="Chapter03.html" target="_blank">Section 1.6. of Chapter 3</a>-ra fogunk támaszkodni.
+
+Ugyanis azt tudjuk, hogy ha a **mintaátlagok eloszlása** az alábbi: $$\bar{y} \sim N\left(\mu,\frac{\sigma}{\sqrt{n}}\right)$$
+
+Akkor a **standardizált/normalizált mintaátlagok eloszlása pedig standard normális eloszlású lesz**: $$\frac{\bar{y}-\mu}{\frac{\sigma}{\sqrt{n}}} = z \sim N(0,1)$$
+
+**Standard normális eloszlás esetén** pedig **mindig igaz**, hogy $P(-2<z<+2) \approx 95\%$. Emlékeztetőként itt az ábra az $N(0,1)$ standard normális eloszlás sűrűségfüggvényéről az 1. heti tananyag 2.6. fejezetéből.
+
+<center>
+![](stnormal.png){width=50%}
+</center>
+
+<br>Most az egyszerűség miatt vegyük a $\approx$-ot $=$-nek: $$P(-2<z<+2) = 95\%$$
+
+Ebbe a **fenti összefüggésbe beírjuk a képletet, amivel kiszámoltuk $z$-t**: $$P\left(-2< \frac{\bar{y}-\mu}{\frac{\sigma}{\sqrt{n}}} <+2\right) = 95\%$$
+
+Most egyelőre azzal a feltevéssel élünk, hogy ismerjük $\sigma$-t, azaz a sokasági szórást. Mondjuk pl. valami előzetes teljeskörű adatfelvételből. Célunk, hogy a valós, sokasági átlagot ($\mu$-t) foglaljuk valamiféle határok közé egy darab mintaátlag ($\bar{y}$) ismeretében (hiszen majd nem akarjuk mindig kivenni az összes lehetséges mintát). Tehát, az összefüggésből fejezzük a $\mu$ sokasági átlagot: $$P\left(\bar{y}-2 \times \frac{\sigma}{\sqrt{n}}< \mu <+2 \times \frac{\sigma}{\sqrt{n}}\right) = 95\%$$
+
+Tehát, ez a fenti összefüggés azt jelenti, hogy a **sokasági átlag az egy darab mintaátlag $\pm 2SH$ intervallumban van kb. $95\%$-os valószínűséggel**. Ezt hívjuk az **átlag 95%-os konfidencia-intervallumának**. A $2$ pedig a $95\%$-os megbízhatósági szinthez tartozó $k$ **megbízhatósági szorzó**. Mindezeket pedig csupán egy darab $n$ elemű mintából ki is tudjuk számolni, ha $\sigma$-t helyettesítjük $s$-sel! Viszont **fontos, hogy a mintánkat véletlenszerűen válasszuk ki, mert csak így kapunk a mintaátlagok eloszlására a látott normális eloszlást!** Ugyebár a CHT-nak kellenek a véletlen kiválasztású mintaelemek a "*véletlen hatások összegződése*" részhez.
+
+### 3.1. Az átlag konfidencia-intervallumának általános alakja
+
+Ha **átalánosságban akarjuk felírni ezt a konfidencia-intervallumot**, akkor úgy szoktunk fogalmazni, hogy $1-\alpha$ **megbízhatóságú intervallum**ot írunk fel, ahol $\alpha$ a **hibázásunk valószínűsége**, tehát, annak a valószínűsége hogy a sokasági átlag *mégsem* a konfidencia-intervallumban van: $$P\left(\bar{y}-z_{1-\frac{\alpha}{2}} \times \frac{\sigma}{\sqrt{n}}< \mu <+z_{1-\frac{\alpha}{2}} \times \frac{\sigma}{\sqrt{n}}\right) = 1- \alpha$$
+
+Itt a $z$ érték azt akarta jelenteni, hogy azt a $z$ **értéket kell levadászni, ami esetén az "alá esés" valószínűsége a standard normális eloszlásban épp** $1-\frac{\alpha}{2}$.<br>
+Ennek okát szemlélteti az alábbi ábra.
+
+<center>
+![](normal_ci.jpg){width=60%}
+</center>
+
+<br>Ugyebár a cél az, hogy a $z \sim N(0,1)$ eloszlásban megtaláljuk azt a $k$ értéket, ahol $P(-k < z < +k)=1-\alpha$. Ugyebár a $95\%$ esetén is innen kaptuk a $2$-t. Ezt pedig akkor úgy kapjuk meg a **fenti ábra alapján**, hogy ha tudjuk, hogy a $\pm k$ közé esés valószínűsége $1- \alpha$, akkor a tartományon **kívülre esés valószínűsége** $\alpha$, a hibázásunk megengedett valószínűsége. Ami a normális eloszlás sűrűségfüggvényének **szimmetriája miatt egyenlően oszlik el** $-k$ alá és $+k$ felé. Tehát a $+k$ felé esési valószínűsége $\alpha / 2$. De mivel R-ben `qnorm` függvény **csak "alá esési" valószínűségekből dolgozik**, így a $+k$ alá esés valószínűséget kell tudnunk, ami a felé esés komplementere, azaz $1-\frac{\alpha}{2}$, ami az **ábrán a narancssárga rész területe a sűrűségfüggvényben**.
+
+Láthatjuk a logika szuperül működik a $95\%$-os megíbzhatóság, azaz $\alpha=5\%$ esetére.
+
+```{r}
+alpha <- 0.05
+qnorm(1-(alpha/2))
+```
+
+Az eredmény nem pontosan $2$, hanem kb. $1.96$. Ugyebár a **levezetésben kerekítettem**, de a megbízhatósági szorzó számítás lényege szerintem átjött. :)
+
+**Szumma-szummárum**. Az **átlag tetszőleges megbízhatóságú intervallumbecslése / konfidencia-intervalluma általános alakban a következő módon számítható**: $$\bar{y} \pm k \times SH$$
+
+Tehát, a **mintaátlagra ($\bar{y}$) rámérjük $\pm$ a standard hiba $k$-szorosát, ahol a $k$, mint megbízhatósági szorzó állítja be a kívánt megbízhatósági szintet**.<br>
+Ez az **általános formula azért nagyon fontos, mert a későbbiekben az átlagra vonatkozó becslések során mindig csak annyit változtatunk rajta, hogy az $SH$ és a $k$ mögött álló konkrét képlet fog csak változni, de ez a fenit alaplogika végig megmarad!!**
+
+### 3.2. A konfidencia-intervallum megbízhatóságának ellenőrzése
+
+Utolsó lépésben ellenőrizzük le konfidencia-intervallumos formulánk működését, és **nézzük meg, hogy a $\sigma$-val számolt $SH$-t használva** tudunk-e **egy $98\%$-os megbízhatóságú intervallumbecslés**t készíteni a Balatont átúszók időeredméyneinek átlagára a $k=z_{1-\frac{\alpha}{2}}$ megoldásunkkal.
+
+Tehát a $10000$ db mintánk **mintaátlagára a mostani helyzetben** a $$\triangle = k \times SE = z_{1-\frac{\alpha}{2}} \times \frac{\sigma}{\sqrt{n}}$$
+
+távolságot kell $\pm$ felmérni. Ezt a $\triangle$ távolságot hívjuk a **konfidencia-intervallum hosszának, vagy másképp a becslés teljes hibahatárának**.
+
+Nézzük akkor meg, hogy egy **ilyen becslés tényleg kb. $98\%$-os találati arányt eredményez-e?**
+
+```{r}
+n <- 100
+alpha <- 1 - 0.98
+k <- qnorm(1-alpha/2)
+SE <- PopStd / sqrt(n)
+delta <- SE * k
+
+samples_100$MeanLower <- samples_100$SampleMeans - delta
+samples_100$MeanUpper <- samples_100$SampleMeans + delta
+head(samples_100[,101:103])
+```
+
+Oké, akkor **megvannak az új intervallumbecsléseink** mind a $10000$ mintára. Lássuk a pontosságukat!
+
+```{r}
+mean((samples_100$MeanLower <= PopMean) & (samples_100$MeanUpper >= PopMean))
+```
+
+És **tényleg kb. $98\%$ a találati arány**, győzelem! :)
+
+### 3.3. A konfidencia-intervallum két fontos tulajdonsága
+
+A konfidencia-intervallum **megbízhatósági szintjével csínján kell bánni**. Ha megfigyeljük a korábbi számításainkat, akkor láthatjuk, hogy
+
+- $95\%$-os megbízhatósághoz $k=1.96$
+- $98\%$-os megbízhatósághoz viszont már $k=2.3$
+
+megbízhatósági szorzó tartozik.
+
+A $\triangle = k \times SE$ összefüggés miatt pedig könnyű látni, hogy **megbízhatósági szint növelésével a becslési hibahatár nő, azaz a konfidencia-intervallum tágul**. Teljesen logikus: ha **nagyobb találati arányt akarok, akkor "növelni kell a hálót", így nagyobb eséllyel akad fenn rajta a sokasági átlag**.<br>
+$100\%$-os megbízhatóság pedig egy esetben van, ha az intervallumbecslésünk a $\pm \infty$ tartomány, ami ugyebár nem túl hazsnos becslési intervallum... :)
+
+Érdemes kipróbálni a dolgot még az *Section 1* kivett $100$ elemű mintán mondjuk $\alpha=\{0.2,0.1,0.05,0.01,0.001\}$ hibavalószínűségek mellett egy `for` ciklussal.<br>
+A számoláshoz felhasználom a korábban kiszámolt `MintaAtlag` és `SH` objektumokat.
+
+```{r}
+alpha_vector = c(0.2, 0.1, 0.05, 0.01, 0.001)
+
+for (current_alpha in alpha_vector) {
+  lower <- SampleMean - SE*qnorm(1-current_alpha/2)
+  upper <- SampleMean + SE*qnorm(1-current_alpha/2)
+  print(paste0("Confidence: ",(1-current_alpha)*100,"% - Conf. Int.: [",
+               round(lower,2), ", ",round(upper,2),"]"))
+}
+```
+
+Szépen megfigyelhető a leírt jelenség: **a megbízhatóság növelésével a konfidencia-intervallum egyre csak tágul, azaz a becslési hibahatár folyamatosan nő**.
+
+- $90\%$ megbízhatóság esetén az átlagos időeredményt még valahova $153$ és $168$ perc közé tippeljük,
+- $99\%$ megbízhatóságnál viszont már $146$ és $175$ perc közé!
+
+A jelenséget mérsékelni a **mintaelemszám növelésével lehet**! **Nézzük meg az előző `for` ciklust egy $n=20$ elemű mintán az $n=100$ helyett!** Számoljuk ki az első 20 oszlop alapján a $\bar{y}$ mintaátlagot. Mivel a kiválasztás FAE volt, így olyan lesz a dolog, mintha csak 20 elemet választottunk volna ki a mintavétel során, nem pedig 100-at. Az $SE=\frac{\sigma}{\sqrt{n}}$ is könnyen újraszámolható $n=20$ mellett.
+
+```{r}
+SampleMean_Size20 <- mean(swimming_sample$TIME[1:20])
+n <- 20
+SE_Size20 <- PopStd / sqrt(n)
+
+alpha_vector = c(0.2, 0.1, 0.05, 0.01, 0.001)
+
+for (current_alpha in alpha_vector) {
+  lower <- SampleMean_Size20 - SE_Size20*qnorm(1-current_alpha/2)
+  upper <- SampleMean_Size20 + SE_Size20*qnorm(1-current_alpha/2)
+  print(paste0("Confidence: ",(1-current_alpha)*100,"% - Conf. Int.: [",
+               round(lower,2), ", ",round(upper,2),"]"))
+}
+```
+
+Szépen láthatjuk, hogy az **átlagos átúszási időket $99\%$-os megbízhatósággal**
+
+- $n=20$ esetben $132$ és $197$ perc közé tesszük,
+- $n=100$ esetben pedig láttuk az előbb, hogy a becslés pontosabb (kisebb $\triangle$ hibahatárú): $146$ és $175$ perc közé teszi a sokasági átlagidőt.
+
+Nem meglepő az eredmény. Mivel a $\frac{\sigma}{\sqrt{n}}$ standard hiba **képlet nevezőjében van az $n$ elemszám, így növelése csökkenti a standard hibát, ezen keresztül pedig a teljes $\triangle$ becslési hibahatárt**. Ugyebár a <a href="Gyak03.html" target="_blank">3. heti tananyagban</a> megállapítottuk, hogy az átlag **konzisztens becslés**: elemszám növekedésével a $SH$-ja csökken, a $0$-ba tart.
+
+Emiatt a **választott $1-\alpha$ megbízhatósági szint a mintaelemszám függvénye**:
+
+- Nagyobb $n$ elemszám esetén egy $99\%$-os megbízhatóság is elég pontos intervallumbecslést szolgáltathat,
+- Kisebb mintaméret esetén valószínűleg meg kell elégedni valami moderáltabb (pl. $90\%-95\%$) megbízhatósági szinttel is.
+
+## 4. Intervallumbecslés a gyakorlatban
+
+Ezen a ponton **engedjük el a Balaton átúszókat**, és **próbáljuk ki az átlag konfidencia intervallum számítást olyan esetben, ahol nem ismerjük a teljes sokaságot, amiből mintát vettünk**.
+
+### 1. feladat: Altatók hatékonysága
+
+A sztorink a következő.
+
+Egy gyógyszergyár egy új altató készítmény hatását vizsgálja $10$ véletlenszerűen kiválasztott inszomniában szenvedő páciensen. Mind a tíz páciens esetében feljegyezték, hogy hány órát növekedett az alvásidejük a készítmény használatát követően. Korábbi klinikai vizsgálatok alapján ismeretes, hogy az altató készítmények által kiváltott alvásidő-változás normális eloszlású, $2$ óra szórással.												
+
+$Data = \{1.9, 0.8, 1.1, 0.1, -0.1, 4.4, 5.5, 1.6, 4.6, 3.4\}$
+
+Készítsünk $95\%$-os megbízhatósággal intervallumbecslést a várható átlagos alvásidő-változásra:
+
+a) a megadott feltételek alapján;
+b) feltételezve, hogy az eloszlás normális, de a szórás ismeretlen!
+c) Mekkora mintára van szükség, ha ugyan ekkora megbízhatóság (95%) mellett a b) pontban kapott hibahatárt a felére kívánjuk csökkenteni?
+
+### 1/a) feladat megoldás
+
+Ebben az a) feladatban nagyon el vagyunk kényeztetve. Az altató hatékonyságához van egy $n=10$ elemű mintánk, aminek az adatait tételesen ismerjük. Első páciens alvásideje $1.9$ órával nőtt az altató használata után, másodiké $0.8$ órával, stb. Van egy páciens, akinek csökkent az alvásideje a gyóygszerhasználat után: az 5. delikvensé, $0.1$ órával.<br>
+Ha ezeket az adatokat elrakjuk egy `vector`-ba, akkor simán kiszámolható a megfigyelt 10 páciens esetében az átlagos alvásidő növekedés, azaz $\bar{y}$
+
+```{r}
+SampleData = c(1.9, 0.8, 1.1, 0.1, -0.1, 4.4, 5.5, 1.6, 4.6, 3.4)
+SampleMean = mean(SampleData)
+SampleMean
+```
+
+Tehát a megfigyelt páciensek esetében az átlagos alvásidő növekedés kb. $\bar{y}=2.3$ óra. Ami szép és jó, de mennyi lehet az **átlagos alvásidő növekedés az inszomniás páciensek összességére, a teljes sokaságra nézve? Ehhez kell a konfidencia-intervallum! Hogy olyan betegekre is tudjunk mondani valamit, akiket a mintában NEM figyeltünk meg!**
+
+Itt az a) esetben minden **feltételezést elfogadhatunk, amit a feladat tesz**. Ebben van egy olyan rész, ami szerint "*korábbi kutatásokból*" ismerjük, hogy az alvásidő-változások szórása $2$. Ha ezt így elhisszük, akkor azt mondhatjuk, hogy az alvásidő-változások teljes sokaságra vonatkozó szórását vehetjük $2$-nek. Azaz, $\sigma=2$-t "*hazudunk*" a számolások során.<br>
+**FIGYELEM!** Ha a feladat szövege azt akarja közölni velünk, hogy van egy sokasági szórás, egy $\sigma$, amit ismerünk és használhatunk a számolásaink során, akkor azt mindig ilyen "*korábbi kutatásokból ismeretes...*" szövegrészbe fogja becsomagolni!
+
+Ha **elfogadjuk a feltételezéseinket, akkor minden adott a konfidencia-intervallum 3. fejezetben megismert képletének alkalmazásához**. Hiszen, ha $95\%$ a megbízhatóság, akkor $\alpha=5\%$. Tegyük is ezt: alkalmazzuk a képleteket az adatainkra!
+
+```{r}
+n <- 10
+alpha <- 1-0.95
+assumed_pop_sd <- 2
+
+k <- qnorm(1-alpha/2)
+SE <- assumed_pop_sd/sqrt(n)
+delta <- k*SE
+
+lower <- SampleMean - delta
+upper <- SampleMean + delta
+
+c(lower, upper)
+```
+
+Az eredmény alapján ez az **új alatató készítmény az inszomniás páciensek teljes sokaságában a 10 elemű mintánk alapján legalább $1.09$ óra és legfeljebb $3.6$ óra alvásidő növekedést okoz $95\%$-os valószínűséggel!**
+
+Ennek a cég vezetése nagyon örül, mert lehet olyan reklámszlogeneket elsütni az eredményünk alapján, hogy "*vizsgálatok igazolják, hogy altatónk $95\%$-os valószínűséggel legalább $1$ órával növeli a várható alvásidőt*". Egy ilyen mondat pedig minden marketinges álma *úgymond*. :)
+
+De **minden ilyen szép marad-e ha az alvásidők szórását nem a feltételezett** $\sigma=2$-vel, hanem a **mintából számolt korrigált szórással ($s$) számítjuk?**
+
+### 1/b) feladat megoldás
+
+Itt a feladat azt mondja, hogy ne higyjünk mindenféle kétes "*korábbi kutatásnak*", ne fogadjuk el az általuk megadott $\sigma$-t, hanem **számoljunk magunknak egy korrigált mintaszórást**, azaz $s$-t (a korrigált mintaszórás ad torzítatlan becsést a valós, sokasági $\sigma$-ra), és számoljuk végig azzal a stanadard hibát $SH=\frac{s}{\sqrt{n}}$ módon.
+
+Viszont, ha **feloldjuk azt a feltevésünk, hogy ismerjük a sokasági szórást az $SH$ számoláshoz** , akkor a **mintaátlagok normális helyett egy $n-1$ szabadságfokú t-eloszlást követnek**.
+
+A **t-eloszlás sűrűségfüggvénye az alábbi alakot ölti**. Az szabadságfokokat az angol *degrees of freedom* kifejezésből $df$-el jelöljük.
+
+<center>
+![](studentdistr.png){width=60%}
+</center>
+
+<br>Ahogy a fenti sűrűségfüggvényből is létszik Student-féle t-eloszlás valójában egy **ellapított standard normális eloszlás** (lásd fenti ábra). A lapítás azt akarja kifejezni, hogy az eloszlás szórása nagyobb. Hiszen nagyobb szórás esetén az eloszlás szélein lévő számértékek is nagyobb valószínűséggel következhetnek be (mivel a lapítás miatt a sűrűségfüggvény magasabban fut ezeken a helyeken), így változatosabbá, jobban szóródóvá teszik az adatsorunk.
+
+Viszont, ahogy növeljük az eloszlás szabadságfokát ($df$), egyre jobban "*visszacsúcsosítjuk*" az eloszlást a standard normális eloszlásba. Logikus, hogy ilyenkor ezt az eloszlást használjuk, mivel a standard hiba értékébe (ami a mintaátlagok normális eloszlásának szórás paramétere) egy biztosan ismert sokasági szórás érték helyett, annak egy mintából számított becslését rakjuk, így **nagyobb bizonytalanságot, nagyobb szórást viszünk az eloszlásba**.
+
+Ebben a helyzetben a konfidencia-intervallum úgy módosul, hogy $\sigma$ helyére $s$ kerül a $SH$-ban, és a $k$ megbízhatósági szorzót $t$-eloszlásból számoljuk $N(0,1)$ eloszlás helyett: $$P\left(\bar{y}-t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}< \mu <+t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}\right) = 1- \alpha$$
+
+Az $n-1$ szabadságfokú $t$ érték számításához a `qt` függvényt vesszük elő. Teljesen hasonló logikával működik, mint a `qnorm` függvény (vagy mint az R bármelyik eloszlás inverz értékét számoló függvénye). A $t$-eloszlás is szimmetrikus, tehát most is azt az értéket keressük az $n-1$ szabadságfokú $t$-eloszlásunkban, ahol az "*alá esési*" valószínűség $1-\frac{\alpha}{2}$. A `qt` függvény `df` paraméterével állítható a szabadságfok.<br>
+Ezt a mi $n=10$ elemű mintánkra, $95\%$-os megbízhatósági szint mellett az alábbi módon számoljuk
+
+```{r}
+n <- 10
+alpha <- 1-0.95
+
+k_z <- qnorm(1-alpha/2)
+k_t <- qt(1-alpha/2, df = (n-1))
+
+c(k_z, k_t)
+```
+
+Láthatjuk, hogy **a $t$-eloszlású $k$ szorzó értéke érdemben nagyobb, mint a standard normális eloszlású $k$ szorzóé ugyan arra a megengedett hibavalószínűségre**! Mivel a $t$-eloszlás nagyobb valószínűséget tulajdonít az extrém magas+alacsony értékek bekövetkezésének, így ha ezt alkalmazzuk, akkor ugyan ahhoz a megbízhatósági szinthez egy magasabb $k$ megbízhatósági szorzót kapunk a $SH$-hoz!
+
+Ezek után igazából csak annyi a feladatunk, hogy a teljes becslési hibahatárt kiszámítsuk $\triangle = t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}$ módon, és ezt rámérjük $\pm$ a mintaátlagra, $\bar{y}$-ra. Ez már mehet ugyan úgy, mint az a) feladatban.
+
+```{r}
+corr_std <- sd(SampleData)
+
+k_t <- qt(1-alpha/2, df = (n-1))
+SE <- corr_std/sqrt(n)
+delta <- k_t * SE
+
+lower <- SampleMean - delta
+upper <- SampleMean + delta
+
+c(lower, upper)
+```
+
+Nem meglepő módon, a **t-eloszlású megbízhatósági szorzó miatt a $95\%$-os kinfidencia-intervallum kitágult**. Annak ellenére is, hogy az $SH$-ban gyakorlatilag nincs változás, mivel $s=2.0022$. Az altató átlagos alvásidő növekedése a betegek teljes sokaságban, már $0.9$ és $3.76$ óra közé tehető $95\%$-os valószínűséggel. Szóval, ebben a reálisabb helyzetben, amikor már a szórást magunknak számoljuk a mintaadatokból, és nem pedig "*elhisszük*" valakinek, akkor a bizonytalanság megnövekedése miatt alkalmazott t-eloszlásnak köszönhetően, a becslési hibahatár, a $\triangle$ kitágul. A marketingesek pedig már nem mondhatnak olyan szépeket, hogy "95%-os valószínűséggel legalább átlag $1$ órát növeli az alvásidőt az altató". RIP! :(
+
+Viszont, amíg a **mintánk elemszámi kicsi**, $n \leq 30$, addig a **t-eloszlású konfidencia intervallum számításának van egy előfeltétele: az adatsor, amiből a mintát vesszük normális eloszlású kell, hogy legyen!!**<br>
+Esetünkben ez annyit tesz, hogy az inszomniás páciensek sokaságában az *alvásidő normális eloszlású* hisztogramot mutat.
+
+Na, most itt ezt kemény $n=10$ esetben marha nehéz értelmesen megvizsgálni a minta alapján, de lessünk egy hisztogramot a megfigyelt $10$ db alvásidőre! A hisztogram osztályközeinek számát most nem optimalizáljuk, elfogadjuk az alapbeállításokat.
+
+```{r}
+hist(SampleData)
+```
+
+Hát, a fene se tudja ennyiből eldönteni, de tényleg. Akár normális eloszlásúak lehetnek az alvásidők. :) Bízzunk a *CHT*-ben: az egyéni alvásidők valószínűleg véletlen hatások összegeként állnak elő, így azok adatsora a sokaságban, a nem megfigyelt $10$ elemű mintán *kívüli* világban, lehet normális eloszlású is akár. :)
+
+Maga a *t-eloszlás* egyébként egy *William Gosset* nevű angol statisztikus kreatúrája. Mr. Gosset a *Guiness* sörgyárak minőségbitosítási vezetője volt, és azt a feladatot kapta, hogy oldja meg, hogy az üveges sörök minőségbiztosítása kis mintákból is megoldható legyen. Mivel a minőségbiztosításhoz ki kell bontani az üveget és megmérni benne az összetevőket, aztán utána ezek átlagára néznek konfidencia-intervallumokat. A minőségbiztosításra kinyitott sör pedig már nem elfogyasztható. *Kellemetlen*.<br>
+Így érhető, hogy minél kevesebb üvegből akarják az egész minőségbiztit megúszni. Erre adta megoldásként Gosset a t-eloszlást. Mivel a sörökben a különböző alapanyagok értéke normális eloszlást követ.
+
+Azonban emberünk el akart büszkélkedni a saját kis elszlásával a nagy világban, ezért *Student álnéven* publikálta is az eredményeit...innen lett az eloszlás neve *Student-féle t-eloszlás*. :) Viszont nagyon nem volt előrelátó az úriemberünk, hiszen akkoriban nyilván csak a Guiness sörgyár tudott elég kevés üvegből ugyan olyan "jó" megbízhatósággal minőségbiztosítani, mintha több elemű mintát vizsgáltak volna, így *Mr. Gosset* gyorsan lebukott.
+
+Tehát, ahogy az alábbi ábra is mutatja, szegény emberünk csak a sörtermelést szerette volna hatékonyabbá tenni, de végül mindenki életét tönkretette, aki statisztikai becsléselméletet tanul. :)
+
+<center>
+![](student.png){width=30%}
+</center>
+
+### 1/c) feladat megoldás
+
+Node, térjünk vissza az altató készítményünk hatékonyságára. Ugyebár a t-eloszlással készített konfidencia-intervallum eléggé elkeserítő eredményt hozott: nem tudjuk azt mondani $95\%$-os megbízhatósággal, hogy készítményünk legalább $1$ órával növeli az alvásidőt!
+
+Mi ennek az oka? Hát a **magas becslési hiba, az átlagra épített konfidencia-intervallum hossza**, tehát a $\triangle$. Ez most ugye nekünk $\pm 1.43$ óra.
+
+```{r}
+delta
+```
+Mondjuk ezt a becslési **hibahatárt szeretnénk levinni a felére**, $1.43/2$, azaz kb. $\triangle'= \pm 0.7$ órára. Ezt kétféleképpen lehet elérni. Hiszen "*magasról nézve*", a becslési hibahatár egy kéttényezős szorzat $$\triangle=k \times SH$$
+
+1. Addig állítgatom a megbízhatósági-szintet, azaz valójában $\alpha$-t, amíg a t-eloszlásból származó $k$ megbízhatósági szorzó olyan alacsony nem lesz, hogy az eddigi $SE$-val szorozgatva ki nem adja a $0.7$-es értéket $\triangle$-re. Ez az **illetlen megoldás**! Hiszen lehet, hogy ehhez az $\alpha$-t nagyon fel kell engedni, és a becslésnek nagyon alacsony lesz a megbízhatósága...az "$55\%$-os megbízhatósággal állítható az, hogy..." nem hangzik olyan jól marketing szempontból sem.
+
+2. Az **intelligens megoldás** a mintaelemszám, azaz $n$ növelése. Az $\alpha$-t adottnak vesszük, és így $k$-t nem bántjuk. Persze a t-eloszlás szabadságfoka miatt az elemszám $k$-ra is hat, de ahogy az eloszlás sűrűségfüggvényéből is látszik, kellően nagy $n$ esetén a t-eloszlás igazából a standard normálissal lesz ekvivalens, tovább tehát nem tudjuk csökkenteni $k$-t adott $\alpha$ mellett. Tehát ekkor a $k$ lényegében fix. Ellenben $n$ növekedése miatt az $SE$ része a szorzatnak biztosan csökkeni fog, hiszen az átlagra konzisztens becslést adunk, tehát $SE$ a $0$-ba tart $n$ növelése esetén. Ez ugye a $SE=\frac{s}{\sqrt{n}}$ összefüggésből adódik egyértelműen. Szóval az $s$-t (vagy éppen $\sigma$-t, ha azt ismerjük) adottnak vesszük, akkor kiszámolhatjuk, hogy mekkora $n$ szükséges a $\triangle'= \pm 0.7$ óra eléréséhez hibahatár fronton.
+
+Szóval, a 2. megoldást, az elemszám növelését választva a következő összefüggésből ki kell fejezni $n$-t: $$\triangle=k \times SE = z_{1-\frac{\alpha}{2}} \times \frac{s}{\sqrt{n}}$$
+
+Hiszen $\triangle$ helyére beírhatjuk nemes egyszerűséggel az elérni kívánt $\triangle$-t. A $k$ helyére azért írtam $z_{1-\frac{\alpha}{2}}$-t és nem a t-eloszlású szprzót, mert a standard normális eloszlású megbízhatóságú szorzó értéke alá úgysem tudunk menni a t-eloszlással adott $\alpha$ mellett, hiszen a t-elsozlású sűrűségfüggvényt végtelen szabadságfok mellett is csak a standard normális eloszlásba lehet maximum "*visszacsúcsosítani*", ahogy a b) feladat megoldásában szereplő ábrán láthattuk is.
+
+Ha pedig a fent formulából kifejeztük az elemszámot, akkor ehhez az összefüggéshez jutunk: $$n=\frac{z_{1-\frac{\alpha}{2}}^2 \times s^2}{\triangle^2}$$
+
+Ebbe pedig gond nélkül be tudunk helyettesíteni mindent.
+
+```{r}
+delta_new <- 0.7
+
+n_new <- k_z^2 * corr_std^2 / delta_new^2
+n_new
+```
+
+Tehát a becslési ha felezéséhez $n=31.4$ elemű minta kéne... mivel egyik betegből sem vágnánk ki $0.4$ részt a vizsgálatra, így logikus módon az eredményt kerekítsük fel $n=32$-re. **Azaz, $32-10=22$ páciensen kéne még  extrában megvizsgálni az altató hatását ahhoz, hogy az átlagos alvásidő növekedést $95\%$-os megbízhatósággal és $\pm0.7$ órás becslési hibával meg lehessen adni**.<br>
+Persze, ha a mintaátlag vagy éppen a korrigált mintaszórás úgy módosul az új mintaelemek hatására, hogy a konfidencia-intervallum alsó határa továbbra sem éri el a vágyott $1$ órát, akkor tervünk dugába dőlt. Viszont, akkor ez inkább a gyógyszert fejlesztő vegyészek sara, mint a hatékonyságvizsgálatot végző statisztikusé, aki rávilágít a problémákra. :)
+
+### 2. feladat
+
+Az <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/ESS2020.xlsx" target="_blank">ESS2020.xlsx</a> fájlban található adatbázis a 2020-ban végzett európai szociális felmérés (European Social Survey 2020 = ESS2020) 1849 magyar kitöltöjének válaszait tartalmazza 14 kérdésre (plusz van egy *id* oszlop).
+
+Ha valamelyik oszlopban üres értéket találunk, akkor az adott sorban lévő kitöltő nem válaszolt a kérdésre. Az adatbázisban szereplő kitöltők a teljes 18 év feletti magyar népességből vett véletlen mintaként kezelhetők. Most feltesszük, hogy ez a véletlen minta visszatevéses, azaz $IID$ is. A 6. heti tananyagban látni fogjuk, hogy ez nem is valóságtól elrugaszkodott feltevés.
+
+Az adatbázis nyers formában <a href="https://ess-search.nsd.no/en/study/172ac431-2a06-41df-9dab-c1fd8f3877e7" target="_blank">eről a linkről</a> elérhető egy ingyenes regisztráció után.
+
+**Feladatunk** a mintavétel alapján megbecsülni, hogy hogy egy átlagos magyar polgár $97\%$-os megbízhatósággal várhatóan legalább és legfeljebb hány percet internetezik naponta!
+
+### 2. feladat megoldás
+
+Először is töltsök be az adatbázist data frame-be és nézzük meg az elemszámot a feladat szempontjából releváns `NetUsePerDay_Minutes` oszlopban!
+
+```{r}
+ESS <- read_excel("ESS2020.xlsx")
+str(ESS)
+
+n <- sum(!is.na(ESS$NetUsePerDay_Minutes)) # this way, we do not consider the non-respondents
+n
+```
+
+Szóval, az üres értékeket nem számolva, a releváns oszlop `count` metódusával megtudhattuk, hogy az internetezési idő esetében $n=1099$ elemű mintából főzhetünk. **Ez bőven nagy minta**, mivel ebből a tárgyból közmegegyezéssel **az $n > 30$ eseteket nagy mintának tekintjük**, ahogy az 1/b) feladat megoldásában megadtuk. Emiatt **nem kell az intrenetezési idők normális eloszlását sem vizsgálni az intervallumbecslés elvégzéséhez $s$-t és t-eloszlást használva**!
+
+Mehetünk simán előre a $\triangle = t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}$ képletet használva.
+
+```{r}
+sample_mean <- mean(ESS$NetUsePerDay_Minutes, na.rm = TRUE) # this way, we do not consider the non-respondents
+corr_std <- sd(ESS$NetUsePerDay_Minutes, na.rm = TRUE) # this way, we do not consider the non-respondents
+
+SE <- corr_std / sqrt(n)
+
+alpha <- 1-0.97
+k_t <- qt(1-alpha/2, df = (n-1))
+
+delta <- k_t * SE
+
+lower <- sample_mean - delta
+upper <- sample_mean + delta
+
+c(lower, upper)
+```
+
+Tehát, az $n=1099$ elemű mintánk alapján azt mondhatjuk, hogy az átlagos magyar $97\%$-os megbízhatósággal legalább napi $171.8$ percet és legfeljebb napi $190.8$ percet tölt internetezéssel.
+
+Az eredményünk nem nagyon változik, ha a $k$ megbízhatósági szorzót standard normális eloszlásból számoljuk t-eloszlás helyett, hiszen az $n$ olyan nagy, hogy az $n-1$ szbadságfokú t-eloszlás sűrűségfüggvénye lényegében semmiben nem fog különbözni a standard normális eloszlás sűrűségfüggvényétől.
+
+```{r}
+k_z <- qnorm(1-alpha/2)
+
+delta <- k_z * SE
+
+lower <- sample_mean - delta
+upper <- sample_mean + delta
+
+c(lower, upper)
+```
+
+Láthatjuk, hogy csak a tizedesjegyekben vannak nagyon minimális eltérések. Szóval **nagy mintaelemszám esetén a megbízhatósági szorzó nyugodtan számolható standard normális eloszlásból is a t-eloszlás helyett**.
+
+Szerencsénkre, R-ben az átlag konfidencia-intervallumának számítására t-eloszlású $k$ szorzók esetében **van függvény egy külön csomagban**.
+
+We can apply the `groupwiseMean` function from the `rcompanion` to calculate the **confidence interval for the mean with t-distribution**.
+
+Let's install and include the package:
+
+```{r eval=FALSE}
+install.packages("rcompanion")
+library(rcompanion)
+```
+
+```{r echo=FALSE}
+library(rcompanion)
+```
+
+Ok, now we can use the function. In the first parameter, we define the numerical variable on which we want to see a confidence interval for the mean, then add a `~1` code. We'll see the reason for this in just a bit. The second parameter defines the data frame where the variable selected in the first parameter is located:
+
+```{r}
+groupwiseMean(NetUsePerDay_Minutes ~ 1, data = ESS, conf = 0.97,
+              na.rm = TRUE, digits = 4)
+```
+
+Egyezünk a korábbi eredményeinkkel: az átlagos magyar $97\%$-os megbízhatósággal legalább napi $171.8$ percet és legfeljebb napi $190.8$ percet tölt internetezéssel. Szuperek vagyunk! :)
+
+
+## 5. Összefoglalás az átlag konfidencia-intervallumairól
+
+Ezen a ponton érdemes összefoglalni, hogy az átlag intervallumbecslése milyen feltételek mellett milyen konkrét formulák vannak.
+
+Az **alapképlet a konfidencia-intervallum hosszára, azaz a becslési hibahatárra**: $$\triangle = k \times SE$$
+
+1. A sokasági szórás, alias $\sigma$ ismert.
+  * $k=z_{1-\frac{\alpha}{2}}$<br>
+  * $SE=\frac{\sigma}{\sqrt{n}}$
+2. Az adatsor, amiből a mintát vettük *normális eloszlás*ú
+  * $k=t_{1-\frac{\alpha}{2}}^{n-1}$<br>
+  * $SE=\frac{s}{\sqrt{n}}$
+3. A mintánk elemszáma nagy: $n > 30$
+  * $k=t_{1-\frac{\alpha}{2}}^{n-1}$ vagy $k=z_{1-\frac{\alpha}{2}}$<br>
+  * $SE=\frac{s}{\sqrt{n}}$
+
+És ennyi, igazából, ha végiggondoljuk a 4. fejezet feladatait, ezt a $3$ esetet tudjuk elkülöníteni a $\triangle$ számítása során.
+
+## 6. Esettanulmány
+
+Vizsgáljuk meg $99\%$-os megbízhatósággal hogyan alakul az átlagos internetezéssel töltött idő a teljes magyar népességben pártpreferencia szerint!
+
+Érdekes megnézni, hogy egy $n=1099$ elemű mintában mért átlagos különbségek az egyes pártok intenetezési idejében mennyire általánosíthatók ki a pártokat támogató népesség egészére, tehát azokra az emberekre, akiket a mintában még NEM figyeltünk meg, azaz a **mintaelemeken kívüli világra**.
+
+The `groupwiseMean` function can get confidence intervals for the population mean by separate categories of a `factor` or `character` variable. So, for example we can **see the confidence interval of the mean net usage time by party preferences**. We just need to switch the `~1` code to `~PoliticalPartyPref` in the first parameter. This indicates that we want confidence levels separately, not as a whole:
+
+```{r}
+groupwiseMean(NetUsePerDay_Minutes ~ PoliticalPartyPref, data = ESS, conf = 0.99,
+              na.rm = TRUE, digits = 4)
+```
+
+Remek! :) Ezek alapján azt mondhatjuk, hogy az egyesült ellenzék esetén egy átlagos kérdőívkitöltő $228.8$ percet netezik naponta, míg egy átlag Fidesz kitöltő csak napi $158.7$ percet.<br>
+Azonban, a teljes ellenzéki népességben az átlag netezési idő $196$ és $261$ perc között van $99\%$-os valószínűséggel. A teljes fideszes táborban pedig az átlagos neten töltött idő csak $137$ és $180$ perc között mozog, szintén $99\%$-os valószínűséggel.<br>
+Tehát, $99\%$-os valószínűséggel az átlag netezési idő az Ellenzék esetében magasabb, mint a Fidesz esetében a teljes népességben is, hiszen a "legrosszabb" ellenzéki átlagérték is már $196$ perc, míg a Fidesz esetén a "legjobb" átlagidő is csak $180$ perc.<br>
+Mindez persze a különböző felületeken (tv, rádió, internet) működő médiumok irányultságát figyelembe véve egyáltalán nem meglepő. :)
+
+Az eredméynekből tudunk egy szép kis vizualizációt is készíteni a `ggplot` csomaggal. Először is elmentjük a `groupwiseMean` függvény eredményét egy külön data frame-be. Majd csinálunk egy olyan oszlopdiagramot belőle `ggplot`-ban, ahol az `x` tengelyen a pártpreferencia szerepel, míg az `y` tengelyen a mintában mért átlagos netezési idő. A `fill` paraméterben beállítjuk, hogy minden oszlop különböző színű legyen a pártpreferencia függvényében (ez csak egy optikai tuning :)). A `geom_bar` rétegben alkalmazott `stat = "identity"` paraméterbeállítás kényszeríti ki, hogy az ábra `y` tengelyén tényleg a mintaátlagok szerepeljenek, mert alapból a pártpreferenciák gyakoriságait rakná rá a gépállat.<br>
+Végül pedig a `geom_errorbar` rétegben felvisszük az ábrára a konfidencia-intervallumok alsó és felső határait a rétegen belül alkalmazott `aes` függvény  `ymin` és `ymax` paraméterein keresztül. A két paraméternek megadott érték azért `Trad.lower` illetve `Trad.upper`, mert a `conf_int_df`-ben ilyen nevű oszlopokban lettek letárolva a konfidencia-intervallumok határai, ha emlékszünk még az előző kód eredményére.
+
+```{r}
+conf_int_df <- groupwiseMean(NetUsePerDay_Minutes ~ PoliticalPartyPref, data = ESS, conf = 0.99,
+                             na.rm = TRUE, digits = 4)
+
+ggplot(conf_int_df, aes(x = PoliticalPartyPref, y=Mean, fill = PoliticalPartyPref)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin=Trad.lower, ymax=Trad.upper))
+```
+
+Mint láthatjuk, igazából az Ellenzék átlagos netezési ideje az, ami konfidencia-intervallumokkal együtt is magasabb, mint a többi párt szavazóinak átlagos netezési ideje a teljes népességben. Sőt, a **többi párt esetében azt mondhatjuk, hogy egyáltalán nem biztos, hogy a teljes népességben ezek az átlag netezési idők különböznek** $99\%$-os megbízhatósággal, **mivel a konfidencia-intervallumok metszik egymást**. Szóval, hiába van a megfigyelt adatok körében a Fidesznek magasabb átlag netideje, mint az Egyéb pártoknak, de kevesebb, mint a Nem ismert eseteknek, a nem megfigyelt, mintán kívüli adatok körében, azaz a teljes népességben simán lehet ($99\%$-os megbízhatósággal), hogy a Fideszes szavazók neteznek átlag a legkevesebbet egy napon. Ehhez csak annyi kell, hogy az a Fidesz valós, sokasági átlaga a konfidencia-intervallum alsó határa körül legyen a teljes népességben, míg a többi párt (nem ismert és egyéb) átlagideje pedig a konfidencia-intervallumuk tetejénél "kössön ki" a teljes népesség körében.
+
+Érdemes még megfigyelni, hogy az Egyéb pártoknak a legszélesebb a konfidencia-intervalluma. Ez ugye azért van, mert mint láttuk a fejezet elején ide csak $n=13$ kitöltő tartozik. Így az $SE=\frac{s}{\sqrt{n}}$ összefüggés miatt érthető, hogy nagyon bizonytalanok vagyunk ennél a csoportnál az átlagos netezési idő becslésében. Ráadásul ez nem is egy teljesen pontos becslés, amit itt a konfidencia-intervallum hosszára látunk! Hiszen a kis elemszám miatt a $k$ megbízhatósági szorzót itt $13-1$ szabadságfokú t-eloszlásból számoltuk ki, de ehhez kellene az, hogy maguk a netezési idők normális eloszlást kövessenek. Viszont, az a helyzet, ahogy az alábbi hisztogram is szemlélteti, a napi netezési idők nem normális, hanem jobbra elnyúló eloszlásúak.
+
+```{r}
+hist(ESS$NetUsePerDay_Minutes)
+```
