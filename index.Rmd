@@ -28,7 +28,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Chapter 7 - <a href="Chapter07.html" target="_blank">Confidence Interval for the Mean in IID Samples</a>
 
-## Chapter 8 - Confidence Interval for Other Parameters in IID Samples. The Bootstrap Method.
+## Chapter 8 - <a href="Chapter08.html" target="_blank">Confidence Interval for Other Parameters in IID Samples. The Bootstrap Method.</a>
 
 ## Chapter 9 - Confidence Interval in SR and Stratified Samples
 

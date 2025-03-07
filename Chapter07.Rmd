@@ -474,7 +474,7 @@ Of course, if the sample mean or the corrected sample standard deviation changes
 
 ### Task 2
 
-The <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/ESS2020.xlsx\" target="_blank">ESS2020.xlsx</a> file contains a database with the responses of 1849 Hungarian participants to 14 questions (plus an *id* column) from the 2020 European Social Survey (ESS2020).
+The <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/ESS2020.xlsx" target="_blank">ESS2020.xlsx</a> file contains a database with the responses of 1849 Hungarian participants to 14 questions (plus an *id* column) from the 2020 European Social Survey (ESS2020).
 
 If an empty value is found in any column, it means that the respondent in that row did not answer the question. The respondents in the database can be considered a random sample drawn from the entire Hungarian population aged 18 and over. For now, we assume that this random sample is drawn with replacement, i.e., it is $IID$. In Chapter 8, we will see that this is not an unrealistic assumption.
 
