@@ -1,7 +1,7 @@
 ---
 title: "Confidence Interval for the Mean in IID Samples"
 author: "László Kovács"
-date: "06/03/2025"
+date: "07/03/2025"
 output:
   html_document:
     toc: true
@@ -308,22 +308,27 @@ At this point, let’s **leave behind the Balaton swimmers** and **try calculati
 
 ### Task 1: Efficiency of Sleeping Pills
 
+Our story is as follows.  
+
+A pharmaceutical company is studying the effect of a new sleeping pill on $10$ randomly selected patients suffering from insomnia. For each of the ten patients, the increase in their sleep duration (in hours) after using the medication was recorded. Based on previous clinical studies, it is known that the change in sleep duration caused by sleeping pills follows a normal distribution with a standard deviation of $2$ hours.  
+
+
 A sztorink a következő.
 
 Egy gyógyszergyár egy új altató készítmény hatását vizsgálja $10$ véletlenszerűen kiválasztott inszomniában szenvedő páciensen. Mind a tíz páciens esetében feljegyezték, hogy hány órát növekedett az alvásidejük a készítmény használatát követően. Korábbi klinikai vizsgálatok alapján ismeretes, hogy az altató készítmények által kiváltott alvásidő-változás normális eloszlású, $2$ óra szórással.												
 
 $Data = \{1.9, 0.8, 1.1, 0.1, -0.1, 4.4, 5.5, 1.6, 4.6, 3.4\}$
 
-Készítsünk $95\%$-os megbízhatósággal intervallumbecslést a várható átlagos alvásidő-változásra:
+Construct a $95\%$ confidence interval for the expected average change in sleep duration:
 
-a) a megadott feltételek alapján;
-b) feltételezve, hogy az eloszlás normális, de a szórás ismeretlen!
-c) Mekkora mintára van szükség, ha ugyan ekkora megbízhatóság (95%) mellett a b) pontban kapott hibahatárt a felére kívánjuk csökkenteni?
+a) based on the given conditions above;
+b) assuming that the distribution is normal, but the standard deviation is unknown!
+c)  How large should the sample be if, with the same confidence level (95%), we want to reduce the margin of error obtained in part b) to half?
 
 ### Task 1/a Solution
 
-Ebben az a) feladatban nagyon el vagyunk kényeztetve. Az altató hatékonyságához van egy $n=10$ elemű mintánk, aminek az adatait tételesen ismerjük. Első páciens alvásideje $1.9$ órával nőtt az altató használata után, másodiké $0.8$ órával, stb. Van egy páciens, akinek csökkent az alvásideje a gyóygszerhasználat után: az 5. delikvensé, $0.1$ órával.<br>
-Ha ezeket az adatokat elrakjuk egy `vector`-ba, akkor simán kiszámolható a megfigyelt 10 páciens esetében az átlagos alvásidő növekedés, azaz $\bar{y}$
+In this a) task, we are very spoiled. We have a sample of size $n=10$ regarding the effectiveness of the sleeping pill, and we know the data in detail. The sleep duration of the first patient increased by $1.9$ hours after using the sleeping pill, the second by $0.8$ hours, etc. There is one patient whose sleep duration decreased after taking the medication: the 5th subject, by $0.1$ hours.<br>
+If we store these data in a `vector`, we can easily calculate the average sleep duration increase for the observed 10 patients, that is, $\bar{y}$.
 
 ```{r}
 SampleData = c(1.9, 0.8, 1.1, 0.1, -0.1, 4.4, 5.5, 1.6, 4.6, 3.4)
@@ -331,12 +336,12 @@ SampleMean = mean(SampleData)
 SampleMean
 ```
 
-Tehát a megfigyelt páciensek esetében az átlagos alvásidő növekedés kb. $\bar{y}=2.3$ óra. Ami szép és jó, de mennyi lehet az **átlagos alvásidő növekedés az inszomniás páciensek összességére, a teljes sokaságra nézve? Ehhez kell a konfidencia-intervallum! Hogy olyan betegekre is tudjunk mondani valamit, akiket a mintában NEM figyeltünk meg!**
+Thus, for the observed patients, the average sleep duration increase is approximately $\bar{y}=2.3$ hours. Which is nice, but what could be the **average sleep duration increase for the entire population of insomniac patients?** This is where the **confidence interval** comes into play! So that we can **say something about patients who were NOT observed in the sample!**
 
-Itt az a) esetben minden **feltételezést elfogadhatunk, amit a feladat tesz**. Ebben van egy olyan rész, ami szerint "*korábbi kutatásokból*" ismerjük, hogy az alvásidő-változások szórása $2$. Ha ezt így elhisszük, akkor azt mondhatjuk, hogy az alvásidő-változások teljes sokaságra vonatkozó szórását vehetjük $2$-nek. Azaz, $\sigma=2$-t "*hazudunk*" a számolások során.<br>
-**FIGYELEM!** Ha a feladat szövege azt akarja közölni velünk, hogy van egy sokasági szórás, egy $\sigma$, amit ismerünk és használhatunk a számolásaink során, akkor azt mindig ilyen "*korábbi kutatásokból ismeretes...*" szövegrészbe fogja becsomagolni!
+In case a), we can accept **all assumptions made in the problem statement**. One part of this states that "*based on previous research,*" we know that the standard deviation of sleep duration changes is $2$. If we take this as true, then we can assume that the standard deviation of sleep duration changes for the entire population is $2$. That is, we "*pretend*" that $\sigma=2$ for our calculations.<br>
+**ATTENTION!** If the problem statement wants to communicate that there is a population standard deviation $\sigma$ that we know and can use in our calculations, it will always be wrapped in a phrase like "*based on previous research, it is known that...*".
 
-Ha **elfogadjuk a feltételezéseinket, akkor minden adott a konfidencia-intervallum 3. fejezetben megismert képletének alkalmazásához**. Hiszen, ha $95\%$ a megbízhatóság, akkor $\alpha=5\%$. Tegyük is ezt: alkalmazzuk a képleteket az adatainkra!
+If **we accept these assumptions, then we have everything needed to apply the confidence interval formula introduced in Section 3**. Since the confidence level is $95\%$, we set $\alpha=5\%$. Let's apply the formulas to our data!
 
 ```{r}
 n <- 10
@@ -353,32 +358,33 @@ upper <- SampleMean + delta
 c(lower, upper)
 ```
 
-Az eredmény alapján ez az **új alatató készítmény az inszomniás páciensek teljes sokaságában a 10 elemű mintánk alapján legalább $1.09$ óra és legfeljebb $3.6$ óra alvásidő növekedést okoz $95\%$-os valószínűséggel!**
+Based on the results, this **new sleeping pill is estimated to increase sleep duration by at least $1.09$ hours and at most $3.6$ hours for the entire population of insomniac patients, with a $95\%$ probability!**
 
-Ennek a cég vezetése nagyon örül, mert lehet olyan reklámszlogeneket elsütni az eredményünk alapján, hogy "*vizsgálatok igazolják, hogy altatónk $95\%$-os valószínűséggel legalább $1$ órával növeli a várható alvásidőt*". Egy ilyen mondat pedig minden marketinges álma *úgymond*. :)
+The company's management is very happy with this because they can use marketing slogans such as: "*Studies confirm that our sleeping pill increases expected sleep duration by at least $1$ hour with a $95\%$ probability*". A sentence like that is every marketer's dream, so to speak. :)
 
-De **minden ilyen szép marad-e ha az alvásidők szórását nem a feltételezett** $\sigma=2$-vel, hanem a **mintából számolt korrigált szórással ($s$) számítjuk?**
+But **will everything remain this nice if we do not assume** $\sigma=2$, but instead **calculate using the corrected standard deviation ($s$)?**
 
 ### Task 1/b Solution
 
-Itt a feladat azt mondja, hogy ne higyjünk mindenféle kétes "*korábbi kutatásnak*", ne fogadjuk el az általuk megadott $\sigma$-t, hanem **számoljunk magunknak egy korrigált mintaszórást**, azaz $s$-t (a korrigált mintaszórás ad torzítatlan becsést a valós, sokasági $\sigma$-ra), és számoljuk végig azzal a stanadard hibát $SH=\frac{s}{\sqrt{n}}$ módon.
+Here, the task tells us not to believe in every dubious "*previous research*," and not to accept the given value of $\sigma$, but instead **calculate a corrected sample standard deviation** for ourselves, that is, $s$ (the corrected sample standard deviation provides an unbiased estimate of the true population $\sigma$), and compute the standard error using $SE=\frac{s}{\sqrt{n}}$.
 
-Viszont, ha **feloldjuk azt a feltevésünk, hogy ismerjük a sokasági szórást az $SH$ számoláshoz** , akkor a **mintaátlagok normális helyett egy $n-1$ szabadságfokú t-eloszlást követnek**.
+However, if **we relax our assumption that we know the population standard deviation for computing \$SE\$**, then **the sample means follow a t-distribution with $n-1$ degrees of freedom instead of a normal distribution**.
 
-A **t-eloszlás sűrűségfüggvénye az alábbi alakot ölti**. Az szabadságfokokat az angol *degrees of freedom* kifejezésből $df$-el jelöljük.
+The **density function of the t-distribution takes the following form**. The degrees of freedom are denoted by $df$.
 
 <center>
 ![](studentdistr.png){width=60%}
 </center>
 
-<br>Ahogy a fenti sűrűségfüggvényből is létszik Student-féle t-eloszlás valójában egy **ellapított standard normális eloszlás** (lásd fenti ábra). A lapítás azt akarja kifejezni, hogy az eloszlás szórása nagyobb. Hiszen nagyobb szórás esetén az eloszlás szélein lévő számértékek is nagyobb valószínűséggel következhetnek be (mivel a lapítás miatt a sűrűségfüggvény magasabban fut ezeken a helyeken), így változatosabbá, jobban szóródóvá teszik az adatsorunk.
+<br>As seen from the density function above, Student’s t-distribution is actually a **flattened standard normal distribution** (see the figure above). The flattening expresses that the distribution has a larger standard deviation. A larger standard deviation means that extreme values are more likely to occur at the tails of the distribution (because the density function runs higher at these points), making our data more dispersed.
 
-Viszont, ahogy növeljük az eloszlás szabadságfokát ($df$), egyre jobban "*visszacsúcsosítjuk*" az eloszlást a standard normális eloszlásba. Logikus, hogy ilyenkor ezt az eloszlást használjuk, mivel a standard hiba értékébe (ami a mintaátlagok normális eloszlásának szórás paramétere) egy biztosan ismert sokasági szórás érték helyett, annak egy mintából számított becslését rakjuk, így **nagyobb bizonytalanságot, nagyobb szórást viszünk az eloszlásba**.
+However, as we increase the degrees of freedom ($df$), we gradually "*sharpen*" the distribution back into the standard normal distribution. This makes sense because we are substituting a population standard deviation with an estimated value from a sample when calculating the standard error. This **introduces greater uncertainty and increased dispersion into the distribution**.
 
-Ebben a helyzetben a konfidencia-intervallum úgy módosul, hogy $\sigma$ helyére $s$ kerül a $SH$-ban, és a $k$ megbízhatósági szorzót $t$-eloszlásból számoljuk $N(0,1)$ eloszlás helyett: $$P\left(\bar{y}-t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}< \mu <+t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}\right) = 1- \alpha$$
+In this case, the confidence interval is modified such that $\sigma$ is replaced by $s$ in $SE$, and the confidence multiplier $k$ is calculated from the t-distribution instead of $N(0,1)$: $$P\left(\bar{y}-t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}< \mu <+t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}\right) = 1- \alpha$$
 
-Az $n-1$ szabadságfokú $t$ érték számításához a `qt` függvényt vesszük elő. Teljesen hasonló logikával működik, mint a `qnorm` függvény (vagy mint az R bármelyik eloszlás inverz értékét számoló függvénye). A $t$-eloszlás is szimmetrikus, tehát most is azt az értéket keressük az $n-1$ szabadságfokú $t$-eloszlásunkban, ahol az "*alá esési*" valószínűség $1-\frac{\alpha}{2}$. A `qt` függvény `df` paraméterével állítható a szabadságfok.<br>
-Ezt a mi $n=10$ elemű mintánkra, $95\%$-os megbízhatósági szint mellett az alábbi módon számoljuk
+
+To compute the t-value for $n-1$ degrees of freedom, we use the `qt` function. It works similarly to the `qnorm` function (or any other quantile function in R). The t-distribution is symmetric, so we look for the value where the "*lower-tail*" probability is $1-\frac{\alpha}{2}$. The `df` parameter of the `qt` function controls the degrees of freedom.<br>
+For our $n=10$ sample at a $95\%$ confidence level, we compute it as follows.
 
 ```{r}
 n <- 10
@@ -390,9 +396,9 @@ k_t <- qt(1-alpha/2, df = (n-1))
 c(k_z, k_t)
 ```
 
-Láthatjuk, hogy **a $t$-eloszlású $k$ szorzó értéke érdemben nagyobb, mint a standard normális eloszlású $k$ szorzóé ugyan arra a megengedett hibavalószínűségre**! Mivel a $t$-eloszlás nagyobb valószínűséget tulajdonít az extrém magas+alacsony értékek bekövetkezésének, így ha ezt alkalmazzuk, akkor ugyan ahhoz a megbízhatósági szinthez egy magasabb $k$ megbízhatósági szorzót kapunk a $SH$-hoz!
+We can see that **the t-distribution confidence multiplier ($k$) is significantly larger than the standard normal distribution multiplier ($k$) for the same confidence probability** (or confidence level)! Since the t-distribution assigns a higher probability to extreme values, it results in a higher $k$ multiplier for $SE$ at the same confidence level.
 
-Ezek után igazából csak annyi a feladatunk, hogy a teljes becslési hibahatárt kiszámítsuk $\triangle = t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}$ módon, és ezt rámérjük $\pm$ a mintaátlagra, $\bar{y}$-ra. Ez már mehet ugyan úgy, mint az a) feladatban.
+Now, our only task is to compute the total margin of error $\triangle = t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}$, and apply it symmetrically $\pm$ around the sample mean $\bar{y}$. This is done in the same way as in task a).
 
 ```{r}
 corr_std <- sd(SampleData)
@@ -407,25 +413,25 @@ upper <- SampleMean + delta
 c(lower, upper)
 ```
 
-Nem meglepő módon, a **t-eloszlású megbízhatósági szorzó miatt a $95\%$-os kinfidencia-intervallum kitágult**. Annak ellenére is, hogy az $SH$-ban gyakorlatilag nincs változás, mivel $s=2.0022$. Az altató átlagos alvásidő növekedése a betegek teljes sokaságban, már $0.9$ és $3.76$ óra közé tehető $95\%$-os valószínűséggel. Szóval, ebben a reálisabb helyzetben, amikor már a szórást magunknak számoljuk a mintaadatokból, és nem pedig "*elhisszük*" valakinek, akkor a bizonytalanság megnövekedése miatt alkalmazott t-eloszlásnak köszönhetően, a becslési hibahatár, a $\triangle$ kitágul. A marketingesek pedig már nem mondhatnak olyan szépeket, hogy "95%-os valószínűséggel legalább átlag $1$ órát növeli az alvásidőt az altató". RIP! :(
+Unsurprisingly, due to the **t-distribution confidence multiplier, the $95\%$ confidence interval has widened**. Even though $SE$ remains almost unchanged (since $s=2.0022$), the estimated increase in sleep duration caused by the sleeping pill now falls between $0.9$ and $3.76$ hours with $95\%$ probability. So, in this more realistic scenario, where we compute the standard deviation from the sample rather than "*blindly accepting*" a given value, the increased uncertainty requires a t-distribution, widening the margin of error ($\triangle$). As a result, marketers can no longer claim that "our sleeping pill increases sleep duration by at least $1$ hour with $95\%$ probability."RIP! :(
 
-Viszont, amíg a **mintánk elemszámi kicsi**, $n \leq 30$, addig a **t-eloszlású konfidencia intervallum számításának van egy előfeltétele: az adatsor, amiből a mintát vesszük normális eloszlású kell, hogy legyen!!**<br>
-Esetünkben ez annyit tesz, hogy az inszomniás páciensek sokaságában az *alvásidő normális eloszlású* hisztogramot mutat.
+However, as long as our **sample size remains small ($n \leq 30$)**, there is a **key assumption for using the t-distribution confidence interval: the variable from which the sample is drawn must follow a normal distribution in the population!**<br>
+In our case, this means that the *sleep durations* of insomniac patients must *follow a normal distribution*.
 
-Na, most itt ezt kemény $n=10$ esetben marha nehéz értelmesen megvizsgálni a minta alapján, de lessünk egy hisztogramot a megfigyelt $10$ db alvásidőre! A hisztogram osztályközeinek számát most nem optimalizáljuk, elfogadjuk az alapbeállításokat.
+Now, with only $n=10$ observations, it's incredibly difficult to assess this meaningfully, but let’s check a histogram of the observed 10 sleep durations! We won’t optimize the number of bins, just use the default settings.
 
 ```{r}
 hist(SampleData)
 ```
 
-Hát, a fene se tudja ennyiből eldönteni, de tényleg. Akár normális eloszlásúak lehetnek az alvásidők. :) Bízzunk a *CHT*-ben: az egyéni alvásidők valószínűleg véletlen hatások összegeként állnak elő, így azok adatsora a sokaságban, a nem megfigyelt $10$ elemű mintán *kívüli* világban, lehet normális eloszlású is akár. :)
+Well, it's hard to tell from so little data. The sleep durations could be normally distributed. :) Let’s trust the *Central Limit Theorem* (CLT): individual sleep durations likely arise as a sum of random effects, meaning their distribution in the entire population (outside our observed 10 samples) might still be normal.
 
-Maga a *t-eloszlás* egyébként egy *William Gosset* nevű angol statisztikus kreatúrája. Mr. Gosset a *Guiness* sörgyárak minőségbitosítási vezetője volt, és azt a feladatot kapta, hogy oldja meg, hogy az üveges sörök minőségbiztosítása kis mintákból is megoldható legyen. Mivel a minőségbiztosításhoz ki kell bontani az üveget és megmérni benne az összetevőket, aztán utána ezek átlagára néznek konfidencia-intervallumokat. A minőségbiztosításra kinyitott sör pedig már nem elfogyasztható. *Kellemetlen*.<br>
-Így érhető, hogy minél kevesebb üvegből akarják az egész minőségbiztit megúszni. Erre adta megoldásként Gosset a t-eloszlást. Mivel a sörökben a különböző alapanyagok értéke normális eloszlást követ.
+The *t-distribution* itself was actually the creation of an English statistician named *William Gosset*. Mr. Gosset worked as the head of quality control at the *Guinness* brewery, tasked with ensuring that the quality of bottled beer could be maintained using small sample sizes. Since quality control required opening bottles to measure their ingredients, the tested beer could no longer be sold. *Unfortunate.*<br>
+Thus, the brewery wanted to use as few bottles as possible for quality testing. To solve this problem, Gosset developed the t-distribution, since the chemical properties of beer ingredients follow a normal distribution.
 
-Azonban emberünk el akart büszkélkedni a saját kis elszlásával a nagy világban, ezért *Student álnéven* publikálta is az eredményeit...innen lett az eloszlás neve *Student-féle t-eloszlás*. :) Viszont nagyon nem volt előrelátó az úriemberünk, hiszen akkoriban nyilván csak a Guiness sörgyár tudott elég kevés üvegből ugyan olyan "jó" megbízhatósággal minőségbiztosítani, mintha több elemű mintát vizsgáltak volna, így *Mr. Gosset* gyorsan lebukott.
+However, Gosset wanted to show off his discovery to the world, so he published his findings under the *pseudonym "Student"* —hence the name *Student’s t-distribution*. :) Unfortunately, he wasn’t very strategic, because at the time, only Guinness knew how to perform reliable quality control with small samples. *Mr. Gosset* got caught.
 
-Tehát, ahogy az alábbi ábra is mutatja, szegény emberünk csak a sörtermelést szerette volna hatékonyabbá tenni, de végül mindenki életét tönkretette, aki statisztikai becsléselméletet tanul. :)
+So, as the figure below shows, all Gosset wanted to do was optimize beer production—but in the end, he ruined the lives of everyone studying statistical estimation theory. :)
 
 <center>
 ![](student.png){width=30%}
@@ -433,26 +439,28 @@ Tehát, ahogy az alábbi ábra is mutatja, szegény emberünk csak a sörtermel�
 
 ### Task 1/c Solution
 
-Node, térjünk vissza az altató készítményünk hatékonyságára. Ugyebár a t-eloszlással készített konfidencia-intervallum eléggé elkeserítő eredményt hozott: nem tudjuk azt mondani $95\%$-os megbízhatósággal, hogy készítményünk legalább $1$ órával növeli az alvásidőt!
+Now, let's return to the effectiveness of our sleeping aid. As we have seen, the confidence interval constructed using the t-distribution has brought rather disappointing results: we cannot state with $95\%$ confidence that our product increases sleep time by at least $1$ hour!
 
-Mi ennek az oka? Hát a **magas becslési hiba, az átlagra épített konfidencia-intervallum hossza**, tehát a $\triangle$. Ez most ugye nekünk $\pm 1.43$ óra.
+What is the reason for this? It is the **high estimation error, the length of the confidence interval built on the mean**, i.e. $\triangle$. Currently, for us, this is $\pm 1.43$ hours.
 
 ```{r}
 delta
 ```
-Mondjuk ezt a becslési **hibahatárt szeretnénk levinni a felére**, $1.43/2$, azaz kb. $\triangle'= \pm 0.7$ órára. Ezt kétféleképpen lehet elérni. Hiszen "*magasról nézve*", a becslési hibahatár egy kéttényezős szorzat $$\triangle=k \times SH$$
 
-1. Addig állítgatom a megbízhatósági-szintet, azaz valójában $\alpha$-t, amíg a t-eloszlásból származó $k$ megbízhatósági szorzó olyan alacsony nem lesz, hogy az eddigi $SE$-val szorozgatva ki nem adja a $0.7$-es értéket $\triangle$-re. Ez az **illetlen megoldás**! Hiszen lehet, hogy ehhez az $\alpha$-t nagyon fel kell engedni, és a becslésnek nagyon alacsony lesz a megbízhatósága...az "$55\%$-os megbízhatósággal állítható az, hogy..." nem hangzik olyan jól marketing szempontból sem.
+Let's say we want to **reduce this estimation error margin by half**, to $1.43/2$, approximately $\triangle'= \pm 0.7$ hours. This can be achieved in two ways. Since, "*broadly speaking*", the estimation error margin is a product of two factors: $$\triangle=k \times SE$$
 
-2. Az **intelligens megoldás** a mintaelemszám, azaz $n$ növelése. Az $\alpha$-t adottnak vesszük, és így $k$-t nem bántjuk. Persze a t-eloszlás szabadságfoka miatt az elemszám $k$-ra is hat, de ahogy az eloszlás sűrűségfüggvényéből is látszik, kellően nagy $n$ esetén a t-eloszlás igazából a standard normálissal lesz ekvivalens, tovább tehát nem tudjuk csökkenteni $k$-t adott $\alpha$ mellett. Tehát ekkor a $k$ lényegében fix. Ellenben $n$ növekedése miatt az $SE$ része a szorzatnak biztosan csökkeni fog, hiszen az átlagra konzisztens becslést adunk, tehát $SE$ a $0$-ba tart $n$ növelése esetén. Ez ugye a $SE=\frac{s}{\sqrt{n}}$ összefüggésből adódik egyértelműen. Szóval az $s$-t (vagy éppen $\sigma$-t, ha azt ismerjük) adottnak vesszük, akkor kiszámolhatjuk, hogy mekkora $n$ szükséges a $\triangle'= \pm 0.7$ óra eléréséhez hibahatár fronton.
+1. We adjust the confidence level, i.e., effectively $\alpha$, until the confidence multiplier $k$ derived from the t-distribution is low enough that when multiplied by the current $SE$, it results in a $\triangle$ value of $0.7$. This is the **improper solution**! Because achieving this may require increasing $\alpha$ significantly, resulting in a very low confidence level... A statement like "it can be asserted with $55\%$ confidence that..." does not sound very good from a marketing perspective.
 
-Szóval, a 2. megoldást, az elemszám növelését választva a következő összefüggésből ki kell fejezni $n$-t: $$\triangle=k \times SE = z_{1-\frac{\alpha}{2}} \times \frac{s}{\sqrt{n}}$$
+2. The **intelligent solution** is increasing the sample size, i.e. $n$. We keep $\alpha$ fixed, thus leaving $k$ unchanged. Of course, due to the degrees of freedom in the t-distribution, sample size does influence $k$, but as can be seen from the probability density function of the distribution, for sufficiently large $n$, the t-distribution essentially becomes equivalent to the standard normal distribution, meaning we cannot further reduce $k$ for a given $\alpha$. Thus, in this case, $k$ is essentially fixed. However, since $SE$ is part of the product and we provide a consistent estimate for the mean, $SE$ will definitely decrease as $n$ increases, ultimately tending toward $0$ as $n$ grows. This is clearly derived from the formula: $SE=\frac{s}{\sqrt{n}}$ So, if we take 
+$s$ (or $\sigma$, if it is known) as given, we can calculate the necessary $n$ required to achieve an estimation error of $\triangle'= \pm 0.7$ hours.
 
-Hiszen $\triangle$ helyére beírhatjuk nemes egyszerűséggel az elérni kívánt $\triangle$-t. A $k$ helyére azért írtam $z_{1-\frac{\alpha}{2}}$-t és nem a t-eloszlású szprzót, mert a standard normális eloszlású megbízhatóságú szorzó értéke alá úgysem tudunk menni a t-eloszlással adott $\alpha$ mellett, hiszen a t-elsozlású sűrűségfüggvényt végtelen szabadságfok mellett is csak a standard normális eloszlásba lehet maximum "*visszacsúcsosítani*", ahogy a b) feladat megoldásában szereplő ábrán láthattuk is.
+Thus, choosing the second solution, increasing the sample size, we need to express $n$ from the following equation: $$\triangle=k \times SE = z_{1-\frac{\alpha}{2}} \times \frac{s}{\sqrt{n}}$$
 
-Ha pedig a fent formulából kifejeztük az elemszámot, akkor ehhez az összefüggéshez jutunk: $$n=\frac{z_{1-\frac{\alpha}{2}}^2 \times s^2}{\triangle^2}$$
+Here, I wrote $z_{1-\frac{\alpha}{2}}$ instead of the t-distribution multiplier for $k$ because we cannot go below the confidence multiplier value of the standard normal distribution for a given $\alpha$ using the t-distribution. The reason is that even with infinite degrees of freedom, the t-distribution can only be "*peaked back*" into the standard normal distribution at most, as we saw in the figure in part (b) of the solution.
 
-Ebbe pedig gond nélkül be tudunk helyettesíteni mindent.
+Once we express the sample size from the above formula, we obtain the following equation: $$n=\frac{z_{1-\frac{\alpha}{2}}^2 \times s^2}{\triangle^2}$$
+
+We can substitute all known values into this without issue.
 
 ```{r}
 delta_new <- 0.7
@@ -461,22 +469,22 @@ n_new <- k_z^2 * corr_std^2 / delta_new^2
 n_new
 ```
 
-Tehát a becslési ha felezéséhez $n=31.4$ elemű minta kéne... mivel egyik betegből sem vágnánk ki $0.4$ részt a vizsgálatra, így logikus módon az eredményt kerekítsük fel $n=32$-re. **Azaz, $32-10=22$ páciensen kéne még  extrában megvizsgálni az altató hatását ahhoz, hogy az átlagos alvásidő növekedést $95\%$-os megbízhatósággal és $\pm0.7$ órás becslési hibával meg lehessen adni**.<br>
-Persze, ha a mintaátlag vagy éppen a korrigált mintaszórás úgy módosul az új mintaelemek hatására, hogy a konfidencia-intervallum alsó határa továbbra sem éri el a vágyott $1$ órát, akkor tervünk dugába dőlt. Viszont, akkor ez inkább a gyógyszert fejlesztő vegyészek sara, mint a hatékonyságvizsgálatot végző statisztikusé, aki rávilágít a problémákra. :)
+Thus, to halve the estimation error, we would need a sample size of $n=31.4$... Since we obviously wouldn't cut $0.4$ of a patient for the study, it makes sense to round up to $n=32$. That is, **we would need to examine an additional $32-10=22$ patients to determine the average increase in sleep time with $95\%$ confidence and an estimation error of $\pm0.7$ hours**.<br>
+Of course, if the sample mean or the corrected sample standard deviation changes due to the new sample elements in such a way that the lower bound of the confidence interval still does not reach the desired $1$ hour, then our plan has failed. However, in that case, the responsibility lies more with the chemists developing the drug rather than with the statistician conducting the efficacy analysis and highlighting the problems. :)
 
 ### Task 2
 
-Az <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/ESS2020.xlsx" target="_blank">ESS2020.xlsx</a> fájlban található adatbázis a 2020-ban végzett európai szociális felmérés (European Social Survey 2020 = ESS2020) 1849 magyar kitöltöjének válaszait tartalmazza 14 kérdésre (plusz van egy *id* oszlop).
+The <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/ESS2020.xlsx\" target="_blank">ESS2020.xlsx</a> file contains a database with the responses of 1849 Hungarian participants to 14 questions (plus an *id* column) from the 2020 European Social Survey (ESS2020).
 
-Ha valamelyik oszlopban üres értéket találunk, akkor az adott sorban lévő kitöltő nem válaszolt a kérdésre. Az adatbázisban szereplő kitöltők a teljes 18 év feletti magyar népességből vett véletlen mintaként kezelhetők. Most feltesszük, hogy ez a véletlen minta visszatevéses, azaz $IID$ is. A 6. heti tananyagban látni fogjuk, hogy ez nem is valóságtól elrugaszkodott feltevés.
+If an empty value is found in any column, it means that the respondent in that row did not answer the question. The respondents in the database can be considered a random sample drawn from the entire Hungarian population aged 18 and over. For now, we assume that this random sample is drawn with replacement, i.e., it is $IID$. In Chapter 8, we will see that this is not an unrealistic assumption.
 
-Az adatbázis nyers formában <a href="https://ess-search.nsd.no/en/study/172ac431-2a06-41df-9dab-c1fd8f3877e7" target="_blank">eről a linkről</a> elérhető egy ingyenes regisztráció után.
+The raw database is available <a href="https://ess-search.nsd.no/en/study/172ac431-2a06-41df-9dab-c1fd8f3877e7\" target="_blank">at this link</a> after free registration.
 
-**Feladatunk** a mintavétel alapján megbecsülni, hogy hogy egy átlagos magyar polgár $97\%$-os megbízhatósággal várhatóan legalább és legfeljebb hány percet internetezik naponta!
+**Our task** is to estimate, based on the sample, the minimum and maximum number of minutes an average Hungarian citizen is expected to spend on the internet daily, with $97\%$ confidence!
 
 ### Task 2 Solution
 
-Először is töltsök be az adatbázist data frame-be és nézzük meg az elemszámot a feladat szempontjából releváns `NetUsePerDay_Minutes` oszlopban!
+First, let’s load the database into a data frame and check the sample size in the `NetUsePerDay_Minutes` column, which is relevant to our task!
 
 ```{r}
 ESS <- read_excel("ESS2020.xlsx")
@@ -486,13 +494,13 @@ n <- sum(!is.na(ESS$NetUsePerDay_Minutes)) # this way, we do not consider the no
 n
 ```
 
-Szóval, az üres értékeket nem számolva, a releváns oszlop `count` metódusával megtudhattuk, hogy az internetezési idő esetében $n=1099$ elemű mintából főzhetünk. **Ez bőven nagy minta**, mivel ebből a tárgyból közmegegyezéssel **az $n > 30$ eseteket nagy mintának tekintjük**, ahogy az 1/b) feladat megoldásában megadtuk. Emiatt **nem kell az intrenetezési idők normális eloszlását sem vizsgálni az intervallumbecslés elvégzéséhez $s$-t és t-eloszlást használva**!
+So, by ignoring empty values and using the `is.na` method with the `!` negation operator on the relevant column, we found that for internet usage time, we have a sample of size $n=1099$. This is a **sufficiently large sample**, since, by common agreement in this course, we **consider cases where $n > 30$ as large samples**, as stated in the solution to task 1/b). Because of this, we **do not need to check whether internet usage times follow a normal distribution to perform interval estimation using $s$ and the t-distribution**!
 
-Mehetünk simán előre a $\triangle = t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}$ képletet használva.
+We can proceed smoothly using the formula $\triangle = t_{1-\frac{\alpha}{2}}^{n-1} \times \frac{s}{\sqrt{n}}$
 
 ```{r}
-sample_mean <- mean(ESS$NetUsePerDay_Minutes, na.rm = TRUE) # this way, we do not consider the non-respondents
-corr_std <- sd(ESS$NetUsePerDay_Minutes, na.rm = TRUE) # this way, we do not consider the non-respondents
+sample_mean <- mean(ESS$NetUsePerDay_Minutes, na.rm = TRUE) # with na.rm = TRUE, we do not consider the non-respondents
+corr_std <- sd(ESS$NetUsePerDay_Minutes, na.rm = TRUE) # with na.rm = TRUE, we do not consider the non-respondents
 
 SE <- corr_std / sqrt(n)
 
@@ -507,9 +515,9 @@ upper <- sample_mean + delta
 c(lower, upper)
 ```
 
-Tehát, az $n=1099$ elemű mintánk alapján azt mondhatjuk, hogy az átlagos magyar $97\%$-os megbízhatósággal legalább napi $171.8$ percet és legfeljebb napi $190.8$ percet tölt internetezéssel.
+Thus, based on our sample of $n=1099$, we can state that an average Hungarian spends at least $171.8$ minutes and at most $190.8$ minutes per day on the internet, with $97\%$ confidence.
 
-Az eredményünk nem nagyon változik, ha a $k$ megbízhatósági szorzót standard normális eloszlásból számoljuk t-eloszlás helyett, hiszen az $n$ olyan nagy, hogy az $n-1$ szbadságfokú t-eloszlás sűrűségfüggvénye lényegében semmiben nem fog különbözni a standard normális eloszlás sűrűségfüggvényétől.
+Our result does not change significantly if we calculate the confidence multiplier $k$ from the standard normal distribution instead of the t-distribution, since $n$ is so large that the probability density function of the t-distribution with $n-1$ degrees of freedom is essentially indistinguishable from that of the standard normal distribution.
 
 ```{r}
 k_z <- qnorm(1-alpha/2)
@@ -522,9 +530,9 @@ upper <- sample_mean + delta
 c(lower, upper)
 ```
 
-Láthatjuk, hogy csak a tizedesjegyekben vannak nagyon minimális eltérések. Szóval **nagy mintaelemszám esetén a megbízhatósági szorzó nyugodtan számolható standard normális eloszlásból is a t-eloszlás helyett**.
+We can see that there are only very minimal differences in decimal places. So, **for large sample sizes, the confidence multiplier can safely be calculated from the standard normal distribution instead of the t-distribution**.
 
-Szerencsénkre, R-ben az átlag konfidencia-intervallumának számítására t-eloszlású $k$ szorzók esetében **van függvény egy külön csomagban**.
+Fortunately, in R, **there is a function in a separate package** for calculating the confidence interval of the mean using t-distributed $k$ multipliers.
 
 We can apply the `groupwiseMean` function from the `rcompanion` to calculate the **confidence interval for the mean with t-distribution**.
 
@@ -539,54 +547,53 @@ library(rcompanion)
 library(rcompanion)
 ```
 
-Ok, now we can use the function. In the first parameter, we define the numerical variable on which we want to see a confidence interval for the mean, then add a `~1` code. We'll see the reason for this in just a bit. The second parameter defines the data frame where the variable selected in the first parameter is located:
+Ok, now we can use the function. In the first parameter, we define the numerical variable on which we want to see a confidence interval for the mean, then add a `~1` code. We'll see the reason for this in just a bit. The second parameter defines the data frame where the variable selected in the first parameter is located. The `na.rm = TRUE` parameter setting means that we ignore the rows with missing values and the `digits` parameter controls the rounding accuracy of the confidence interval results. Higher number here means more digits to the results.
 
 ```{r}
 groupwiseMean(NetUsePerDay_Minutes ~ 1, data = ESS, conf = 0.97,
               na.rm = TRUE, digits = 4)
 ```
 
-Egyezünk a korábbi eredményeinkkel: az átlagos magyar $97\%$-os megbízhatósággal legalább napi $171.8$ percet és legfeljebb napi $190.8$ percet tölt internetezéssel. Szuperek vagyunk! :)
-
+We confirm our previous results: an average Hungarian spends at least $171.8$ minutes and at most $190.8$ minutes per day on the internet, with $97\%$ confidence. We are awesome! :)
 
 ## 5. Summary on the Different Confidence Interval Formulas for the Mean
 
-Ezen a ponton érdemes összefoglalni, hogy az átlag intervallumbecslése milyen feltételek mellett milyen konkrét formulák vannak.
+At this point, it is worth summarizing under what conditions and with what specific formulas the confidence interval for the mean can be calculated.
 
-Az **alapképlet a konfidencia-intervallum hosszára, azaz a becslési hibahatárra**: $$\triangle = k \times SE$$
+The basic **formula for the length of the confidence interval, i.e. the margin of estimation error**: $$\triangle = k \times SE$$
 
-1. A sokasági szórás, alias $\sigma$ ismert.
+1. The population standard deviation, i.e. $\sigma$ is known.
   * $k=z_{1-\frac{\alpha}{2}}$<br>
   * $SE=\frac{\sigma}{\sqrt{n}}$
-2. Az adatsor, amiből a mintát vettük *normális eloszlás*ú
+2. The variable we are sampling has a *normal distribution*
   * $k=t_{1-\frac{\alpha}{2}}^{n-1}$<br>
   * $SE=\frac{s}{\sqrt{n}}$
-3. A mintánk elemszáma nagy: $n > 30$
-  * $k=t_{1-\frac{\alpha}{2}}^{n-1}$ vagy $k=z_{1-\frac{\alpha}{2}}$<br>
+3. We have a large enough sample size: $n > 30$
+  * $k=t_{1-\frac{\alpha}{2}}^{n-1}$ or $k=z_{1-\frac{\alpha}{2}}$<br>
   * $SE=\frac{s}{\sqrt{n}}$
 
-És ennyi, igazából, ha végiggondoljuk a 4. fejezet feladatait, ezt a $3$ esetet tudjuk elkülöníteni a $\triangle$ számítása során.
+And that’s it, really. If we think through the exercises in *Section 4*, we can distinguish these 3 cases when calculating $\triangle$.
 
 ## 6. Case Study
 
-Vizsgáljuk meg $99\%$-os megbízhatósággal hogyan alakul az átlagos internetezéssel töltött idő a teljes magyar népességben pártpreferencia szerint!
+Let’s examine how the average time spent on the internet in the entire Hungarian population varies by political party preference with $99\%$ confidence!
 
-Érdekes megnézni, hogy egy $n=1099$ elemű mintában mért átlagos különbségek az egyes pártok intenetezési idejében mennyire általánosíthatók ki a pártokat támogató népesség egészére, tehát azokra az emberekre, akiket a mintában még NEM figyeltünk meg, azaz a **mintaelemeken kívüli világra**.
+It is interesting to see how much the average differences in internet usage time measured in a sample of $n=1099$ can be generalized to the entire population of party supporters, meaning those people who were NOT observed in the sample—in other words, the **world beyond the sample elements**.
 
-The `groupwiseMean` function can get confidence intervals for the population mean by separate categories of a `factor` or `character` variable. So, for example we can **see the confidence interval of the mean net usage time by party preferences**. We just need to switch the `~1` code to `~PoliticalPartyPref` in the first parameter. This indicates that we want confidence levels separately, not as a whole:
+The `groupwiseMean` function can get confidence intervals for the population mean by separate categories of a `factor` or `character` variable. So, for example we can **see the confidence interval of the mean internet usage time by political party preferences**. We just need to switch the `~1` code to `~PoliticalPartyPref` in the first parameter. This indicates that we want confidence intervals separately, not as a whole:
 
 ```{r}
 groupwiseMean(NetUsePerDay_Minutes ~ PoliticalPartyPref, data = ESS, conf = 0.99,
               na.rm = TRUE, digits = 4)
 ```
 
-Remek! :) Ezek alapján azt mondhatjuk, hogy az egyesült ellenzék esetén egy átlagos kérdőívkitöltő $228.8$ percet netezik naponta, míg egy átlag Fidesz kitöltő csak napi $158.7$ percet.<br>
-Azonban, a teljes ellenzéki népességben az átlag netezési idő $196$ és $261$ perc között van $99\%$-os valószínűséggel. A teljes fideszes táborban pedig az átlagos neten töltött idő csak $137$ és $180$ perc között mozog, szintén $99\%$-os valószínűséggel.<br>
-Tehát, $99\%$-os valószínűséggel az átlag netezési idő az Ellenzék esetében magasabb, mint a Fidesz esetében a teljes népességben is, hiszen a "legrosszabb" ellenzéki átlagérték is már $196$ perc, míg a Fidesz esetén a "legjobb" átlagidő is csak $180$ perc.<br>
-Mindez persze a különböző felületeken (tv, rádió, internet) működő médiumok irányultságát figyelembe véve egyáltalán nem meglepő. :)
+Great! :) Based on this, we can say that an average respondent supporting the united opposition spends $228.8$ minutes online per day, while an average respondent supporting the governing Fidesz party spends only $158.7$ minutes per day.<br>
+However, in the entire opposition-supporting population, the average internet usage time is between $196$ and $261$ minutes with $99\%$ probability. In the entire Fidesz camp, the average time spent online is only between $137$ and $180$ minutes, also with $99\%$ probability.<br>
+Thus, with $99\%$ probability, the average internet usage time is higher for the Opposition than for Fidesz in the entire population as well, since even the "worst" Opposition average value is already $196$ minutes, while the "best" average time for Fidesz is only $180$ minutes.<br>
+All of this, of course, is not surprising considering the orientation of the media operating on different platforms (TV, radio, internet). :)
 
-Az eredméynekből tudunk egy szép kis vizualizációt is készíteni a `ggplot` csomaggal. Először is elmentjük a `groupwiseMean` függvény eredményét egy külön data frame-be. Majd csinálunk egy olyan oszlopdiagramot belőle `ggplot`-ban, ahol az `x` tengelyen a pártpreferencia szerepel, míg az `y` tengelyen a mintában mért átlagos netezési idő. A `fill` paraméterben beállítjuk, hogy minden oszlop különböző színű legyen a pártpreferencia függvényében (ez csak egy optikai tuning :)). A `geom_bar` rétegben alkalmazott `stat = "identity"` paraméterbeállítás kényszeríti ki, hogy az ábra `y` tengelyén tényleg a mintaátlagok szerepeljenek, mert alapból a pártpreferenciák gyakoriságait rakná rá a gépállat.<br>
-Végül pedig a `geom_errorbar` rétegben felvisszük az ábrára a konfidencia-intervallumok alsó és felső határait a rétegen belül alkalmazott `aes` függvény  `ymin` és `ymax` paraméterein keresztül. A két paraméternek megadott érték azért `Trad.lower` illetve `Trad.upper`, mert a `conf_int_df`-ben ilyen nevű oszlopokban lettek letárolva a konfidencia-intervallumok határai, ha emlékszünk még az előző kód eredményére.
+We can also create a nice visualization from the results using the `ggplot` package. First, we save the result of the `groupwiseMean` function into a separate data frame. Then, we create a bar chart from it in `ggplot`, where the `x` axis represents party preference, while the `y` axis represents the average internet usage time measured in the sample. In the `fill` parameter, we set it so that each bar has a different color depending on party preference (this is just an optical tuning :)). The `stat = "identity"` parameter setting in the `geom_bar` layer ensures that the `y` axis of the graph truly represents the sample means, because by default, the machine spirit would plot the frequencies of party preferences instead.<br>
+Finally, in the `geom_errorbar` layer, we add the confidence interval limits to the graph using the `ymin` and `ymax` parameters within the `aes` function. The values for these parameters are `Trad.lower` and `Trad.upper` because the confidence interval limits were stored in columns with these names in the `conf_int_df`, if we remember the result of the previous code.
 
 ```{r}
 conf_int_df <- groupwiseMean(NetUsePerDay_Minutes ~ PoliticalPartyPref, data = ESS, conf = 0.99,
@@ -597,9 +604,9 @@ ggplot(conf_int_df, aes(x = PoliticalPartyPref, y=Mean, fill = PoliticalPartyPre
   geom_errorbar(aes(ymin=Trad.lower, ymax=Trad.upper))
 ```
 
-Mint láthatjuk, igazából az Ellenzék átlagos netezési ideje az, ami konfidencia-intervallumokkal együtt is magasabb, mint a többi párt szavazóinak átlagos netezési ideje a teljes népességben. Sőt, a **többi párt esetében azt mondhatjuk, hogy egyáltalán nem biztos, hogy a teljes népességben ezek az átlag netezési idők különböznek** $99\%$-os megbízhatósággal, **mivel a konfidencia-intervallumok metszik egymást**. Szóval, hiába van a megfigyelt adatok körében a Fidesznek magasabb átlag netideje, mint az Egyéb pártoknak, de kevesebb, mint a Nem ismert eseteknek, a nem megfigyelt, mintán kívüli adatok körében, azaz a teljes népességben simán lehet ($99\%$-os megbízhatósággal), hogy a Fideszes szavazók neteznek átlag a legkevesebbet egy napon. Ehhez csak annyi kell, hogy az a Fidesz valós, sokasági átlaga a konfidencia-intervallum alsó határa körül legyen a teljes népességben, míg a többi párt (nem ismert és egyéb) átlagideje pedig a konfidencia-intervallumuk tetejénél "kössön ki" a teljes népesség körében.
+As we can see, the average internet usage time for the Opposition remains higher even when confidence intervals are included, compared to voters of other parties in the entire population. In fact, **for the other parties, we cannot confidently say that these average internet usage times differ in the full population** with $99\%$ confidence, **because the confidence intervals overlap**. So, even though in the observed data, the governing Fidesz party has a higher average internet time than the Other parties but lower than Unknown cases, in the unobserved, out-of-sample data —in other words, in the full population— it is entirely possible (with $99\%$ confidence) that Fidesz voters actually spend the least time online on average per day. For this to be the case, the true population mean for Fidesz just needs to be near the lower bound of its confidence interval in the full population, while the mean internet usage times of other parties (Unknown and Other) should end up near the upper bound of their confidence intervals in the full population.
 
-Érdemes még megfigyelni, hogy az Egyéb pártoknak a legszélesebb a konfidencia-intervalluma. Ez ugye azért van, mert mint láttuk a fejezet elején ide csak $n=13$ kitöltő tartozik. Így az $SE=\frac{s}{\sqrt{n}}$ összefüggés miatt érthető, hogy nagyon bizonytalanok vagyunk ennél a csoportnál az átlagos netezési idő becslésében. Ráadásul ez nem is egy teljesen pontos becslés, amit itt a konfidencia-intervallum hosszára látunk! Hiszen a kis elemszám miatt a $k$ megbízhatósági szorzót itt $13-1$ szabadságfokú t-eloszlásból számoltuk ki, de ehhez kellene az, hogy maguk a netezési idők normális eloszlást kövessenek. Viszont, az a helyzet, ahogy az alábbi hisztogram is szemlélteti, a napi netezési idők nem normális, hanem jobbra elnyúló eloszlásúak.
+It is also worth noting that the confidence interval for Other parties is the widest. This is, of course, because, as we saw at the beginning of the chapter, only $n=13$ respondents belong to this category. Thus, due to the relationship $SE=\frac{s}{\sqrt{n}}$, it is understandable that we are very uncertain about estimating the average internet usage time for this group. Moreover, this is not even a completely accurate estimate of the confidence interval length! Since, due to the small sample size, the confidence multiplier $k$ was calculated from a $t$-distribution with $13-1$ degrees of freedom, this would require that the internet usage times themselves follow a normal distribution. However, as the histogram below illustrates, daily internet usage times do not follow a normal distribution but have a long right tail.
 
 ```{r}
 hist(ESS$NetUsePerDay_Minutes)
