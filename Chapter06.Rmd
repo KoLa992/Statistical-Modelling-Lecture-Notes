@@ -1,7 +1,7 @@
 ---
 title: "Estimating Parameters of Probability Distributions"
 author: "László Kovács"
-date: "02/03/2025"
+date: "09/03/2025"
 output:
   html_document:
     toc: true
@@ -389,7 +389,7 @@ Taking the natural logarithm of the likelihood function to produce the log-likel
 
 Using logarithm properties we can make the expression additive, so its easier to derivative: $$l(\mu, \sigma)=\frac{n}{2} \ln(2\pi\sigma^2)-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}$$
 
-Taking the derivative with respect to $\mu$ (remember $\sigma$ is treated as a constant term here): $$\frac{\partial l(\mu, \sigma)}{\partial\mu}=\sum_{i=1}^n{\frac{(y_i-\mu)^2}{\sigma^2}}$$
+Taking the derivative with respect to $\mu$ (remember $\sigma$ is treated as a constant term here): $$\frac{\partial l(\mu, \sigma)}{\partial\mu}=\sum_{i=1}^n{\frac{y_i-\mu}{\sigma^2}}$$
 
 We've used the chain rule to get the derivative of the $(y_i-\mu)^2$ part which is $2(y_i-\mu) \times (-1)$. We can simplify with $2$ in the division. And the $-1$ takes care of the $-$ before the sum.
 
