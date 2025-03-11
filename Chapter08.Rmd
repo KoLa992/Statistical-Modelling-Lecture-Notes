@@ -1,7 +1,7 @@
 ---
 title: "Confidence Interval for the Mean in IID Samples"
 author: "László Kovács"
-date: "07/03/2025"
+date: "11/03/2025"
 output:
   html_document:
     toc: true
@@ -19,22 +19,22 @@ text-align: justify}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 1. A Konfidencia-intervallumok két általános tulajdonsága
+## 1. Two General Properties of Confidence Intervals
 
-Az átlagra vonatkozó konfidencia-intervallumokkal kapcsolatos számolások során megállapítottunk **két olyan általános tulajdonságot a konfidencia-intervallumok hosszára, azaz a teljes becslési hibahatárra** $\triangle$-re vonatkozóvan, **amelyek igazak lesznek az összes többi** - a tárgyban vizsgált - **statisztikai mutató konfidencia-intervallumára** is:
+During the calculations related to confidence intervals for the mean, we established **two general properties regarding the length of confidence intervals, that is, the total margin of estimation error** $\triangle$, which will **also hold true for all other statistical measures examined in this course when constructing confidence intervals**:
 
-1. A megbízhatóság növelésével a konfidencia-intervallum egyre csak tágul, azaz a becslési hibahatár folyamatosan nő. Tehát, **nagyobb megbízhatóságú becslés csak pontatlanabb konfidencia-intervallum árán érhető el**.
-2. Mivel a továbbiakban is konzisztensen viselkedő becslőfüggvényekkel ($\hat{\theta}$-kal) fogunk dolgozni, így kijelenthető, hogy a **mintaelemszám ($n$) növelésével**, a $SH$ értéke csökken. A csökkenő $SE$ miatt pedig **az egész konfidencia-intervallum pontosabb lesz**. **Magyarul**  az elemszém növelésével a konfidencia-intervallum hossza, leánykori nevén **becslési hibahatár** ($\triangle$) **csökken**.
+1. As reliability increases, the confidence interval expands, meaning the margin of estimation error continuously grows. Thus, a **higher-confidence estimate can only be obtained at the cost of a less precise confidence interval**.
+2. Since we will continue working with consistently behaving estimators ($\hat{\theta}$), we can state that **as the sample size ($n$) increases**, the standard error ($SE$) decreases. Due to the decreasing $SE$, the entire **confidence interval becomes more precise**. **In other words**, as the sample size increases, the length of the confidence interval —also known as the **margin of estimation error** ($\triangle$)— **decreases**..
 
-A következő két fejezetben figyeljük meg, hogy **minden újabb statisztikai mutató konfidencia-intervalluma a feni két tulajdonságot betartva fog viselkedni**!
+In the next two sections, let’s observe **how every new statistical measure’s confidence interval will behave according to these two properties**!
 
-## 2. Arányok konfidencia-intervalluma
+## 2. Confidence Interval for Proportions
 
-Vegyük elő újra a <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/ESS2020.xlsx" target="_blank">ESS2020.xlsx</a> fájlban található adatbázist! Emlékeztetőül álljon itt, hogy ez az adatbázis a 2020-ban végzett európai szociális felmérés (European Social Survey 2020 = ESS2020) 1849 magyar kitöltöjének válaszait tartalmazza 14 kérdésre (plusz van egy *id* oszlop).
+Let's revisit the database found in the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/ESS2020.xlsx\" target="_blank">ESS2020.xlsx</a> file! As a reminder, this database contains the responses of 1849 Hungarian participants from the 2020 European Social Survey (ESS2020) to 14 questions (plus an *id* column).
 
-Ugyebár az <a href="Chapter07.html" target="_blank">Section 4 of Chapter 7</a>-ben azt mondtuk, hogy ha az adatbázis valamelyik oszlopában üres értéket találunk, akkor az azt jelenti, hogy az adott sorban lévő kitöltő nem válaszolt a kérdésre. Az adatbázisban szereplő kitöltők a teljes 18 év feletti magyar népességből vett véletlen mintaként kezelhetők. Most feltesszük, hogy ez a véletlen minta visszatevéses, azaz $FAE$ is. A következő tananyagban látni fogjuk, hogy ez nem is valóságtól elrugaszkodott feltevés.
+In <a href="Chapter07.html" target="_blank">Section 4 of Chapter 7</a>, we stated that if an empty value is found in any column of the database, it means that the respondent in that row did not answer the question. The respondents in the database can be considered a random sample drawn from the entire Hungarian population aged 18 and over. We now assume that this random sample was drawn with replacement, meaning it follows the $IID$ assumption. In the next chapter, we will see that this is not an unrealistic assumption.
 
-Először is töltsök be az adatbázist ismét az Excelből egy `pandas` data frame-be és nézzük meg az `str` függvénnyel milyen oszlopaink (azaz ismérveink) vannak!
+First, let's load the database again from Excel into a data frame and check its columns (i.e., variables) using the `str` function!
 
 ```{r}
 library(readxl)
@@ -43,20 +43,20 @@ ESS <- read_excel("ESS2020.xlsx")
 str(ESS)
 ```
 
-Láthatjuk, hogy megvan mind a 14+1 oszlopunk a megfelelő adattípusokkal. Hurrá! :)
+We can see that all 14+1 columns are present with the appropriate data types. Hooray! :)
 
-**Feladatunk** ezúttal az lenne, hogy **99%-os megbízhatóságú konfidencia-intervallum**ot építsünk a **Fideszt támogatók arányára!**
+**Our task** this time is to construct a **99% confidence interval for the proportion of the governing party Fidesz supporters**!
 
-Szerencsére ezt aránylag könnyű megtenni, hiszen **egy adott tulajdonsággal bíró egyedek aránya lényegében egy átlag**! Konkrétan **egy olyan változó átlaga, ahol a tulajdonsággal bíró egyedek $1$ értéket, míg a tulajdonsággal NEM rendelkező egyedek $0$ értéket kapnak**.
+Fortunately, this is relatively easy to accomplish since the **proportion of individuals possessing a given characteristic is essentially a mean**! Specifically, it is **the mean of a variable where individuals with the characteristic receive a value of $1$, while those without it receive a value of $0$.**
 
-Ezt könnyű is szemléltetni Python-ban. Vegyük a feladat szempontjából releváns a `PoliticalPartyPref` ismérv **relatív gyakoriságait** a `table` és  `prop.table` függvények segítségével:
+This is easy to demonstrate in R. Let’s determine the **relative frequencies** of the `PoliticalPartyPref` variable using the `table` and `prop.table` functions.
 
 ```{r}
 prop.table(table(ESS$PoliticalPartyPref))
 ```
 
-Ez alapján ugye a Fidesz kormánypárt támogatóinak aránya a megfigyelt 1849 elemű mintában $19.7\%$. Ezt az eredményt pedig úgy is megkaphatjuk, hogy csinálunk egy új `Fidesz` nevű oszlopot az `ESS` nevű data frame-be, amiben a Fidesz támogatók $1$ értéket kapnak, a többiek $0$-t, és vesszük az új oszlop átlagát.<br>
-Az új oszlop létrehozásához az `ifelse` néven futó függvényét használjuk. Ez lényegében olyan, mint az Excel `HA` függvénye: egy logikai feltétel megadása után értéket adunk az új oszlopban a *feltétel igaz* ágon, majd utána a *feltétel hamis* ágon.
+Based on this, the proportion of Fidesz supporters in the observed sample of 1849 respondents is $19.7\%$. This result can also be obtained by creating a new column named `Fidesz` in the `ESS` data frame, where Fidesz supporters receive a value of $1$, while others receive $0$, and then computing the mean of this new column.<br>
+To create the new column, we use the `ifelse` function. This function works similarly to the `IF` function in Excel: after specifying a logical condition, we assign a value to the new column for the *true branch* of the condition, followed by a value for the *false branch*.
 
 ```{R}
 # Create the new column called 'Fidesz'
@@ -66,7 +66,7 @@ ESS$Fidesz <- ifelse(ESS$PoliticalPartyPref=='Fidesz-KDNP', 1, 0)
 mean(ESS$Fidesz)
 ```
 
-Ismét megkaptuk a $19.7\%$-os támogatottsági arányt. Ez alapján pedig könnyen elkészíthetjük rá a 99%-os megíbzhatóságú konfidencia-intervallumot az `rcompanion` csomag `groupwiseMean` függvényével. A nagy mintaelemszám miatt nincs lényegi különbség arra nézve, hogy a szükséges a $k$ szorzót t-eloszlásból vagy standard normális eloszlásból számítjuk, így tökéletes lesz a függvény által használt alapértelmezett t-eloszlás.
+We obtained the $19.7\%$ support rate again. Based on this, we can easily construct a 99% confidence interval for it using the `groupwiseMean` function from the `rcompanion` package. Due to the large sample size, there is no significant difference whether the necessary $k$ multiplier is calculated from the t-distribution or the standard normal distribution, so the function’s default t-distribution is perfectly adequate.
 
 ```{r}
 library(rcompanion)
@@ -74,27 +74,27 @@ library(rcompanion)
 groupwiseMean(Fidesz~1, data = ESS, na.rm = TRUE, digits = 4, conf = 0.99)
 ```
 
-Tehát, a mintánk alapján a **magyar népesség egészét tekintve az mondható el, hogy 99%-os valószínűséggel legalább $17.4\%$-uk támogatja a Fidesz-KDNP-t, viszont szintén 99%-os valószínűséggel kijelenthető, hogy a támogatottsági arányuk nem magasabb $22.1\%$-nál**.
+Thus, based on our sample, we can say that for the **entire Hungarian population, with 99% probability, at least $17.4\%$ support Fidesz, while it can also be stated with 99% probability that their support rate does not exceed $22.1\%$.**
 
-Sőt, ha figyelembe vesszük, hogy a teljes magyar népesség 2020. január 1-jén 9 772 756 fő volt, akkor megkaphatjuk, hogy **konkrétan hány főnyi Fidesz támogató lehet a magyar népességben** $99\%$-os megbízhatósággal. Egyszerűen csak **az arány konfidencia-intervallum két határát kell felszorozni az $N=9772756$-os sokasági elemszámmal**.
+Moreover, considering that the total Hungarian population was 9 772 756 as of January 1, 2020, we can estimate the **specific number of Fidesz supporters in Hungary** with 99% confidence. We simply **multiply the two boundaries of the confidence interval by the total population size** of $N=9772756$.
 
 ```{r}
 c(as.integer(0.174 * 9772756), as.integer(0.221 * 9772756))
 ```
 
-Tehát Magyarországon $99\%$ valószínűséggel $170$ ezer és $216$ ezer fő közötti a Fidesz támogatók száma. Éljen! :)
+Thus, in Hungary, the number of Fidesz supporters is estimated to be between $170$ and $216$ thoudósand peopl with 99% confidence. Hooray! :)
 
-A teljes népességre nézve vett Fidesz támogatottság vizsgálható ugyan ezzel a függvényével **regionális bontásban** is, most $95\%$-os megbízhatósággal.
+The examination of Fidesz support across the entire population can also be conducted on a **regional level**, now with a **95% confidence level**.
 
 ```{r}
 groupwiseMean(Fidesz ~ Region, data = ESS, na.rm = TRUE, digits = 4, conf = 0.95)
 ```
 
-Az eredményből egyrészt látható, hogy a mintán belül a Fidesz támogatottsága az Dél-Dunántúlon csak 15.4%, míg Nyugat-Dunántúlon 16.7%. Kérdés, hogy ezek a különbségek a mintavételi hiba, azaz a 95%-os megbízhatóságú konfidencia-intervallum figyelembe vételével is megmaradnak-e!
+From the results, it can be observed that in the sample, Fidesz support is only 15.4% in Southern Transdanubia, while it is 16.7% in Western Transdanubia. The question is whether these differences remain significant even when considering the sampling error and the 95% confidence interval!
 
-Az eredményül kapott táblából szintén látható, hogy a **mintán belül a Fidesz támogatottsága az Dél-Alföldön csak 12.6%, míg Dél-Dunántúlon már 15.4%**. Azonban, ha a konfidencia-intervallum segítségével a **teljes népességet vizsgáljuk, akkor ez 95%-os valószínűséggel egy NEM szignifikáns** (jelentős) **eltérés, mivel a két konfidencia-intervallum metszi egymást!** Tehát a teljes népességben elképzelhető legjobb esetben egy 17.7%-as támogatottság is a Dél-Alföldön, míg a legrosszabb esetben belefér a Dél-Dunántúlon 9.4%-es támogatottság is. Tehát, az, hogy a Dél-Dunántúlon magasabb a Fidesz támogatottsági arány a mintában, az lehet csak a mintavételi hiba műve 95%-os megbízhatósággal! Ellenben az **Észak-Magyarországi Fidesz támogatottság 95% valószínűséggel a sokaságban is magasabb, mint a Dél-Alföldi**, hiszen a Dél-Alföldön a támogatottság legjobb esetben is csak 17.7%, míg Észak-Magyarországon legrosszabb esetben is már 20.4%. Tehát a **két konfidencia-intervallum NEM metszi egymást, a mintában mért eltérések 95% valószínűséggel megmaradnak a sokaságban is!**
+The results table also shows that **within the sample, Fidesz support in the Southern Great Plain is only 12.6%, while in Southern Transdanubia, it is already 15.4%**. However, when **examining the entire population** using the confidence interval, **this difference is NOT statistically significant at the 95% confidence** level because the two **confidence intervals overlap**! This means that in the best possible case, Fidesz support in the Southern Great Plain could be as high as 17.7%, while in the worst-case scenario, it could be as low as 9.4% in Southern Transdanubia. Therefore, the higher Fidesz support observed in the Southern Transdanubia sample might only be due to sampling error at the 95% confidence level! On the other hand, **Fidesz support in Northern Hungary is significantly higher than in the Southern Great Plain at the 95% confidence** level, as the best-case scenario for the Southern Great Plain is only 17.7%, while in Northern Hungary, even the worst-case scenario is already 20.4%. Since the **two confidence intervals do NOT overlap, the differences observed in the sample remain significant in the population with 95% confidence**!
 
-Az eredményekről ugyan úgy készíthetünk egy olyan `ggplot` vizualizációt is, mint a pártpreferenciák szerint bontott átlagos netezési időkről a <a href="Chapter07.html" target="_blank">Section 6 of Chapter 7</a>-ben.
+We can also create a `ggplot` visualization of these results, similar to the visualization of average internet usage times by party preference in <a href="Chapter07.html" target="_blank">Section 6 of Chapter 7</a>.
 
 ```{r}
 conf_int_df <- groupwiseMean(Fidesz ~ Region, data = ESS, na.rm = TRUE, digits = 4, conf = 0.95)
@@ -106,100 +106,101 @@ ggplot(conf_int_df, aes(x = reorder(Region,Mean), y=Mean, fill = Region)) +
   geom_errorbar(aes(ymin=Trad.lower, ymax=Trad.upper)) + coord_flip() + labs(x="")
 ```
 
-Az előbb taglalt, 95%-os megbízhatósággal a sokaságban is szignifikáns eltérés Dél-Alföld és Észak-Magyarország között. Az is látszik, hogy **hasonló szignifikáns különbség még** ezen kívül **Dél-Alföld és Budapest Fidesz támogatottsági aránya között található**.
+The previously discussed 95% confidence level statistically significant difference between the Southern Great Plain and Northern Hungary is also visible in the visualization. Additionally, it is evident that a **similar significant difference can also be found between the Southern Great Plain and Budapest in terms of Fidesz support**.
 
-### 2.1. Mintaelemszám meghatározása aránybecsléshez
+### 2.1. Calculating Sample Size for Estimating Proportions
 
-Érdemes az arány konfidencia-intervallumának számítása során felhasználni azt az információt, hogy egy csak 0-ból és 1-ből álló változó korrigált mintaszórása $s=\sqrt{p(1-p)}$ módon számítható, ahol $p$ az $1$ értékek aránya a mintában!<br>
-Nézzük is meg, hogy igaz-e ez! Ugyebár a Fidesz támogatottsági aránya a teljes 1849 elemű mintában $p=19.7\%$. Ez alapján a szórása a `Fidesz` nevű 0-1-ből álló változónak $s=\sqrt{p(1-p)}=\sqrt{0.197 \times (1-0.197)}=0.3977323$.
+It is worth using the information during the calculation of the proportion confidence interval that the corrected sample standard deviation of a variable consisting only of 0s and 1s can be calculated as $s=\sqrt{p(1-p)}$, where $p$ is the proportion of $1$ values in the sample!<br>  
+Let's check if this is true! The support rate of Fidesz in the full sample of 1849 elements is $p=19.7\%$. Based on this, the standard deviation of the variable named `Fidesz`, which consists of 0s and 1s, is calculated as $s=\sqrt{p(1-p)}=\sqrt{0.197 \times (1-0.197)}=0.3977323$.  
 
-Nézzük meg az eredményt az `sd` függvénnyel is:
+Let's verify the result using the `sd` function.
 
 ```{r}
 sd(ESS$Fidesz)
 ```
 
-A kétféleképp számolt érték némi kerekítési hibát leszámítva egyezik! :) De hát ez nem meglepő, hogy így alakult, hiszen a <a href="Chapter05.html" target="_blank">Section 5 of Chapter 5</a>-ben éppen azt mondtuk, hogy a mintaarányok (a $p$-k) standard mintavételi hibája a $SE(p) \approx \sqrt{\frac{p(1-p)}{n}}$ képlettel megadható. :)
+Apart from some rounding error, the values calculated in two different ways match! :) But this is not surprising, as we mentioned in <a href=\"Chapter05.html\" target=\"_blank\">Section 5 of Chapter 5</a> that the standard sampling error of the sample proportions ($p$ values) is given by the formula $SE(p) \approx \sqrt{\frac{p(1-p)}{n}}$. :)  
 
-Ez azt jelenti, hogy **az arány konfidencia-intervallumának hossza** a $\triangle = SE \times k$ képlet alapján $\sqrt{\frac{p(1-p)}{n}} \times k$ módon számítható, hiszen az átlag standard hibája $\frac{s}{\sqrt{n}}$ volt, és most felhasználtuk, hogy csak 0-1-et tartalmazó változókra $s=\sqrt{p(1-p)}$. A $k$ megbízhatósági szorzó pedig ugyan úgy $N(0,1)$ eloszlással számolható *nagy méretű minták esetén*, mint az átlag konfidencia-intervallumánál. Hiszen magas $n$ esetén a $t(n-1)$ eloszlás sűrűségfüggvénye már lényegében egybeesik az $N(0,1)$ eloszlás sűrűségfüggvényével, ahogy a <a href="Chapter07.html" target="_blank">Section 4 of Chapter 7</a>-ben is láttuk.
+This means that **the length of the proportion confidence interval** can be calculated using the formula $\triangle = SE \times k$ as $\sqrt{\frac{p(1-p)}{n}} \times k$, since the standard error of the mean was $\frac{s}{\sqrt{n}}$, and now we used the fact that for variables containing only 0s and 1s, $s=\sqrt{p(1-p)}$. The confidence multiplier $k$ is calculated from the $N(0,1)$ distribution *for large samples*, just as in the case of the mean confidence interval. For large $n$, the density function of the $t(n-1)$ distribution almost coincides with that of the $N(0,1)$ distribution, as we also saw in <a href=\"Chapter07.html\" target=\"_blank\">Section 4 of Chapter 7</a>.  
 
-**Ennyi információ alapján pedig képesek vagyunk arra, hogy még mintavétel ELŐTT meghatározzuk, hogy az arány egy adott pontosságú és megbízhatóságú becsléséhez mekkora elemszámú mintára van szükségünk**.
+**With this information, we are able to determine, even BEFORE sampling, how large a sample is needed to estimate the proportion with a given accuracy and confidence level.**  
 
-Hiszen pl. $99\%$-os megbízhatósági szint mellett a szükséges megbízhatósági $k$ szorzó a standard normális, azaz $N(0,1)$ eloszlás inverz értéke alapján megadható $z_{1-\frac{\alpha}{2}}$ módon:
+For instance, at a $99\%$ confidence level, the required confidence multiplier $k$ can be determined as the inverse value of the standard normal $N(0,1)$ distribution: $z_{1-\frac{\alpha}{2}}$.  
 
 ```{r}
 alpha <- 1-0.99
 qnorm(1-alpha/2)
 ```
 
-Vegyük az értéket kerekítve $k=2.6$-nak!
+Let's round this value to $k=2.6$!  
 
-Ugyebár azt tudjuk, hogy a jelenlegi 1849 elemű mintánk esetén Fidesz támogatottsági aránya $p=19.7\%$, **amitől a támogatottsági arány valós sokasági értéke** 99%-os valószínűséggel $\pm$ **2.4 százalékpontos hibahatárral térhet el**: $$\pm \triangle = SE \times k = \sqrt{\frac{p(1-p)}{n}} \times k = \sqrt{\frac{0.197 \times (1-0.197)}{1849}} \times 2.6=0.0240$$
+We already know that in our current sample of 1849 elements, the Fidesz support rate is $p=19.7\%$, **which means that the true population proportion** can differ from this by a margin of error of $\pm$ **2.4 percentage points with 99% probability**:  
+$$\pm \triangle = SE \times k = \sqrt{\frac{p(1-p)}{n}} \times k = \sqrt{\frac{0.197 \times (1-0.197)}{1849}} \times 2.6=0.0240$$  
 
-De mi a helyzet, ha a **hibahatár értékét 1 százalékpontra akarom csökkenteni és meg akarom őrizni a 99%-os megízhatósági szintet**? Ekkor **nagyobb mintát kell venni, kérdés, hogy mennyivel nagyobbat**. Ezek alapján a kívánt $\triangle$ érték $0.01$ és a $k=2.6$ értékből sem akarok engedi. Azaz: $$0.01 = \sqrt{\frac{p(1-p)}{n}} \times 2.6$$
+But what if we **want to reduce the margin of error to 1 percentage point while maintaining the 99% confidence level**? In this case, **we need to take a larger sample, but by how much**? Given that the desired $\triangle$ value is $0.01$ and we do not want to change $k=2.6$, we have: $$0.01 = \sqrt{\frac{p(1-p)}{n}} \times 2.6$$  
 
-Ebből $n$-t kifejezve: $$n=\frac{2.6^2 \times p(1-p)}{0.01^2}$$
+Solving for $n$:  $$n=\frac{2.6^2 \times p(1-p)}{0.01^2}$$  
 
-Ezen a ponton nagy a csábítás, hogy a képletből úgy számoljuk ki $n-t$, hogy $p=19.7\%$-kal dolgozzunk. De ezt **ne tegyük**! Mivel nem tudjuk, hogy a megnövelt elemszámú mintában mennyi is lesz $p$. Plusz, ha a **szükséges mintaelemszámot AZELŐTT akarjuk meghatározni, hogy a kérdéses $p$ arány becslésére már vettünk mintát, akkor aztán tényleg lövésünk nincs a $p$ értékéről**!
+At this point, it may be tempting to calculate $n$ using $p=19.7\%$. But **we should not do this**! Since we do not know what $p$ will be in the larger sample. Furthermore, if we want to **determine the required sample size BEFORE taking a sample to estimate $p$, we have absolutely no idea what the value of $p$ is**!  
 
-Szerencsére, **rájöhetünk, hogy a $p(1-p)$ kifejezésnek könnyen meg tudjuk adni a maximumát**, hiszen az $f(p)=p(1-p)=p-p^2$ függvény egy fordította parabola, melynek maximuma $p=0.5$-nél kerül felvételre és értéke $max(p(1-p))=0.25$:
+Fortunately, **we can determine the maximum of the expression $p(1-p)$**, because the function $f(p)=p(1-p)=p-p^2$ is an inverted parabola with a maximum at $p=0.5$, where its value is $max(p(1-p))=0.25$.  
 
 <center>
 ![](p_SH.jpg){width=50%}
 </center>
 
-Szóval az $N=\frac{2.6^2 \times p(1-p)}{0.01^2}$ formulába **mindig beírhatjuk a $0.25$-öt, hiszen ez a legrosszabb szituációnk, ekkor lesz aránybecslés esetén maximális a standard hibánk**. Ha elégség nagy mintát veszünk, hogy a maximális $SH$ mellett is $\triangle = 0.01$-et érjünk el, akkor minden egyéb esetben is jók vagyunk.
+So, in the formula $N=\frac{2.6^2 \times p(1-p)}{0.01^2}$, **we can always substitute $0.25$ as the worst-case scenario, ensuring that our estimate is accurate even under maximum standard error**. If we take a large enough sample to achieve $\triangle = 0.01$ under maximum $SE$, then we are covered for all other cases.  
 
-Tehát, **az 1 százalékpontos hibahatár eléréséhez szükséges elemszám 99%-os megbízhatóság mellett** $N=\frac{2.6^2 \times 0.25}{0.01^2}=16900$ **fő**.<br>
-Ennek fényében különsöen érdekes meglesni [ezen a linken](https://ig.ft.com/sites/brexit-polling/) hogy hány fős mintából dolgoztak a 2016-os Brexit népszavazás eredményének előrejelzése során a közvéleménykutatók, ahol lehetett tudni, hogy nagyon kiélezett a verseny a maradás és elszakadás pártok között, így a két párt támogatottsági arányának becslése során **nagyon szükség lett volna erre az 1 százalékpontos hibahatárra és a 99%-os megbízhatósági szintre, ami a 16900 elemű minták biztosítanak arányok becslése során**.
+Thus, **the sample size required to achieve a 1 percentage point margin of error with 99% confidence** is $N=\frac{2.6^2 \times 0.25}{0.01^2}=16900$ **individuals**.<br>  
+In light of this, it is particularly interesting to check [this link](https://ig.ft.com/sites/brexit-polling/) to see how many people were surveyed in opinion polls predicting the results of the 2016 Brexit referendum. It was known that the competition between the remain and leave sides was very tight, meaning that an **accurate estimate of their support rates was crucial, and achieving a 1 percentage point margin of error with 99% confidence required a sample of 16 900 individuals**.
 
-### 2.2. Szükséges minimális elemszám aránybecsléshez
+### 2.2. Minimal Sample Size Requirement for Estimating Proportions
 
-Az **arány intervallumbecslés** esetén **van** a 2.1. fejezetben taglaltak mellett egy **minimális elemszám követelménye is, aminél kisebb mintákban az intervallumbecslés egyáltalán NEM elvégezhető!!**
+In the case of **proportion interval estimation**, **there is** —in addition to what was discussed in Section 2.1— also a **minimum sample size requirement, below which interval estimation CANNOT be performed at all!!**  
 
-Ez a követelemény abból jön, hogy az aránybecslést gyakorlatilag egy átlagbecslésre vezetjük vissza.<br>
-Hiszen átlagbecslés esetén **kis elemszámú mintáknál feltételezzük az alapsokaság** (tehát, amiből a mintát vettük) **normális eloszlását, még akkor is, ha a megbízhatósági szorzót t-eloszlásból számítjuk!** Egy **csak $0$-ból és $1$-ből álló adatsor pedig bajosan fog normális eloszlást követni!** :)
+This requirement arises from the fact that proportion estimation is essentially reduced to mean estimation.<br>  
+In mean estimation, **for small samples, we assume that the population** (from which the sample was taken) **follows a normal distribution, even if we calculate the confidence multiplier from the t-distribution!** However, a dataset consisting only of **$0$ and $1$ values is unlikely to follow a normal distribution!** :)  
 
-Azt, hogy **mi számít aránybecslés esetén nagy mintának, a következő szabály adja meg**:
+The **rule for determining what qualifies as a large sample in proportion estimation is as follows**:  
 
-- Legyen az arány szempontjából *kedvező* esetek száma több, mint 10 a mintában, azaz: $n \times p >10$
-- Legyen az arány szempontjából *kedvezőtlen* esetek száma is több, mint 10 a mintában, azaz: $n \times (1-p) >10$
+- The number of *favorable* cases for the proportion should be greater than 10 in the sample, meaning: $n \times p >10$  
+- The number of *unfavorable* cases for the proportion should also be greater than 10 in the sample, meaning: $n \times (1-p) >10$  
 
-Ez a Fidesz támogatók arányának korábbi példájára nézve úgy néz ki, hogy a teljes mintánk elemszáma $n=1849$ fő:
+Looking at this in the previous example of Fidesz supporters' proportion, our total sample size is $n=1849$ individuals.
 
 ```{r}
 nrow(ESS) # number of rows in the data frame
 ```
 
-Míg az arány szempontjából *kedvező* esetek, azaz a Fidesz-KDNP támogatók száma $365$ fő:
+The number of *favorable* cases for the proportion, i.e., Fidesz-KDNP supporters, is $365$ individuals.
 
 ```{r}
 sum(ESS$Fidesz)
 ```
 
-Tehát a **két feltétel itt a következőképpen teljesül**:
+Thus, **the two conditions are met n our case as follows**:  
 
-- A *kedvező* esetek száma $365 > 10 \rightarrow$ **feltétel teljesül**
-- A *kedvezőtlen* esetek száma $(1849-365) = 1484 > 10 \rightarrow$ **feltétel teljesül**
+- The number of *favorable* cases is $365 > 10 \rightarrow$ **condition met**  
+- The number of *unfavorable* cases is $(1849-365) = 1484 > 10 \rightarrow$ **condition met**  
 
-Tehát, **mindkét feltétel teljesül**, a Fidesz támogatók arányának **intervallumbecslése elvégezhető** volt, mivel **megvan a minimális mintaelemszám**. Yeah! :)
+Therefore, **both conditions are satisfied**, meaning that **interval estimation for the proportion of Fidesz supporters was possible** because **the minimum sample size requirement was met**. Yeah! :) 
 
-## 3. A Bootstrap becslések általános elve
+## 3. General Concept of Bootstrap Estimation
 
-Eddig a konfidencia-intervallumokkal kapcsolatban elég könnyű dolgunk volt *úgymond*, mert az **átlag és arány esetében** is a konfidencia inztervallum hosszát ($\triangle$-t) ki tudtuk számolni standard hiba ($SE$) szorozva megbízhatósági szorzó ($k$) elven: $$\triangle=SE \times k$$
+So far, dealing with confidence intervals has been relatively easy so to speak, because in the case of **means and proportions**, we could calculate the length of the confidence interval ($\triangle$) using the standard error ($SE$) multiplied by the confidence multiplier ($k$) principle: $$\triangle=SE \times k$$  
 
-Azért tudott ez a formuula működni, mert a **standard hibára tudtunk adni egy egyszerű képletet** ($\frac{s}{\sqrt{n}}$ vagy $\sqrt{\frac{p(1-p)}{n}}$) és **a $k$-t ki tudtuk számolni valami konkrét eloszlásból** (standard normális vagy t-eloszlás).
+This formula worked because we could **provide a simple formula for the standard error** ($\frac{s}{\sqrt{n}}$ or $\sqrt{\frac{p(1-p)}{n}}$) and **calculate $k$ from a specific distribution** (standard normal or t-distribution).  
 
-NODE, **mi a helyzet ha ezek az eszközök NEM állnak rendelkezésre?** Tehát, mi van akkor, ha 
+BUT, **what happens when these tools are NOT available?** That is, what if:  
 
-1. A standard hibáját egy statisztikai mutatónak (paraméternek, azaz $\theta$-nak) nem lehet egysezrű képlettel kiszámolni.
-2. A $k$ számolásához nincs konkrét eloszlás, vagy ami van, az csak lehetetlen feltételekkel alkalmazható (pl. a vizsgált alapsokaság, amiből a mintát vettük az legyen normális eloszlású, mintamérettől függetlenül)
+1. The standard error of a statistical measure (parameter, i.e., $\theta$) cannot be calculated using a simple formula.  
+2. There is no specific distribution available for calculating $k$, or the available one can only be applied under impossible conditions (e.g., the studied population from which the sample was taken must have a normal distribution, regardless of sample size).  
 
-Ezekben az esetekben **segít rajtunk a Bootstrap becslés**! Nézzük meg ennek a módszernek **mi az általános alapelve az átlag standard hibáján keresztül**.
+In such cases, **Bootstrap Estimation helps us**! Let’s see **the general principle of this method through the standard error of the mean**.  
 
-Ugyebár az átlag standard hibája úgy jön ki egy mintavételből, hogy fogjuk a minta korrigált szórását, $s$-t, és ezt elosztjuk a mintaelemszám ($n$) gyökével: $$SE(\bar{y})=\frac{s}{\sqrt{n}}$$
+The standard error of the mean is obtained from a sample by taking the sample’s corrected standard deviation, $s$, and dividing it by the square root of the sample size ($n$): $$SE(\bar{y})=\frac{s}{\sqrt{n}}$$  
 
-Számoljuk ki az `ESS` adatbázisból a napi netezési idő (`NetUsePerDay_Minutes` oszlop) átlagának standard hibáját! Csak emlékezzünk, hogy a `NetUsePerDay_Minutes` oszlopban volt pár hiányzó érték, ezeket ne vegyük figyelembe az $n$ meghatározásakor!
+Let’s calculate the standard error of the mean daily internet usage time from the `ESS` dataset (`NetUsePerDay_Minutes` column)! Just remember that the `NetUsePerDay_Minutes` column contained some missing values, so we should not consider them when determining $n$!
 
 ```{r}
 n <- sum(!is.na(ESS$NetUsePerDay_Minutes)) # this way we do not consider the empty rows
@@ -210,34 +211,34 @@ SE_Formula <- corr_std / sqrt(n)
 SE_Formula
 ```
 
-Szuper, a mintaátlag várható eltérése a valós, sokasági átlagos netezési időtől várhatóan $\pm4.38$ perc!
+Great, the expected deviation of the sample mean from the true population mean daily internet usage time is $\pm4.38$ minutes!  
 
-**Hogyan jön ki ez az eredmény Bootstrap módon?**
+**How does this result come out using the Bootstrap method?**  
 
-A **Bootstrap becslés alapötlete a standard hiba alap definíciójából jön**, amit a <a href="Gyak03.html" target="_blank">3. heti tananyag 5. fejezetében néztünk</a>. **Vegyünk ki a sokaságból nagyon-nagyon sok** (pl. 1000 vagy 10000 db) **visszatevéses** (azaz FAE) **mintát, minden mintából számoljuk mi a mintaátlagot és a mintaátlagok szórása a standard hiba** az átlagbecslés *torzítatlanság*a miatt.<br>
-Ugyebár ezzel a megközelítéssel az a **baj, hogy a gyakorlatban csak egyetlen egy darab mintánk van, és nem ismerjük a sokaságot, így nem tudunk belőle nagyon-nagyon sok FAE mintát kivenni**.<br>
-Nos, a **Bootstrap módszer azt mondja, hogy ezt az alap szórás-elvű $SH$ számolást tudjuk SZIMULÁLNI akár egyetlen egy darab mintavételből is!**
+The **basic idea of Bootstrap estimation comes from the standard error definition**, which we discussed in <a href="Chapter05.html" target="_blank">Section 5 of Chapter 5</a>. We **take a very large number** (e.g., 1000 or 10,000) **of resampled samples** (i.e., with replacement, IID), **calculate the mean for each sample, and the standard deviation of these sample means is the standard error** due to the *unbiasedness* of mean estimation.<br>  
+The problem with this approach is that **in practice, we only have one single sample and do not know the full population, so we cannot take many IID samples from it**.<br>  
+Well, the **Bootstrap method says that we can SIMULATE this standard error-based calculation even from a single sample!**  
 
-Ha **van egy $n$ elemű mintánk, akkor abból vegyünk ki nagyon-nagyon sok (pl. 1000 db) szintén $n$ elemű FAE almintát!!** A **FAE, azaz visszatevéses elv miatt, az $n$ elemű alminták összetétele véletlenszerűen meg fog változni, és ezek a véletlen változások épp a mintavételi hiba tendenciáit követik le!!**<br>
-Ezek után más dolgounk nincs, mint **kiszámolni minden almintából a mintaátlagot, és venni ezek sima, korrigálatlan szórását, és ez lesz a $SH$!!**
+If **we have a sample of size $n$, we take a very large number (e.g., 1000) of resampled sub-samples of size $n$!** Due to the **IID (with replacement) principle, the composition of these $n$-sized sub-samples will change randomly, and these random variations precisely follow the tendencies of sampling error!!**<br>  
+After that, all we need to do is **calculate the sample mean for each sub-sample, compute the simple uncorrected standard deviation of these means, and this gives us $SE$!!**  
 
-Lássuk akkor ezt a dolgot a gyakorlatban! **Számoljuk ki az átlag standard hibáját Bootstrap elven!**
+Now let’s see this in practice! **Let’s compute the standard error of the mean using the Bootstrap method!**  
 
-Először is **vegyünk a `NetUsePerDay_Minutes` oszlopból mondjuk $1000$ db FAE mintát, és tároljuk le ezeket az almintákat egy olyan data frame-ben, aminek $1000$ sorában lesznek a különböző mintavételek, míg $n$ db oszlopában az $n$ db mintaelem minden egyes mintavételezési körben**.<br>
-Itt gyakorlatilag ugyanazokat a megoldásokat követjük R-ben, mint a <a href="Chapter04.html" target="_blank">Section 3.1. of Chapter 4</a>.
+First, **we take 1000 IID samples from the `NetUsePerDay_Minutes` column and store them in a data frame, where the 1000 rows represent different samples, and the $n$ columns contain the $n$ sample elements for each sampling iteration**.<br>  
+Essentially, we follow the same solutions in R as in <a href="Chapter04.html" target="_blank">Section 3.1 of Chapter 4</a>.  
 
-Először elkészítünk egy olyan verziót az `ESS` data frame-ből, amiben **nincsenek benne a `NetUsePerDay_Minutes` oszlop hiányzó értékei**. Így egy $n=1099$ soros data frame-ünk lesz.
+First, we create a version of the `ESS` data frame **without missing values in the `NetUsePerDay_Minutes` column**. This results in a data frame with $n=1099$ rows.
 
 ```{r warning = FALSE, message = FALSE}
 ESS_Filter <- ESS[!is.na(ESS$NetUsePerDay_Minutes),]
 sum(is.na(ESS_Filter$NetUsePerDay_Minutes))
 ```
 
-Szuper, ezzel megvagyunk!
+Great, now we are set!  
 
-Akkor most **jöhet az $1000$ db $n=1099$ elemű alminta generálása `for` ciklusból** és a tárolás az újonnan létrehozott data frame-ben.<br>
+Now, **let’s generate 1000 sub-samples of size $n=1099$ using a `for` loop** and store them in the newly created data frame.
 
-Most is **megnövekedett futásidőre kell** itt **készülni**! :)
+Again, **we should expect an increased runtime** here! :)
 
 ```{r warning = FALSE, message = FALSE, eval = FALSE}
 # create the first subsample
@@ -259,20 +260,20 @@ head(samples)
 ```
 
 ```{r warning = FALSE, message = FALSE, echo = FALSE}
-samples <- read_excel("BootstrapData.xlsx")
+samples <- as.data.frame(read_excel("BootstrapData.xlsx"))
 rownames(samples) <- paste0("Sample",1:10000)
 head(samples)
 ```
 
-Akkor meg is van az $1000$ db almintánk! :) Számoljuk ki **mindegyik almintában a mintaátlagot**!<br>
-**Figyeljünk** itt is arra, hogy mivel a data frame oszlopai folyamatosan bővülnek amjd, így manuálisan le kell szorítani a statisztikai függvények alkalmazását mindig az első $n=1099$ db oszlopra!
+Now we have our sub-samples of size $1000$. Let’s compute **the sample mean for each sub-sample!**<br>  
+**Be careful** to always restrict statistical calculations to the first $n=1099$ columns as new columns will be added dynamically!
 
 ```{r}
 samples$means <- apply(samples[,1:1099], 1, mean)
 head(samples[,1098:1100])
 ```
 
-A **standard hibánk pedig akkor ezeknek az alminta-átlagoknak lesz a sima korrigálatlan szórása**!
+The **standard error is then simply the uncorrected standard deviation of these sub-sample means!**  
 
 ```{r}
 class_sd <- function(x) {
@@ -284,17 +285,19 @@ SE_Bootstrap <- class_sd(samples$means)
 SE_Bootstrap
 ```
 
-E voilá! Némi kerekítési hiba mellett ez kb. ugyan annyi, mint a $\frac{s}{\sqrt{n}}$ képlettel kapott verzió! :) Illetve, értelemszerűen **itt mindenki más értéket kaphatott, mert nem fixáltuk a véletlenszám generátor magját a mintavételek során**.
+Et voilà! Apart from some rounding error, this is approximately the same as the version obtained using $\frac{s}{\sqrt{n}}$! :)  
+Moreover, **everyone may get slightly different values here since we did not fix the random number generator seed during the sampling process**.
 
 ```{r}
 c(SE_Formula, SE_Bootstrap)
 ```
 
-Nyilván, ha **több almintát veszünk, akkor pontosabb lesz a közelítés**. Ezt úgy mondjuk szépen **szakszóval, hogy növeljük a Bootstrap becslés replikációinak számát**. :) Tehát a **replikációk száma az alminták számát jelenti**.
+Obviously, **if we take more sub-samples, the approximation becomes more accurate**. This is formally called **increasing the number of Bootstrap replications**. :) That is, the **number of replications refers to the number of sub-samples**.  
 
-NODE, **mire volt jó, hogy ezt a fránya $SE$-t ilyen körülményesen számoltuk ki a képlet helyett?** Nos, **átlag esetében a világon SEMMIRE!**<br>
-Viszont, ezzel a **Bootstrap elvvel ki tudjuk számolni pl. a napi netezési időnk mediánjának standard hibáját, amire amúgy NINCS olyan egyszerű képlet, mint az átlag standard hibájára!**<br>
-Ugyebár ezt megtehetjük, mert megnéztük a <a href="Chapter05.html" target="_blank">Section 4 of Chapter 5</a>, hogy a medián is egy *torzítatlanul* becsülhető statisztikai paraméter, mint az átlag.
+BUT, **what was the point of calculating this $SE$ in such a complicated way instead of using the formula?**  
+Well, **in the case of the mean, ABSOLUTELY NOTHING!**<br>  
+However, using this **Bootstrap principle, we can compute the standard error of the median daily internet usage time**, for which **there is NO simple formula like for the mean standard error!**<br>  
+We can apply this Bootstrap $SE$ calculation, because we checked in <a href="Chapter05.html" target="_blank">Section 4 of Chapter 5</a> that the median is also an *unbiased* statistical estimator, just like the mean.  
 
 ```{r}
 SampleMedian <- median(ESS_Filter$NetUsePerDay_Minutes)
@@ -306,39 +309,39 @@ SE_Median <- class_sd(samples$medians)
 SE_Median
 ```
 
-Tehát tudjuk, hogy a megfigyelt $n=1099$ elemű mintában a medián napi netezési idő $120$ perc, és a **standard hibából tudjuk, hogy ez az érték a teljes magyar népesség** (sokaság) **valós medián napi netezési idejétől várhatóan $\pm11.69$ perccel különbözik**.
+Thus, we know that in the observed sample of size $n=1099$, the median daily internet usage time is **120 minutes**, and from the **standard error, we can determine that this value is expected to differ from the true median daily internet usage time of the entire Hungarian population by $\pm11.69$ minutes**.  
 
-Innen pedig már csak egy lépés, hogy legyen valami $1-\alpha$ megbízhatósági szintű **konfidencia-intervallumunk a mediánra** ezzel a Bootstrap módszerrel!
+From here, it is just one more step to construct a **confidence interval for the median** with a confidence level of $1-\alpha$ using the Bootstrap method!
 
-## 4. A Medián Bootstrap intervallumbecslése
+## 4. Bootstrap Confidence Interval for the Median
 
-Ahhoz, hogy megtudjuk a Bootstrap módszerrel előállított $1000$ db alminta alapján a medián $1-\alpha$ megbízhatóságú konfidencia-intervallumát, akkor egyszerűen vennünk kell az **almintákból kiszámolt 1000 db medián adatsorának $\alpha/2$ és $1-\alpha/2$ percentiliseit!**<br>
-Hiszen, az $1-\alpha$ megbízhatóságú konfidencia intervallumnak azt kell megadnia, hogy milyen két érték között mozoghat a valós, sokasági medián $1-\alpha$ valószínűséggel. Ezt pedig pl. **átlag esetében úgy állapítottuk meg, hogy vettük a sok-sok mintaátlag eloszlásának, konkrétan az $N\left(\mu, \frac{\sigma}{\sqrt{n}}\right)$ eloszlásnak a középső $1-\alpha$ százalékát!!**<br>
-A **Bootstrap** mintavételezés segítségével pedig pont a **sok-sok minta-medián eloszlását akartuk szimulálni, tehát ennek kell venni a középső $1-\alpha$ százalékát!** Ezt pedig a minta-medián értékek $\alpha/2$ és $1-\alpha/2$ percentilisei adják ki.
+To determine the confidence interval of the median with confidence level $1-\alpha$ based on the $1000$ bootstrap samples, we simply need to **take the $\alpha/2$ and $1-\alpha/2$ percentiles of the 1000 median values calculated from the samples**!<br>
+After all, the $1-\alpha$ confidence interval should indicate the range within which the true population median falls with $1-\alpha$ probability. For example, in the **case of the mean, we determined this by taking the middle $1-\alpha$ percentage of the distribution of many sample means, specifically of the $N\left(\mu, \frac{\sigma}{\sqrt{n}}\right)$ distribution!!**<br>
+With **Bootstrap** sampling, we aimed to **simulate the distribution of many sample medians**, so we should **take the middle $1-\alpha$ percentage of these simulated medians**! This is given by the $\alpha/2$ and $1-\alpha/2$ percentiles of the sample median values.
 
-Nézzük is meg az eredményt a netezési idők mediánjának $95\%$-os megbízhatóságú konfidencia-intervallumára! Pythonban a data frame `Medianok`-nak elnevezett oszlopának `quantile` metódusát tudjuk használni a keresett két percentilis kiszámításához.<br>
-Ugyebár ekkor $1-\alpha=95\%=0.95$, tehát $\alpha=0.05=5\%$:
+Let's examine the result for the $95\%$ confidence interval of the median internet usage time! In R, we can apply the `quantile` function on the `medians` column of our simulated data frame.<br> 
+Since $1-\alpha=95\%=0.95$, we have $\alpha=0.05=5\%$ in this case.
 
 ```{r}
 alpha <- 0.05
 quantile(samples$medians, probs = c(alpha/2, 1-alpha/2))
 ```
 
-Tehát, a **teljes magyar népesség körében a medián napi netezési idő $120$ és $150$ perc között van $95\%$ valószínűséggel.**.
+Thus, the **median daily internet usage time in the entire Hungarian population is between $120$ and $150$ minutes** with $95\%$ probability.
 
-Az eredményből láthatjuk, hogy a medián konfidencia-intervalluma **NEM szimmetrikus a minta egészéből számított mediánra (ami szintén 120 perc volt, mint itt az alsó határ), mint ahogy az átlag konfidencia-intervalluma a minta egészéből számított átlagra szimmetrikus volt**!
+From the result, we can see that the confidence interval for the median is **NOT symmetric around the sample median (which was also $120$ minutes, just like the lower bound here), unlike the confidence interval for the mean, which was symmetric around the sample mean**!
 
-Ennek hátterében az áll, hogy a **minta-mediánok eloszlása nem szép szimmetrikus normális eloszlás, mint a mintaátlagoké**. Ez a szimulált alminták átlagainak és mediánjainak hisztogramjaiból rögtön szépen látszódik.
+This is due to the fact that the **distribution of sample medians is not a nice, symmetric normal distribution like that of sample means**. This becomes immediately apparent when looking at the histograms of simulated sample means and medians.
 
 ```{r}
 hist(samples$means)
 hist(samples$medians)
 ```
 
-És tényleg: a mediánok esetében a szimulált mintavételi eloszlás nagyon koncentrál a $120$-ra, míg az átlag esetében megkapjuk a jól ismert, csudiszép normális eloszlásunkat! :)<br>
-Medián esetén a torzabb eloszlás kép részben összefügg azzal, amit Fundamentals of Statistics-ben tanultunk: kis értékkészletű ismérvre a medián nem túl informatív mutatószám! Mindenesetre ezt a "torzságot" a Bootstrap elven számolt konfidencia-intervallumkezeli. :)
+And indeed: in the case of medians, the simulated sampling distribution is highly concentrated around $120$, whereas in the case of the mean, we obtain our well-known, beautifully normal distribution! :)<br>
+For medians, the more skewed distribution is partly related to what we learned in Fundamentals of Statistics: for a variable with a small value set, the median is not a very informative statistic! In any case, this "skewness" is handled by the Bootstrap confidence interval method. :)
 
-Egyébként le is tudjuk csekkolni, hogy **átlag esetében a Bootstrap elven számított $95\%$-os megbízhatóságú konfidencia-intervallum ugyan azt az eredményt hozza némi kerekítési hibával, mint a standard normális eloszlású megbízhatóságú szorzóval dolgozó konfidencia-intervallum számolás**. Ugyebár most $n=1099$ nagy minta, így mindegy, hogy normális eloszlású megbízhatóságú szorzóval dolgozunk vagy t-eloszlásúval.
+By the way, we can also check that **for the mean, the $95\%$ confidence interval calculated using the bootstrap method gives the same result (with minor rounding errors) as the confidence interval calculated using the standard normal confidence multiplier**. Since in this case $n=1099$ is a large sample, it doesn't matter whether we use the normal distribution multiplier or the t-distribution multiplier.
 
 ```{r}
 # formula with confidence multiplier from t-distribution
@@ -348,11 +351,11 @@ groupwiseMean(NetUsePerDay_Minutes ~ 1, data = ESS, conf = 0.95,na.rm = TRUE, di
 quantile(samples$means, probs = c(alpha/2, 1-alpha/2))
 ```
 
-Tényleg, csak minimális eltérés van a két eredmény között, ami amúgy csökkenthető, ha a Bootstrap módszerben több almintával, azaz magasabb replikációszámmal dolgozunk.
+Indeed, there is only a minimal difference between the two results, which can be further reduced by increasing the number of Bootstrap subsamples, i.e., increasing the replication count.
 
-Szerencsére, a **Bootstrap konfidencia intervallum**okat nem kell mindig ilyen szenvedős módon kiszámolni Pythonban, mint ahogy most tettük a külön data frame generálásra `for` ciklusból az almintáknak, hanem **a `boot` csomagban létezik rá egy beépített függvény nagyon krevatívan `boot` néven**. Ennek az is az előnye, hogy a **futásideje is sokkal jobb, mint a mi összebarkálcsolt megoldásunknak**. Hiszen ezen a függvényen több fejlesztő is dolgozott több hónapot, halálra van az egész kód mögötte optimalizálva.
+Fortunately, **Bootstrap confidence intervals** do not always have to be computed in such a laborious manner in R as we just did by generating a separate data frame with a `for` loop for the subsamples. Instead, **the `boot` package provides a built-in function named very creatively as `boot`.** An additional advantage of this function is that **its runtime performance is much better than our manually constructed solution**. This is because multiple developers have optimized the entire code behind it over several months.
 
-Let's install and include the package to our R environment:
+Let's install and include the package to our R environment.
 
 ```{r eval=FALSE}
 install.packages("boot")
@@ -363,13 +366,13 @@ library(boot)
 library(boot)
 ```
 
-Az ezen belül lakó `boot` függvény paraméterei a következőképpen működnek:
+The `boot` function within this package works with the following parameters:
 
-1. Megadjuk az **adatsort vektor formátumban, amiből** majd a Bootstrap **almintákat kell generálni**.
-2. Megadjuk annak a **statisztikai paraméter**nek (mutatószámnak) az R-ben lévő függvényét, **amire a konfidencia-intervallumot** akarunk számolni.
-3. A **replikációszám**ot egy `R` paraméterben lehet variálni, de mivel alapesetben $10000$ db almintát készít a függvény, így **nem érdemes ebbe manuálisan belenyúlni ebbe a paraméterbe**. A $10000$ replikáció általában elég szokott lenni. :)
+1. We provide the **dataset in vector format, from which the bootstrap subsamples** should be **generated**.
+2. We specify the **statistical parameter** (measure) **for which we want** to compute **the confidence interval** in R.
+3. The **number of replications** can be adjusted via the `R` parameter, but since the function defaults to generating $10000$ samples, it is **generally not necessary to manually modify this parameter**. The $10000$ replications are usually sufficient. :)
 
-Lássuk akkor a függvényt akcióban, a napi netezési idők mediánjának $95\%$-os megbízhatóságú konfidencia-intervalluma esetében!
+Let's see the function in action for the $95\%$ confidence interval of the median daily internet usage time!
 
 ```{r}
 bootMedian <- function(data, indices) median(data[indices])
@@ -379,16 +382,16 @@ boot_result <- boot(ESS_Filter$NetUsePerDay_Minutes, bootMedian, R=10000)
 boot_result
 ```
 
-E voilá! Megvan a korábban látott $11.7$ perc körüli $SE$! :)
+E voilá! We have the previously seen standard error of around $11.7$ minutes! :)
 
-A `type` paraméterben kikötjük, hogy ugyan úgy **precentilisekkel határozza meg a konfidencia-intervallumot** a gépszellem, ahogyan mi is tettük ezt manuálisan. Itt is van a $120-150$ perces konfidencia-intervallum.
+In the `type` parameter, we specify that the system should **determine the confidence interval using percentiles**, just as we manually did. And here we have the $120-150$ minute confidence interval.
 
 ```{r}
 boot.ci(boot_result, conf = 0.95, type = "perc")
 ```
 
 
-## 5. A Szórás Bootstrap intervallumbecslése
+## 5. Bootstrap Confidence Interval for the Standard Deviation
 
 A szórás $1-\alpha$ konfidencia-intervallumára van egy zárt formulás képletünk, ami elég egyszerűen néz ki: $$P\left(\sqrt{\frac{(n-1)s^2}{\chi^2_{\alpha/2}(n-1)}}< \sigma <\sqrt{\frac{(n-1)s^2}{\chi^2_{1-\alpha/2}(n-1)}}\right) = 1 - \alpha$$
 
