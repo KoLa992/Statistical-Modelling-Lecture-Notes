@@ -1,7 +1,7 @@
 ---
 title: "Confidence Interval for the Mean in IID Samples"
 author: "László Kovács"
-date: "11/03/2025"
+date: "12/03/2025"
 output:
   html_document:
     toc: true
@@ -393,21 +393,21 @@ boot.ci(boot_result, conf = 0.95, type = "perc")
 
 ## 5. Bootstrap Confidence Interval for the Standard Deviation
 
-A szórás $1-\alpha$ konfidencia-intervallumára van egy zárt formulás képletünk, ami elég egyszerűen néz ki: $$P\left(\sqrt{\frac{(n-1)s^2}{\chi^2_{\alpha/2}(n-1)}}< \sigma <\sqrt{\frac{(n-1)s^2}{\chi^2_{1-\alpha/2}(n-1)}}\right) = 1 - \alpha$$
+A closed-form formula for the confidence interval of the standard deviation with confidence level $1-\alpha$ looks quite simple: $$P\left(\sqrt{\frac{(n-1)s^2}{\chi^2_{\alpha/2}(n-1)}}< \sigma <\sqrt{\frac{(n-1)s^2}{\chi^2_{1-\alpha/2}(n-1)}}\right) = 1 - \alpha$$
 
-A képletben a $\chi^2(n-1)$ az egyetlen ismeretlen betű. Ez azért van itt, mert a mintaszórásnégyzetek eloszlása egy $n-1$ szabadságfokú $\chi^2$-eloszlás, úgy mint ahogy a mintaátlagok eloszlása egy $n-1$ szabadságfokú $t$-eloszlás, ha a sokasági szórást nem ismerjük előre.<br>
-A $\chi^2(df)$-eloszlás egy **jobrra elnyúló normális eloszlás**. Az **elnyúlás mértékét a szabadságfoka** (angolul degrees of freedom = $df$) **szabályozza: minél nagyobb a szabadságfok, annál kevésbé jobbra elnyúló az eloszlás**:
+In this formula, the only unknown term is $\chi^2(n-1)$. This is present because the sample variance follows a $\chi^2$ distribution with $n-1$ degrees of freedom, just as the sample mean follows a $t$-distribution with $n-1$ degrees of freedom when the population standard deviation is not known in advance.<br>
+The $\chi^2(df)$ distribution is a **distribution with a long right tail**. The **degree of this skewness is controlled by the degrees of freedom** ($df$): the **higher the degrees of freedom, the less skewed the distribution**.
 
 <center>
 ![](chisqrdist.jpg){width=50%}
 </center>
 
-A $\chi^2_{\alpha/2}(n-1)$ és $\chi^2_{1-\alpha/2}(n-1)$ értékek egy $n-1$ (mintaelemszám mínusz egy) szabadságfokú $\chi^2$-eloszlás **inverz értékei $\alpha/2$ és $1-\alpha/2$ aláesési valószínűségek mellett**. Ezeket R-ben kiszámolni pofon egyszerű, hiszen van beépített függvény rá, teljesen logikusan a normális, exponenciális és t-eloszlások után `qchisq` néven. A függvény első paramétere az ismert alá esési valószínűség, második paramétere a szabadságfok, pont mint a `qt` esetében.
+The values $\chi^2_{\alpha/2}(n-1)$ and $\chi^2_{1-\alpha/2}(n-1)$ are the **quantile functions corresponding to the probabilities $\alpha/2$ and $1-\alpha/2$** for a $\chi^2$ distribution with $n-1$ degrees of freedom (sample size minus one). Computing these values in R is very straightforward since there is a built-in function for this, logically named `qchisq`, following the naming conventions of functions for the normal, exponential, and $t$-distributions. The first parameter of this function is the known cumulative probability, and the second is the degrees of freedom, just like in `qt`.
 
-A konfidencia-intervallum ezek után pedig csak annyi, hogy kiindulunk a mintaelemszám mínusz egy szorozva korrigált mintabeli szórásnégyzet ($(n-1)s^2$) értékből, és azt leosztjuk az intervallum alsó határához $\chi^2_{1-\alpha/2}(n-1)$-gyel, a felső határához pedig $\chi^2_{\alpha/2}(n-1)$-gyel, és az egész hányadosból gyököt vonunk.
+The confidence interval is then computed by taking the sample size minus one times the corrected sample variance $(n-1)s^2$ and dividing it by $\chi^2_{1-\alpha/2}(n-1)$ for the lower bound and by $\chi^2_{\alpha/2}(n-1)$ for the upper bound, then taking the square root of the entire fraction.
 
-Nézzük meg az elvet **alkalmazás közben a napi netezési idők szórásának $97%$-os megbízhatóságú konfidencia-intervallumára**!<br>
-Arra emlékezzünk csak technikai oldalon, hogy a $\chi^2_{\alpha/2}(n-1)$ ad majd kisebb inverz értéket, így ővele a felső határnál kell osztani (hogy az eredmény nagyobb legyen), míg a $\chi^2_{1-\alpha/2}(n-1)$ érték ad magasabb inverz értéket, így ővele az alsó határnál kell osztani (hogy az eredmény kisebb legyen).
+Let’s apply this method to **determine the $97\%$ confidence interval for the standard deviation of daily internet usage times**!<br>
+From a technical perspective, remember that $\chi^2_{\alpha/2}(n-1)$ gives the smaller inverse value, so it should be used in the denominator of the upper bound (to increase the result), while $\chi^2_{1-\alpha/2}(n-1)$ gives a higher inverse value, so it should be used in the denominator of the lower bound (to decrease the result).
 
 ```{r}
 # Get corrected sample standard deviation
@@ -426,22 +426,22 @@ common_numerator = (n-1)*(s^2)
 c(sqrt(common_numerator/chisq_upp), sqrt(common_numerator/chisq_low))
 ```
 
-Tehát, a megfigyelt mintában a napinetezési idők szórása $145.2$ perc, ami a **teljes magyar népesség körében $97\%$ valószínűséggel $138.8$ és $152.3$ perc között mozoghat**.
+Thus, in the observed sample, the standard deviation of daily internet usage times is $145.2$ minutes, and **for the entire Hungarian population, it is likely between $138.8$ and $152.3$ minutes with $97\%$ probability**.
 
-Érdemes megfigyelni, hogy a **konfidencia-intervallum NEM szimmetrikus a mintából számított szórásra azaz $s$-re, mint ahogy az átlag konfidencia-intervalluma a minta egészéből számított átlagra szimmetrikus volt**! Közelebb van valamivel a mintából számolt szórás ($s$) a konfidencia-intervallum alsó határához, mint a flsőhöz! Itt ennek az oka az, hogy **a $\chi^2$-eloszlás egy jobbra elnyúló eloszlás**, tehát azt gondolja, hogy a kisebb értékek jellemzőek inkább a mintaszórások eloszlására, így **a mintából mért szórást ($s$-t) is inkább a konfidnecia-intervallum "aljára teszi"**.
+It is worth noting that the **confidence interval is NOT symmetric around the sample standard deviation $s$, like the confidence interval for the mean was symmetric around the sample mean**! The sample standard deviation ($s$) is somewhat closer to the lower bound of the confidence interval than to the upper bound! This occurs **because the $\chi^2$ distribution has a long right tail**, meaning that it assumes smaller values are more typical in the distribution of sample variances, so it **places the observed sample standard deviation ($s$) "towards the bottom" of the confidence interval**.
 
-Ez mind szép és jó, de **ez a $\chi^2$-eloszlásos konfidencia-intervallum képlet jelen esetben feltételezi, hogy az adatsor, amiből a mintát vettük** (tehát a napi netezési idők) **az normális eloszlású a sokaságban!!!** Ez pedig marhára **NEM TELJESÜL, ahogy azt egy gyors hisztogram készítés után láthatjuk is!**
+This is all well and good, but **this $\chi^2$-based confidence interval formula assumes that the variable from which the sample was taken** (i.e., daily internet usage times) **follows a normal distribution in the population!!!** However, **this assumption does NOT hold, as a quick histogram reveals!**
 
 ```{r}
 hist(ESS_Filter$NetUsePerDay_Minutes)
 ```
 
-**Jobbra elnyúló** ez az időeloszlás, mint a fene. Ebből aztán semmilyen sokaságban **NEM** lesz **szép szimmetrikus normális eloszlás**!
+This time distribution has a steep **long right tail**. Therefore, in **no scenario** will this variable becomes a **nicely symmetric normal distribution** in the population!
 
-Tehát, a **szórás konfidencia-intervallum képlete nem reális eredményeket mutat a valós, sokasági szórásra, mert a képlet mögötti feltételezés NEM teljesül!**<br>
-Mit lehet tenni? **Hát alkalmazzuk a Bootstrap becslést, mivel annak semmilyen csúnya előfeltétele nincs**. Csak az kell itt is, hogy az eredeti sokaságból FAE mintavételünk legyen, de megbeszéltük a <a href="Gyak04.html" target="_blank">4. heti tananyag 4. fejezetének 2. feladatában</a>, hogy az ESS2020 mintavétel esetén ez a FAE mintavétel feltételezhető.
+Thus, the **confidence interval formula for the standard deviation does not provide realistic results for the true population standard deviation because the underlying assumption of normality is NOT met!**<br>
+What can be done? We should **apply the Bootstrap estimation method, as it does not require any strict assumptions**. The only requirement is that the original population sampling should be IID, but as we discussed in <a href="Chapter07.html" target="_blank">Section 4 of Chapter 7</a>, this assumption holds for the ESS2020 sample.
 
-Szóval, akkor csináljuk meg a Bootstrap becslést a napi netezési idők szórására is, $97\%$-os megbízhatósági szinten! A beépített `scipy` csomagos függvénnyel most is simán tudunk dolgozni, mint a medián esetében is tettük:
+So, let’s perform Bootstrap estimation for the standard deviation of daily internet usage times with $97\%$ confidence level! With the built-in function from the `boot` package, we can easily accomplish this, just as we did for the median.
 
 ```{r}
 boot_sd <- function(data, indices) sd(data[indices])
@@ -451,9 +451,9 @@ boot_sd_result <- boot(ESS_Filter$NetUsePerDay_Minutes, boot_sd, R = 10000)
 boot.ci(boot_sd_result, conf = 0.97, type = "perc")
 ```
 
-Ez alapján pedig a **napi netezési idők szórása a teljes magyar népesség körében $97\%$ valószínűséggel $131.3$ és $159.7$ perc között mozoghat**. Ami érdemben más, mint a $\chi^2$-es formulából kapott $138.8$ és $152.3$ perc közötti intervallum, de a **Bootstrap verzió a reálisabb, hiszen az NEM feltételezi a netezési idők normális eloszlását a teljes sokaságban!**
+Based on this, the **standard deviation of daily internet usage times in the entire Hungarian population is likely between $131.3$ and $159.7$ minutes with $97\%$ probability**. This is significantly different from the $\chi^2$-based confidence interval of $138.8$ to $152.3$ minutes, but the **Bootstrap version is more realistic because it does NOT assume that internet usage times follow a normal distribution in the population**!
 
-Szóval ez a Bootstrap becslés elég menő dolog. Pl. **lehet vele intervallumbecslést készíteni átlag esetében is kis mintákra** ($n\leq 30$), **amikor a mintavételezett adatsor eloszlása asokaságban NEM normális eloszlású és NEM tudjuk a valós sokasági szórást:**
+So, Bootstrap estimation is quite powerful. For example, it **allows interval estimation for the mean even in cases of small samples** ($n\leq 30$), **when the sampled variable does NOT follow a normal distribution in the population and the true population standard deviation is UNKNOWN**."
 
 <center>
 ![](BootstrapMeme.png){width=35%}
