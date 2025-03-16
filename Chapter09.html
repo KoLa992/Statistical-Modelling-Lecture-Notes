@@ -2752,7 +2752,7 @@ border-radius: 0px;
 <h1 class="title toc-ignore">Confidence Intervals in SR and Stratified
 Samples</h1>
 <h4 class="author">László Kovács</h4>
-<h4 class="date">15/03/2025</h4>
+<h4 class="date">16/03/2025</h4>
 
 </div>
 
@@ -2761,46 +2761,44 @@ Samples</h1>
 body {
 text-align: justify}
 </style>
-<div id="intervallumbecslés-visszatevés-nélküli-egyszerű-véletlen-ev-mintákból" class="section level2">
-<h2>1. Intervallumbecslés visszatevés nélküli egyszerű véletlen (EV)
-mintákból</h2>
-<p>Az eddigi hetek tananyagában végig FAE, azaz <em>visszatevéses</em>
-mintavételekkel dolgoztunk. Most nézzük meg, hogy mi a helyzet akko, ha
-a <strong>mintavételünk visszatevés nélküli véletlen
-mintavétel</strong>, azaz <strong>EV</strong> minta.</p>
-<p>Az okoskodásunk onnan indul, hogy azt mondjuk, hogy ha a minta
-kiválasztási aránya kicsi, azaz <strong>ha a teljes adatsokaságunknak
-csak egy nagyon kis százalékát választjuk ki, akkor a FAE és EV
-mintavétel lényegében ugyan az</strong>. Hiszen ebben az esetben még FAE
-mintavétrel esetén is nagyon kicsi az esélye, hogy a visszatevés miatt
-ténylegesen ismétlődés legyen, azaz többször is kiválasszuk ugyan azt az
-egyedet a mintánkba.</p>
-<p>A minta <strong>kiválasztási arányát</strong> korábbi jelöléseinkkel
-élve <span class="math inline">\(\frac{n}{N}\)</span>-nek jelöljük.
-Tehát, ha <span class="math inline">\(\frac{n}{N} \rightarrow
-0\)</span>, akkor <span class="math inline">\(FAE \approx
-EV\)</span>.</p>
-<p>Ha viszont <span class="math inline">\(\frac{n}{N}\)</span> egy
-nagyobb érték, akkor viszont az <strong>EV mintának pontosabbnak, azaz
-kisebb mintavételi hibájúnak kell lennie, minta FAE mintának</strong>,
-hiszen minden mintaelem az EV mintában biztos, hogy új információt hoz
-be a mintába, míg FAE esetben lehet ismétlődés a visszatevés miatt.</p>
-<p>Ezt a tényt pedig <strong>úgy képezzük le a konfidencia-intervallum
-képleteinkben</strong>, hogy FAE mintavételeknél tanult standard hiba
-képleteket egyszerűen beszorozzuk <span class="math inline">\(\sqrt{1-\frac{n}{N}}\)</span>-nel. Tehát: <span class="math display">\[SE_{SR}=SE_{IID} \times
+<div id="confidence-intervals-for-simple-random-sampling-without-replacement-sr-samples" class="section level2">
+<h2>1. Confidence Intervals for Simple Random Sampling without
+Replacement (SR Samples)</h2>
+<p>In the previous chapters, we have consistently worked with IID
+(Independent, Identically Distributed Samples or in other words, Random
+Sampling <em>with Replacement</em>). Now, let’s examine what happens
+when we have a <strong>random sample without replacement</strong>, i.e.,
+a <strong>SR</strong> Sample.</p>
+<p>Our reasoning starts from the fact that if the sampling fraction is
+small, meaning <strong>if we select only a very small percentage of the
+entire population, then IID and SR are essentially the same</strong>. In
+this case, even with IID, the probability of actual repetitions due to
+replacement is very low, meaning it is unlikely that the same unit is
+selected multiple times in our sample.</p>
+<p>The <strong>selection ratio</strong>, using our previous notation, is
+denoted as <span class="math inline">\(\frac{n}{N}\)</span>. Thus, if
+<span class="math inline">\(\frac{n}{N} \rightarrow 0\)</span>, then
+<span class="math inline">\(IID \approx SR\)</span>.</p>
+<p>However, if <span class="math inline">\(frac{n}{N}\)</span> takes a
+larger value, then the <strong>SR sample should be more precise, meaning
+it should have a smaller sampling error than the IID sample</strong>,
+because every sampled observation in SR brings in new information, while
+in IID, redundant selection can occur due to replacement.</p>
+<p>We <strong>incorporate this fact into our confidence interval
+formulas</strong> by simply multiplying the standard error formulas
+learned for IID by <span class="math inline">\(\sqrt{1-\frac{n}{N}}\)</span>. Thus: <span class="math display">\[SE_{SR}=SE_{IID} \times
 \sqrt{1-\frac{n}{N}}\]</span></p>
-<p>Ez a képlet azért végzi azt, amit mi akarunk, mert <strong>ha nagyon
-<span class="math inline">\(0\)</span> közeli a kiválasztási
-arány</strong>, akkor az <span class="math inline">\(SE_{IID}\)</span>-t
-gyakorlatilag <span class="math inline">\(1\)</span>-gyel szorozzuk,
-azaz <strong>nem változtatunk rajta semmit</strong>. <strong>Ha</strong>
-pedig a <strong>kiválasztási arány érdemben nagyobb, mint <span class="math inline">\(0\)</span>,</strong> akkor pedig egy <span class="math inline">\(0\)</span> és <span class="math inline">\(1\)</span> közti számmal szorozzuk <span class="math inline">\(SE_{IID}\)</span>-t, így a <strong>szorzat ekkor
-biztosan kisebb lesz, mint <span class="math inline">\(SE_{IID}\)</span>
-volt</strong>.</p>
-<p>Aki nem hiszi, nyugodtan <strong>kirajzoltathatja Pythonban, az SR
-korrekciós tényező, azaz a <span class="math inline">\(\sqrt{1-\frac{n}{N}}\)</span>
-viselkedését</strong> különböző <span class="math inline">\(\frac{n}{N}\)</span> kiválasztási arányok
-mellett:</p>
+<p>This formula achieves what we need because:</p>
+<ol style="list-style-type: decimal">
+<li><strong>If the selection ratio is very close to <span class="math inline">\(0\)</span></strong>, then we are multiplying <span class="math inline">\(SE_{IID}\)</span> by approximately <span class="math inline">\(1\)</span>, meaning we do <strong>not change it at
+all</strong>.</li>
+<li><strong>If the selection ratio is noticeably greater than <span class="math inline">\(0\)</span></strong>, then we multiply <span class="math inline">\(SE_{IID}\)</span> by a number between <span class="math inline">\(0\)</span> and <span class="math inline">\(1\)</span>, which ensures that the <strong>product
+is always smaller than the original <span class="math inline">\(SE_{IID}\)</span></strong>.</li>
+</ol>
+<p>If you don’t believe it, feel free to <strong>plot the SR correction
+factor, <span class="math inline">\(\sqrt{1-\frac{n}{N}}\)</span>, in
+R</strong> with <code>ggplot</code> for different values of the
+selection ratio <span class="math inline">\(\frac{n}{N}\)</span>.</p>
 <pre class="r"><code># Empty vector for SR correction factors
 SR_Vec &lt;- c()
 # Vector for the examined selection ratios
@@ -2820,29 +2818,32 @@ SR_Data &lt;- data.frame(SelectionRatio=SelectionRatios,
 library(ggplot2)
 ggplot(SR_Data, aes(x=SelectionRatio, y=CorrectionFactor)) + geom_line()</code></pre>
 <p><img role="img" src="data:image/png;base64,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" width="672" /></p>
-<p>Látszik, hogy ahogy nő a kiválasztási arány, annál kisebb százalékát
-kell venni <span class="math inline">\(SE_{IID}\)</span>-nek az <span class="math inline">\(SE_{SR}\)</span> számolása során. Éljen! :)</p>
-<p>Nézzük meg ezt az egész rendszert a gyakorlatban az átlag
-intervallumbecslése során, nagy mintás esetben!</p>
-<div id="átlag-becslése-ev-mintákból" class="section level3">
-<h3>1.1. Átlag becslése EV mintákból</h3>
-<p>Töltsük be a
+<p>You can see that as the sampling fraction increases, a smaller
+percentage of <span class="math inline">\(SE_{IID}\)</span> is taken
+when calculating <span class="math inline">\(SE_{SR}\)</span>. Hooray!
+:)</p>
+<p>Now, let’s see this entire system in practice for interval estimation
+of the mean in a large-sample case!</p>
+<div id="confidence-interval-for-the-mean-in-sr-sample" class="section level3">
+<h3>1.1. Confidence Interval for the Mean in SR Sample</h3>
+<p>Let’s load the contents of the Excel file
 <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/Households_Income.xlsx" target="_blank">Households_Income.xlsx</a>
-című Excel fájl tartalmát egy data frame-be!<br> A táblában <span class="math inline">\(n=8306\)</span> db magyar háztartás két ismérvét
-(oszlopát) látjuk:</p>
+into a data frame!<br> In the table, we see the two variables (columns)
+of <span class="math inline">\(n=8306\)</span> Hungarian households:</p>
 <ol style="list-style-type: decimal">
-<li>Milyen típusú településen található a háztartás (Village, Town,
-City, Budapest)</li>
-<li>A háztartás éves jövedelmét 2019-ben, ezer Ft-ban kifejezve</li>
+<li>The type of settlement where the household is located (Village,
+Town, City, Budapest)</li>
+<li>The household’s annual income in 2019, expressed in thousand
+HUF</li>
 </ol>
-<p>Az adatok a <a href="https://www.ksh.hu/eletmod" target="_blank">KSH
-Jövedelmi és Életkörülmény Adatfelvételéből</a> származnak. A KSH
-linkelt leírása szerint az <strong>adatok a magyar háztartások
-sokaságából visszatevés nélkül véletlen, azaz EV mintaként
-kezelhetők</strong>.<br> Ez alapján egy nagyon fontos infó, hogy
-2019-ben a magyar háztartások teljes száma 4 111 240 db volt. Tehát, a
-<strong>sokaságunk teljes elemszáma <span class="math inline">\(N=4111240\)</span> db</strong>.</p>
-<p>Lássuk is a beolvasást egy data frame-be!</p>
+<p>The data comes from the
+<a href="https://www.ksh.hu/eletmod" target="_blank">HCSO Income and
+Living Conditions Survey</a>. According to the linked description by
+HCSO, the <strong>data can be treated as a simple random sample without
+replacement (SR) from the population of Hungarian
+households</strong>.<br> Based on this, an important piece of
+information is that in 2019, the <strong>total number of Hungarian
+households was <span class="math inline">\(N=4111240\)</span></strong>.</p>
 <pre class="r"><code>library(readxl)
 HH &lt;- read_excel(&quot;Households_Income.xlsx&quot;)
 str(HH)</code></pre>
@@ -2850,17 +2851,20 @@ str(HH)</code></pre>
 ##  $ HouseholdID: num [1:8306] 1 2 3 4 5 6 7 8 9 10 ...
 ##  $ Settlement : chr [1:8306] &quot;Budapest&quot; &quot;Budapest&quot; &quot;Budapest&quot; &quot;Budapest&quot; ...
 ##  $ Income     : num [1:8306] 7860 4279 10605 3278 5222 ...</code></pre>
-<p>Remek: megvan a két keresett oszlopunk mind az <span class="math inline">\(n=8306\)</span> db háztartásra, plusz egy
-<em>ID</em> oszlop az elején, amit nem fogunk semmire sem használni.
-:)</p>
-<p>Ezek után simán bevethetjük az átlagos háztartási jövedelem <span class="math inline">\(99\%\)</span>-os megbízhatóságú
-intervalumbecslésére a jól bevált <em>mintaátlag +- delta</em>, azaz
-<span class="math inline">\(\bar{y}\pm\triangle\)</span> című módszert.
-Hiszen a <span class="math inline">\(\triangle=k \times SE\)</span>
-képletben a nagy, <span class="math inline">\(n=8306\)</span>-os
-elemszám miatt a megbízhatósági szorzó simán jöhet standard normális
-eloszlásból, azaz <span class="math inline">\(k=z_{1-\frac{\alpha}{2}}\)</span>. Az <span class="math inline">\(SE\)</span> pedig akkor egy EV minta <span class="math inline">\(SE\)</span>-je, ami az előző fejezet alapján <span class="math inline">\(SE_{IID} \times \sqrt{1-\frac{n}{N}}\)</span>
-módon meghadható.</p>
+<p>Great! We have found our two desired columns for all <span class="math inline">\(n=8306\)</span> households, plus an <em>ID</em>
+column at the beginning, which we won’t be using for anything. :)</p>
+<p>Now we can confidently apply the well-known sample <em>mean ±
+delta</em> method, i.e., <span class="math inline">\(\bar{y} \pm
+\triangle\)</span>, to estimate the <span class="math inline">\(99\%\)</span> confidence interval for the average
+household income. Since in the formula <span class="math inline">\(\triangle = k \times SE\)</span>, due to the large
+sample size <span class="math inline">\(n=8306\)</span>, the confidence
+multiplier can be taken directly from the standard normal distribution,
+meaning <span class="math inline">\(k = z_{1-\frac{\alpha}{2}}\)</span>.
+The standard error <span class="math inline">\(SE\)</span> in this case
+is the standard error for an SR sample, which, based on the previous
+chapter, can be given as <span class="math inline">\(SE_{IID} \times
+\sqrt{1-\frac{n}{N}}\)</span>, and of course we all know that for the
+mean <span class="math inline">\(SE_{IID}=\frac{s}{\sqrt{n}}\)</span>.</p>
 <pre class="r"><code>N &lt;- 4111240
 n &lt;- nrow(HH)
 
@@ -2875,39 +2879,41 @@ SE_SR &lt;- s/sqrt(n)*sqrt(1-n/N)
 # conf interval
 c(sample_mean - k_z*SE_SR, sample_mean + k_z*SE_SR)</code></pre>
 <pre><code>## [1] 4567.729 4730.117</code></pre>
-<p>Tehát, viszzatevés nélküli véletlen mintavételként kezelve a HKF
-adatokat,azt kapjuk, hogy <strong>egy átlagos magyar háztartás éves
-jövedeleme</strong> <span class="math inline">\(4568\)</span> és <span class="math inline">\(4730\)</span> ezer Ft, azaz <strong><span class="math inline">\(4.5\)</span> és <span class="math inline">\(4.7\)</span> millió Ft között mozog <span class="math inline">\(99\%\)</span>-os valószínűséggel</strong>.</p>
-<p>A kiválasztási arányunk ugyebármost nagyon kicsi: <span class="math inline">\(\frac{n}{N}=\frac{8306}{4111240}=0.002\)</span>,
-szóval az eredmény lényegében nem különbözik attól, mintha az egészet az
-EV korrekciós szorzó nélkül csináltuk volna végig a műveletet:</p>
+<p>Thus, treating this Household data as a simple random sample without
+replacement, we obtain that <strong>the average annual income of a
+Hungarian household is</strong> between <span class="math inline">\(4568\)</span> and <span class="math inline">\(4730\)</span> thousand HUF, meaning
+<strong>between <span class="math inline">\(4.5\)</span> and <span class="math inline">\(4.7\)</span> million HUF with <span class="math inline">\(99\%\)</span> probability</strong>.</p>
+<p>Our selection ratio here is very small: <span class="math inline">\(\frac{n}{N}=\frac{8306}{4111240}=0.002\)</span>,
+so the result is essentially the same as if we had performed the entire
+calculation without the SR correction factor.</p>
 <pre class="r"><code>SE_IID &lt;- s/sqrt(n)
 
 # conf interval
 c(sample_mean - k_z*SE_IID, sample_mean + k_z*SE_IID)</code></pre>
 <pre><code>## [1] 4567.647 4730.199</code></pre>
-<p>A várható éves jövedelem így is kb. <span class="math inline">\(4.5\)</span> és <span class="math inline">\(4.7\)</span> millió Ft között mozog <span class="math inline">\(99\%\)</span>-os valószínűséggel.</p>
+<p>Thus, the expected annual income is still approximately between <span class="math inline">\(4.5\)</span> and <span class="math inline">\(4.7\)</span> million HUF with <span class="math inline">\(99\%\)</span> confidence.</p>
 </div>
-<div id="arány-becslése-ev-mintákból" class="section level3">
-<h3>1.2. Arány becslése EV mintákból</h3>
-<p>Ugyan ez a logika teljesen jól működik az arányok becslése esetén is.
-Ez nem véletlen, hiszen letisztáztuk az
-<a href="Gyak05.html" target="_blank">5. heti tananyagban</a>, hogy az
-arány, mint statisztikai mutató valójában egy olyan adatsor átlaga, hogy
-az arányban vizsgált tuljadonsággal bíró megfigyelések <span class="math inline">\(1\)</span>-gyel vannak kódolva, a többiek pedig
-<span class="math inline">\(0\)</span>-val.</p>
-<p>Csináljuk is meg egy új oszlopban azt a <span class="math inline">\(0-1\)</span> adatsort, amivel mondjuk a budapesti
-háztartások aránya becsülhető lesz.</p>
+<div id="confidence-interval-for-the-proportions-in-sr-sample" class="section level3">
+<h3>1.2. Confidence Interval for the Proportions in SR Sample</h3>
+<p>The same logic works perfectly well for proportion estimation as
+well. This is no coincidence, as we clarified in
+<a href="Chapter08.html" target="_blank">Chapter 8</a> that a
+proportion, as a statistical measure, is actually the mean of a variable
+where observations possessing the examined characteristic are coded as
+<span class="math inline">\(1\)</span>, while all others are coded as
+<span class="math inline">\(0\)</span>.</p>
+<p>Let’s create this <span class="math inline">\(\{0,1\}\)</span>
+variable in a new column, which will allow us to estimate the proportion
+of Budapest households.</p>
 <pre class="r"><code>HH$isBP &lt;- ifelse(HH$Settlement==&quot;Budapest&quot;, 1, 0)
 mean(HH$isBP)</code></pre>
 <pre><code>## [1] 0.1855285</code></pre>
-<p>Szuper, meg is vagyunk, a megfigyelt mintában a budapesti háztartások
-aránya <span class="math inline">\(18.55\%\)</span>.</p>
-<p>Ezek után, ha ezen az új oszlopon alkalmazzuk a
-konfidencia-intervallum képletét az 1.1. fejezetben látott módon a <span class="math inline">\(\sqrt{1-\frac{n}{N}}\)</span> korrekciós
-tényezővel, akkor meg is van a <strong>budapesti háztartások
-sokaságiarányának <span class="math inline">\(99\%\)</span>-os
-megbízhatóságú intervallumbecslése</strong>:</p>
+<p>Great, we are done! In the observed sample, the proportion of
+Budapest households is <span class="math inline">\(18.55\%\)</span>.</p>
+<p>Now, if we apply the confidence interval formula from Section 1.1 to
+this new column, incorporating the correction factor <span class="math inline">\(\sqrt{1-\frac{n}{N}}\)</span>, we <strong>obtain
+the <span class="math inline">\(99\%\)</span> confidence interval for
+the proportion of Budapest households in the population</strong>.</p>
 <pre class="r"><code>sample_prop &lt;- mean(HH$isBP)
 
 SE_Prop_SR &lt;- sqrt(sample_prop*(1-sample_prop)/n)*sqrt(1-n/N)
@@ -2915,119 +2921,123 @@ SE_Prop_SR &lt;- sqrt(sample_prop*(1-sample_prop)/n)*sqrt(1-n/N)
 # conf interval
 c(sample_prop - k_z*SE_Prop_SR, sample_prop + k_z*SE_Prop_SR)</code></pre>
 <pre><code>## [1] 0.1745530 0.1965041</code></pre>
-<p>Szóval az <strong>összes magyar háztartásból kb. <span class="math inline">\(17.5\% - 19.6\%\)</span> lehet budapesti</strong>,
-<span class="math inline">\(99\%\)</span> valószínűséggel.</p>
+<p>Thus, <strong>approximately <span class="math inline">\(17.5\% -
+19.6\%\)</span> of all Hungarian households are located in
+Budapest</strong>, with <span class="math inline">\(99\%\)</span>
+confidence.</p>
 </div>
 </div>
-<div id="átlag-becslése-arányosan-rétegzett-ar-mintákból" class="section level2">
-<h2>2. Átlag becslése Arányosan Rétegzett (AR) mintákból</h2>
-<p>A KSH a HKF adatbázisáról nem csak simán azt állítja, hogy egyszerű
-véletlen (EV) minta a magyar háztartásokból, hanem, hogy
-<strong>településtípus szerint arányosan rétegzett EV mita</strong>. Ez
-azt jelenti, hogy <strong>a <span class="math inline">\(4\)</span> db
-településtípusból</strong> (Budapest, Nagyváros, Többi város, Község)
-<strong>külön-külön vettek EV mintát, úgy, hogy a végső <span class="math inline">\(n=8306\)</span> elemű mintában az egyes
-településtípusok aránya annyi legyen, mint a teljes sokaságban</strong>
-(összes magyar háztartás) <strong>a településtípusok aránya</strong>.
-Tehát a minta tökéletesen reprezentatívra lett beállítva a
-településtípusra.</p>
-<p>Ennek a mintavételi technikának a lényege, hogy ha <strong>meg akarom
-becsülni a magyar háztartások átlagos éves jövedelmét</strong>, akkor a
-<strong>standard hibában NEM KELL számolnom a településtípusok KÖZÖTTI
-jövedelem szórással</strong>! Hiszen ezt a <strong>külső szórást már
-kezelte a településtípusonkénti külön-különmintavétel!!</strong><br>
-Magyarul, az <span class="math display">\[SE_{SR} = \frac{s}{\sqrt{n}}
-\times \sqrt{1-\frac{n}{N}}\]</span></p>
-<p>Képlet <strong>helyett elég a standard hibában csak a belső korrigált
-mintaszórással</strong>, <span class="math inline">\(s_w\)</span>-vel
-számolnom: <span class="math display">\[SE_{PR} = \frac{s_w}{\sqrt{n}}
-\times \sqrt{1-\frac{n}{N}}\]</span></p>
-<p>Amit a fenti formuláshoz tudni kell, hogy egy <strong>számértékű
-változó teljes (korrigált) varianciája, felbontható a rétegek közötti
-külső és a rétegeken belüli belső varianciák összegére</strong>.</p>
-<p>A következő képletekben a <span class="math inline">\(j\)</span>
-index a <span class="math inline">\(j\)</span>-edik réteget jelöli, és a
-rétegek számát pedig <span class="math inline">\(M\)</span>-mel
-jelöljük, azaz <span class="math inline">\(j=1,2,...,M\)</span> és <span class="math inline">\(n=\sum_{j=1}^M{n_j}\)</span>.</p>
-<p>A belső szórást a <strong>belső variancián, azaz belső
-szórásnégyzeten keresztül kapjuk meg</strong>. Ez pedig nem más, mint a
-rétegenkénti <strong>részszórások <span class="math inline">\(s_j^2\)</span> négyzeteinek elemszámok mínusz
-1-gyel (<span class="math inline">\(n_j-1\)</span>) súlyozott
-átlaga</strong>. <span class="math display">\[s_w^2=\frac{\sum_j{(n_j-1)s_j^2}}{n-1}\]</span></p>
-<p>A belső szórás pedig egyszerűen a belső variancia gyöke. <span class="math inline">\(s_w=\sqrt{s_w^2}\)</span> Általánosságban <span class="math inline">\(s_w\)</span> azt jelenti, hogy <strong>egy
-véletlenszerűen kiválasztott egyed konkrét mennyiségi változó értéke
-várhatóan mennyivel tér el saját csoportjának (rétegének)
-átlagától</strong>.</p>
-<p>A másik vége a dolognak a külső szórás, ami szintén a négyzetén, a
-külső variancián keresztül számítható. A külső variancia pedig a
-<strong>rétegenkénti részátlagok <span class="math inline">\(\bar{y}_j\)</span> elemszámokkal (<span class="math inline">\(n_j\)</span>) súlyozott korrigált szórása a
-mennyiségi változó főátlaga <span class="math inline">\(\bar{y}\)</span>
-körül</strong>. <span class="math display">\[s_b^2=\frac{\sum_j{n_j(\bar{y}_j-\bar{y})^2}}{n-1}\]</span></p>
-<p>A külső szórás pedig egyszerűen a külső variancia gyöke. <span class="math inline">\(s_b=\sqrt{s_b^2}\)</span> Általánosságban <span class="math inline">\(s_b\)</span> azt jelenti, hogy <strong>egy csoport
-(réteg) átlaga várhatóan mennyivel tér el a mennyiségi változó
-főátlagától</strong>.</p>
-<p>Ebből a két tényezőből pedig összeadható a <strong>teljes korrigált
-mintavariancia: <span class="math inline">\(s^2=s_w^2+s_b^2\)</span>.</strong> A teljes szórás
-pedig ennek a mennyiségnek a gyöke: <span class="math inline">\(s=\sqrt{s^2}=\sqrt{s_w^2+s_b^2}\)</span>.
-<strong>Mivel tagonként nem vonhatunk gyököt, így ez az összefüggés
-ugyebár a szórásokra NEM lesz igaz!!</strong></p>
-<p>A teljes szórás pedig <strong>általánosan ugye azt mutatja meg, hogy
-egy véletlenszerűen kiválasztott egyed konkrét mennyiségi változó értéke
-várhatóan mennyivel tér el a mennyiségi változó csoportoktól, azaz
-rétegzéstől független, teljes főátlagától</strong>.</p>
-<p><strong>Képzeljük most el ezeket a különböző szórásokat vizuálisan,
-mint távolságokat</strong>. Az alábbi ábra egy egyszerűbb rendszert
-mutat, ahol a rétegeket adó változó csak két csoportot alkot
-(<em>narancsok</em> és <em>zöldek</em>), nem pedig négyet, mint amennyit
-a mi négy településtípusunk generál.</p>
+<div id="confidence-interval-for-the-mean-from-proportionally-stratified-ps-sample" class="section level2">
+<h2>2. Confidence Interval for the Mean from Proportionally Stratified
+(PS) Sample</h2>
+<p>The HCSO does not simply state that the HH database is a simple
+random sample (SR) from Hungarian households; rather, it specifies that
+it is a <strong>proportionally stratified sample based on settlement
+type</strong>. This means that <strong>separate SR samples were taken
+from the four types of settlements</strong> (Budapest, Large City, Other
+Towns, Villages) in <strong>such a way that their proportions in the
+final sample of <span class="math inline">\(n=8306\)</span> elements
+match their proportions in the entire population</strong> (i.e., all
+Hungarian households). Thus, the sample is perfectly representative
+regarding settlement type.</p>
+<p>The essence of this sampling technique is that if we <strong>want to
+estimate the average annual income of Hungarian households, then in the
+standard error calculation, we do NOT need to account for income
+variation BETWEEN settlement types</strong>! This is because this
+<strong>between variation is already handled by the separate sampling
+within each settlement type</strong>!<br> Meaning that <strong>instead
+of the formula</strong> <span class="math display">\[SE_{SR} =
+\frac{s}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}}\]</span></p>
+<p>It is sufficient to compute the standard error using only the
+<strong>within-strata corrected sample standard deviation</strong>,
+denoted as <span class="math inline">\(s_w\)</span>: <span class="math display">\[SE_{PR} = \frac{s_w}{\sqrt{n}} \times
+\sqrt{1-\frac{n}{N}}\]</span></p>
+<p>To understand this formula, we need to know that <strong>the total
+(corrected) variance of a numerical variable can be decomposed into the
+sum of between variance (between strata) and within variance (within
+strata)</strong>.</p>
+<p>In the following formulas, the index <span class="math inline">\(j\)</span> denotes the <span class="math inline">\(j\)</span>-th stratum, and the number of strata is
+denoted by <span class="math inline">\(M\)</span>, so <span class="math inline">\(j=1,2,...,M\)</span> and <span class="math inline">\(n=\sum_{j=1}^M{n_j}\)</span>.</p>
+<p>The <strong>within standard deviation is obtained through the within
+variance</strong>, i.e., the within squared deviation. This is
+calculated as the <strong>weighted average of the squared deviations
+<span class="math inline">\(s_j^2\)</span> within each stratum, weighted
+by <span class="math inline">\(n_j-1\)</span></strong>. <span class="math display">\[s_w^2=\frac{\sum_j{(n_j-1)s_j^2}}{n-1}\]</span></p>
+<p>The internal standard deviation is simply the square root of the
+internal variance: <span class="math inline">\(s_w=\sqrt{s_w^2}\)</span>. In general, <span class="math inline">\(s_w\)</span> represents <strong>how much a
+randomly chosen observation’s variable value is expected to deviate from
+the mean of their own stratum</strong>.</p>
+<p>On the other hand, the between standard deviation is also calculated
+through its squared deviation, the between variance. The between
+variance is the <strong>weighted corrected variance of the stratum means
+<span class="math inline">\(\bar{y}_j\)</span>, weighted by <span class="math inline">\(n_j\)</span>, around the overall mean <span class="math inline">\(\bar{y}\)</span></strong>: <span class="math display">\[s_b^2=\frac{\sum_j{n_j(\bar{y}_j-\bar{y})^2}}{n-1}\]</span></p>
+<p>The between standard deviation is simply the square root of the
+between variance: <span class="math inline">\(s_b=\sqrt{s_b^2}\)</span>
+In general, <span class="math inline">\(s_b\)</span> <strong>represents
+how much a stratum’s mean is expected to deviate from the overall mean
+of the numerical variable</strong>.</p>
+<p>From these two components, we can compute the <strong>total corrected
+sample variance</strong> as: <span class="math inline">\(s^2=s_w^2+s_b^2\)</span> The total standard
+deviation is then the square root of this quantity: <span class="math inline">\(s=\sqrt{s^2}=\sqrt{s_w^2+s_b^2}\)</span>
+<strong>Since we cannot take square roots term by term, this
+relationship does NOT hold for standard deviations!</strong></p>
+<p>The total standard deviation generally indicates <strong>how much a
+randomly chosen individual’s variable value is expected to deviate from
+the overall mean of the numerical variable, independent of
+stratification</strong>.</p>
+<p><strong>Now, let’s imagine these different standard deviations
+visually as distances.</strong> The following figure illustrates a
+simplified system where the stratifying variable creates only two groups
+(<em>oranges</em> and <em>greens</em>), rather than the four settlement
+types used in our example.</p>
 <center>
 <img role="img" src="data:image/png;base64,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" style="width:80.0%" />
 </center>
-<p><br>Tehát vizuálisan a következőképp érdemes gondolni a különböző
-<span class="math inline">\(s\)</span>-ekra:</p>
+<p><br>So, visually, we should think about the different <span class="math inline">\(s\)</span> values as follows::</p>
 <ul>
-<li><span class="math inline">\(s_w\)</span>: Megfigyelések távolsága
-saját csoportjuk átlagától</li>
-<li><span class="math inline">\(s_b\)</span>: Csoportátlag távolsága a
-főátlagtól</li>
-<li><span class="math inline">\(s\)</span>: Megfigyelések távolsága a
-főátlagától</li>
+<li><span class="math inline">\(s_w\)</span>: Average distance of one
+observation from its own stratum’s mean</li>
+<li><span class="math inline">\(s_b\)</span>: Average distance of strata
+means from the overall mean</li>
+<li><span class="math inline">\(s\)</span>: Average distance of one
+observation from the overall mean</li>
 </ul>
-<p>Ezek alapján nekünk az a jó a csoportosítás, azaz a minőségi ismérv
-magyarázóereje szempontjából, ha <strong>fix</strong> <span class="math inline">\(s\)</span> mellett <span class="math inline">\(s_b\)</span> <strong>nagy</strong> és <span class="math inline">\(s_w\)</span> <strong>kicsi</strong>. Mert ekkor a
-<strong>csoportátlagok messze vannak</strong> a főátlagtól és így
-implicite <strong>egymástól</strong> is, míg a csoportátlagtól az egyes
-<strong>megfigyelések nagyon kis mértékben térnek csak el saját
-csoportátlaguktól</strong>:</p>
+<p>Based on this, in terms of stratification —i.e., the explanatory
+power of the qualitative variable used for the strata— it is best if,
+for a <strong>fixed</strong> <span class="math inline">\(s\)</span>,
+<span class="math inline">\(s_b\)</span> is <strong>large</strong> and
+<span class="math inline">\(s_w\)</span> is <strong>small</strong>. This
+is because in this case, the <strong>strata means are far from the
+overall mean</strong> and thus, implicitly <strong>far from each
+other</strong>, while individual <strong>observations deviate only
+slightly from their own stratum’s mean</strong>.</p>
 <center>
 <img role="img" src="data:image/png;base64,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" style="width:30.0%" />
 </center>
-<p>Ebben az esetben, ahogy az ábráról is látszik a csoportosításunk,
-azaz a rétegzésünk magyarázóereje nagy! Tehát az kell nekünk, hogy az
-<span class="math inline">\(s\)</span> minél nagyobb részét tegye ki
-<span class="math inline">\(s_b\)</span>. Viszont, mivel csak a teljes
-<strong>varianciára</strong> igaz az, hogy <strong>egyenlő a külső és
-belső VARIANCIA összegével</strong>, így azt mondjuk, hogy <strong>azt
-szeretnénk látni</strong>, hogy <strong>a <span class="math inline">\(\frac{s_b^2}{s^2}\)</span> hányados nagy
-legyen</strong>!</p>
-<p>Mivel a rétegzett mintavétel lényege éppen az, hogy <strong>minden
-rétegből külön-külön veszünk EV mintát</strong>. Emiatt pedig a
-<strong>rétegek közötti</strong> $s_b^2 $ külső <strong>variancával NEM
-kel számolni a standard hibában</strong>, csak a belsővel. Ezzel a
-cserével adódik tehát az arányosan rétegzett mintavétel átlagra
-vonatkozó standard hibájának képlete: <span class="math display">\[SE_{PR} = \frac{s_w}{\sqrt{n}} \times
-\sqrt{1-\frac{n}{N}}\]</span></p>
-<p>A rétegzés tehát akkor jó, ha <strong>a rétegek közötti varianciája a
-vizsgált változónka nagy részét teszi ki a teljes
-varianciájának</strong>, mert csak ekkor <strong>kijelenthető, hogy az
-arányosan rétegzett mintavétel becslési hibája az átlagra kisebb, mint
-az EV</strong> (vagy a FAE) <strong>mintavételek esetén</strong>: <span class="math inline">\(SE_{PR} \leq SE_{SR}\)</span></p>
-<p>Nézzük is meg akkor a dolgot élesben!</p>
-<p>Ugyebár tudjuk, hogy a háztartások átlagos éves jövedeleme a teljes
-magyar népességben <span class="math inline">\(99\%\)</span>-os
-valószínűséggek <span class="math inline">\(4.5\)</span> és <span class="math inline">\(4.7\)</span> millió Ft körül mozog, ha a HKF
-adatokat EV mintavételként kezeljük. Most az SE-t rendesen a <span class="math inline">\(SE_{SR}=\frac{s}{\sqrt{n}} \times
-\sqrt{1-\frac{n}{N}}\)</span> képlettel számoljuk ki.</p>
+<p>In this case, as the figure illustrates, our grouping (i.e.,
+stratification) has strong explanatory power! Therefore, we want <span class="math inline">\(s\)</span> to be composed mostly of <span class="math inline">\(s_b\)</span>. However, since the property that the
+total <strong>variance</strong> equals the <strong>sum of between and
+within variance</strong> holds only for variance (not for standard
+deviation), we <strong>look at the ratio of <span class="math inline">\(\frac{s_b^2}{s^2}\)</span> and we want this ratio
+to be large</strong>!</p>
+<p>The essence of stratified sampling is that <strong>we take an
+independent SR sample from each stratum</strong>. As a result, the
+<strong>between-stratum variance</strong> <span class="math inline">\(s_b^2\)</span> <strong>does not need to be
+accounted for in the standard error calculation</strong>, only the
+within variance. Applying this in the original <span class="math inline">\(SE_{SR}\)</span> formula, we get the standard
+error formula for the mean under proportionally stratified (PS)
+sampling: <span class="math display">\[SE_{PR} = \frac{s_w}{\sqrt{n}}
+\times \sqrt{1-\frac{n}{N}}\]</span></p>
+<p>Stratification is therefore most effective when <strong>the variance
+between strata accounts for a large proportion of the total variance of
+the examined variable</strong>, because only then can we say that
+<strong>the estimation error of the proportionally stratified sample is
+smaller than that of an SR</strong> (or an IID sample): <span class="math inline">\(SE_{PR} \leq SE_{SR}\)</span></p>
+<p>Now, let’s test this in practice!</p>
+<p>We know that the average annual household income in the entire
+Hungarian population is likely between <span class="math inline">\(4.5\)</span> and <span class="math inline">\(4.7\)</span> million HUF with <span class="math inline">\(99\%\)</span> probability, assuming we treat the
+<strong>HKF data as an SR sample</strong>. We computed the <span class="math inline">\(SE\)</span> using the <span class="math inline">\(SE_{SR}=\frac{s}{\sqrt{n}} \times
+\sqrt{1-\frac{n}{N}}\)</span> formula here.</p>
 <pre class="r"><code>N &lt;- 4111240
 n &lt;- nrow(HH)
 
@@ -3042,19 +3052,20 @@ SE_SR &lt;- s/sqrt(n)*sqrt(1-n/N)
 # conf interval
 c(sample_mean - k_z*SE_SR, sample_mean + k_z*SE_SR)</code></pre>
 <pre><code>## [1] 4567.729 4730.117</code></pre>
-<p>Viszont, azt mondja az AR minta, hogy a standard hiba <span class="math inline">\(\frac{s}{\sqrt{n}}\)</span> részében <strong>elég
-csak a településtípusok szerinti belső szórással, <span class="math inline">\(s_w\)</span>-vel számolni</strong>. Ehhez viszont
-kell egy <strong>aggregált segédtábla településtípusonként</strong>
-a</p>
+<p>However, the PS sample suggests that, in the standard error term
+<span class="math inline">\(\frac{s}{\sqrt{n}}\)</span>, <strong>it is
+sufficient to use only the within-settlement-type standard deviation,
+<span class="math inline">\(s_w\)</span></strong>. For this, we need an
+<strong>aggregated auxiliary (helper) table by settlement type</strong>
+that includes:</p>
 <ul>
-<li><strong>mintaelemszámokról</strong> (<span class="math inline">\(n_j\)</span>)</li>
-<li><strong>mintaátlagokról</strong> (<span class="math inline">\(\bar{y}_j\)</span>)</li>
-<li><strong>korrigált mintaszórásokról</strong> (<span class="math inline">\(s_j\)</span>)</li>
-<li><strong>sokasági elemszámokról</strong> (<span class="math inline">\(N_j\)</span>)</li>
+<li><strong>sample sizes</strong> (<span class="math inline">\(n_j\)</span>)</li>
+<li><strong>sample means</strong> (<span class="math inline">\(\bar{y}_j\)</span>)</li>
+<li><strong>corrected sample standard deviations</strong> (<span class="math inline">\(s_j\)</span>)</li>
+<li><strong>population sizes</strong> (<span class="math inline">\(N_j\)</span>)</li>
 </ul>
-<p>Láthatjuk, hogy a településtípusokat, azaz a rétegzett mintavétel
-<strong>rétegeit <span class="math inline">\(j\)</span> indexszel
-jelöljük</strong>.</p>
+<p>We can see that the settlement types, i.e., the <strong>strata of the
+stratified sample, are denoted by the index <span class="math inline">\(j\)</span></strong>.</p>
 <pre class="r"><code>helper_table &lt;- aggregate(Income ~ Settlement, data = HH, FUN = mean)
 helper_table$sd &lt;- aggregate(Income ~ Settlement, data = HH, FUN = sd)[,2]
 helper_table$sample_size &lt;- table(HH$Settlement)
@@ -3064,16 +3075,17 @@ helper_table</code></pre>
 {"columns":[{"label":["Settlement"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Income"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["sd"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["sample_size"],"name":[4],"type":["table[1d]"],"align":["right"]}],"data":[{"1":"Budapest","2":"5395.203","3":"3686.787","4":"1541"},{"1":"City","2":"4790.141","3":"2803.907","4":"1786"},{"1":"Town","2":"4395.863","3":"2516.664","4":"2214"},{"1":"Village","2":"4344.418","3":"2580.432","4":"2765"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<p>Viszont a rend kedvéért <strong>egészítsük ki</strong> az aggregált
-segédtáblát a <strong>sokasági elemszámokkal</strong>. Itt
-<strong>kihasználjuk, hogy arányosan rétegzett mintavételről van
-szó</strong>. Tehát, a rétegek sokasági elemszáma a teljes sokasági
-elemszámhoz úgy aránylik, mint a rétegek mintabeli elemszáma a teljes
-mintavétel elemszámához, azaz <span class="math display">\[\frac{n_j}{n}
-= \frac{N_j}{N}, \forall j\]</span></p>
-<p>Ebből gyorsan ki tudjuk számolni minden réteg sokasági elemszámát,
-hiszen tudjuk, hogy <span class="math inline">\(N=4111240\)</span>
-háztartást jelent. A végén természetesen egészre kerekítjuk az <span class="math inline">\(N_j\)</span>-ket:</p>
+<p>However, for the sake of completeness, <strong>let’s
+supplement</strong> the aggregated helper table with the
+<strong>population sizes</strong>. Here, we <strong>take advantage of
+the fact that this is a proportionally stratified sample</strong>. That
+is, the population size of each stratum is proportional to the total
+population size in the same way as the sample size of each stratum is
+proportional to the total sample size: <span class="math display">\[\frac{n_j}{n} = \frac{N_j}{N}, \forall
+j\]</span></p>
+<p>From this, we can quickly calculate the population size for each
+stratum, since we know that <span class="math inline">\(N=4111240\)</span> households in total. At the
+end, of course, we round the <span class="math inline">\(N_j\)</span>-values to integers.</p>
 <pre class="r"><code>helper_table$pop_size &lt;- round(helper_table$sample_size/n * N, 0)
 helper_table</code></pre>
 <div data-pagedtable="false">
@@ -3081,92 +3093,97 @@ helper_table</code></pre>
 {"columns":[{"label":["Settlement"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Income"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["sd"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["sample_size"],"name":[4],"type":["table[1d]"],"align":["right"]},{"label":["pop_size"],"name":[5],"type":["table[1d]"],"align":["right"]}],"data":[{"1":"Budapest","2":"5395.203","3":"3686.787","4":"1541","5":"762752"},{"1":"City","2":"4790.141","3":"2803.907","4":"1786","5":"884021"},{"1":"Town","2":"4395.863","3":"2516.664","4":"2214","5":"1095869"},{"1":"Village","2":"4344.418","3":"2580.432","4":"2765","5":"1368598"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<p>Ezzel is megvagyunk. Akkor minden adott, hogy kiszámoljuk a belső
-szórást a következő képlettel. <span class="math display">\[s_w=\sqrt{\frac{\sum_j{(n_j-1) \times
-s_j^2}}{n-1}}\]</span></p>
-<p>Ezt gyorsan ki is tudjuk számolni R-ben standard vektor műveletek
-segítségével.</p>
+<p>Now we are done with this step as well. Everything is ready to
+calculate the within-group standard deviation using the following
+formula. <span class="math display">\[s_w=\sqrt{\frac{\sum_j{(n_j-1)
+\times s_j^2}}{n-1}}\]</span></p>
+<p>We can quickly compute this in R using standard vector
+operations.</p>
 <pre class="r"><code>within_sd &lt;- sqrt(sum((helper_table$sample_size-1)*helper_table$sd^2)/(n-1))
 within_sd</code></pre>
 <pre><code>## [1] 2848.502</code></pre>
-<p>Tehát, egy konkrét <strong>háztartás éves jövdeleme a megfigyelt
-mintában várhatóan kb. <span class="math inline">\(s_w=\pm
-2.849\)</span> milió Ft-tal </strong>(2849 ezer Ft-tal)** tér el saját
-településtípusának átlagos jövedelmétől**.</p>
-<p>Ha van első szórásunk, akkor pedig gyorsan meg is van az
-<strong>arányosan rétegzett standard hiba</strong>, ami kb. <span class="math inline">\(0.298\)</span> ezer Ft-tal (<span class="math inline">\(298\)</span> Ft-tal) <strong>kisebb, mint a sima
-EV módra számolt standard hiba</strong>:</p>
+<p>So, <strong>the expected deviation of a specific household’s annual
+income from its own settlement type’s average income is
+approximately</strong> <span class="math inline">\(s_w=\pm
+2.849\)</span> million HUF (2849 thousand HUF) in the observed
+sample.</p>
+<p>Once we have the within-group standard deviation, we can quickly
+obtain the <strong>proportionally stratified standard error</strong>,
+which is about <strong>0.298 thousand HUF</strong> (298 HUF)
+<strong>smaller than the standard error calculated using simple SR
+sample</strong>.</p>
 <pre class="r"><code>SE_PS = within_sd/sqrt(n) * sqrt(1-n/N)
 c(SE_SR, SE_PS)</code></pre>
 <pre><code>## [1] 31.52140 31.22349</code></pre>
 <pre class="r"><code>SE_PS-SE_SR</code></pre>
 <pre><code>## [1] -0.2979064</code></pre>
-<p>Ez pedig érezteti magát a <strong>némlileg szűkebb, azaz kisebb <span class="math inline">\(\triangle=SE_{PS} \times
-z_{1-\frac{\alpha}{2}}\)</span> becslési hibahatárral bíró <span class="math inline">\(99\%\)</span>-os
-konfidencia-intervallumban</strong>:</p>
+<p>This causes <strong>slightly narrower -i.e. smaller- confidence
+interval error margin for the <span class="math inline">\(99\%\)</span>
+confidence interval</strong> as the formula we have here is <span class="math inline">\(\triangle=SE_{PS} \times
+z_{1-\frac{\alpha}{2}}\)</span>.</p>
 <pre class="r"><code>c(sample_mean - k_z*SE_PS, sample_mean + k_z*SE_PS)</code></pre>
 <pre><code>## [1] 4568.497 4729.349</code></pre>
-<p>Arányos rétegzéssel a <strong>változatlan megbízhatóságú
-konfidencia-intervallum</strong> <span class="math inline">\(4567 -
-4730\)</span> ezer Ft-ról <span class="math inline">\(4568 -
-4729\)</span> ezer Ft-ra <strong>szűkül</strong>.</p>
-<p>Na jó, ne áltassunk magunkat: <strong>ez szinte nulla csökkenés mind
-a standard hibában, mind a <span class="math inline">\(\triangle\)</span>-ben</strong>! Tehát kb az <span class="math inline">\(PS\)</span> mintavétel nem ért semmit.
-<strong>Miért van ez? Lássuk a magyarázatot!</strong></p>
-<div id="az-ar-mintavételek-hatékonysága" class="section level3">
-<h3>2.1. Az AR mintavételek hatékonysága</h3>
-<p>Az, hogy mennyire jó az <span class="math inline">\(PS\)</span>
-mintavétel az <span class="math inline">\(SR\)</span>-hez képest attól
-függ, hogy <strong>mekkora a külső szórás mértéke, amit el tudunk hagyni
-azzal, hogy csak a belső szórással számolunk a standard hibában a teljes
-szórás helyett</strong>. Ezt pedig <strong>az határozza meg, hogy a
-rétegzéshez használt minőségi ismérv hány százalékban határozza meg
-annak a mennyiségi ismérvnek az alakulását, aminek az átlagát becsülni
-szeretnénk</strong>.<br> Egy úgynevezett a
-<strong>variancia-hányados</strong> nevű mutatószám kell nekünk: <span class="math display">\[\eta^2 = \frac{s_b^2}{s^2} =
-1-\frac{s_w^2}{s^2}\]</span></p>
-<p>És hát valóban a 2. képlettel kiszámolva azt láthatjuk, hogy a
-<strong>településtípus alig határozza csak meg a háztartások éves
-jövdelemének alakulását</strong>:</p>
+<p>With proportional stratification, the <strong>confidence interval
+with confidence level unchanged shrinks</strong> from <span class="math inline">\(4567–4730\)</span> thousand HUF to <span class="math inline">\(4568–4729\)</span> thousand HUF.</p>
+<p>Alright, let’s not fool ourselves: <strong>this is practically zero
+reduction in both the standard error and <span class="math inline">\(\triangle\)</span>!</strong> So, the
+<strong>PS</strong> sampling method was almost useless. <strong>Why is
+that? Let’s see the explanation!</strong></p>
+<div id="efficiency-of-ps-sampling" class="section level3">
+<h3>2.1. Efficiency of PS Sampling</h3>
+<p>The effectiveness of proportionally stratified sampling (<span class="math inline">\(PS\)</span>) compared to simple random sampling
+(<span class="math inline">\(SR\)</span>) depends on <strong>how much of
+the between variance can be omitted by using only the within-strata
+variance in the standard error</strong> instead of the total variance.
+This is <strong>determined by the extent to which the stratification
+variable explains the variation of the quantitative variable whose mean
+we aim to estimate</strong>.<br> We need a measure called the
+<strong>variance ratio</strong>: <span class="math display">\[\eta^2 =
+\frac{s_b^2}{s^2} = 1-\frac{s_w^2}{s^2}\]</span></p>
+<p>And indeed, when calculated using this formula, we can see that
+<strong>the type of settlement barely determines the variation of
+household annual income</strong>.</p>
 <pre class="r"><code>round((1-within_sd^2/s^2) * 100, 2)</code></pre>
 <pre><code>## [1] 1.88</code></pre>
-<p>Mindössze <span class="math inline">\(1.88\%\)</span>-ban magyarázza
-a jövdelemek alakulását a településtípus. Ez <strong>megegyezik azzal
-hány SZÁZALÉKKAL csökkenti az PS mintavétel az SR standard hiba
-négyzetét</strong>:</p>
+<p>Settlement type explains only <span class="math inline">\(1.88\%\)</span> of income variation. This
+<strong>exactly equals the percentage by which PS sampling reduces the
+squared standard error of SR</strong>.</p>
 <pre class="r"><code>round((SE_PS^2/SE_SR^2 - 1) * 100, 2)</code></pre>
 <pre><code>## [1] -1.88</code></pre>
-<p>Másképpen fogalmazva az <strong>arányos rétegzés annyi SZÁZALÉKRA
-csökkenti a <span class="math inline">\(SE^2\)</span>-et, amennyi az
-<span class="math inline">\(1-\eta^2\)</span> értéke</strong>. Innentől
-kezdve ezt a csökkentés hívjuk <strong>relatív hatásfoknak</strong>,
-azaz: <span class="math display">\[Rel=\frac{SE_{PS}^2}{SH_{SR}^2}=1-\eta^2=\frac{s_w^2}{s^2}\]</span></p>
-<p>Ezek az összefüggések R-ben is szépen kiszámíthatók.</p>
+<p>Putting it differently, <strong>proportional stratification reduces
+<span class="math inline">\(SE^2\)</span> by the percentage given by
+<span class="math inline">\(1-\\eta^2\)</span></strong>. From now on, we
+call this reduction the <strong>relative efficiency</strong>, i.e.:
+<span class="math display">\[Rel=\frac{SE_{PS}^2}{SH_{SR}^2}=1-\eta^2=\frac{s_w^2}{s^2}\]</span></p>
+<p>These relationships can also be computed nicely in R.</p>
 <pre class="r"><code>(SE_PS^2/SE_SR^2)</code></pre>
 <pre><code>## [1] 0.9811875</code></pre>
 <pre class="r"><code>within_sd^2/s^2</code></pre>
 <pre><code>## [1] 0.9811875</code></pre>
-<p>Tehát, az <strong>arányos rétegzés miatt <span class="math inline">\(98.2\%\)</span>-RA csökken csak a standard hiba
-négyzete</strong>.</p>
-<p>Természetesen az, hogy maga a <strong>standard hiba hány százalékRA
-csökken</strong>, azt a fenti összefüggés, zóval a <strong>relatív
-hatásfok gyöke</strong> adja meg.</p>
+<p>Thus, due to <strong>proportional stratification, the squared
+standard error is reduced to only <span class="math inline">\(98.2\%\)</span></strong> of its original
+value.</p>
+<p>Of course, the percentage by which the <strong>standard error itself
+decreases</strong> is given by the <strong>square root of the relative
+efficiency</strong>.</p>
 <pre class="r"><code>(SE_PS/SE_SR)</code></pre>
 <pre><code>## [1] 0.9905491</code></pre>
 <pre class="r"><code>within_sd/s</code></pre>
 <pre><code>## [1] 0.9905491</code></pre>
-<p>Szóval, a <strong>standard hiba az arányos rétegzés miatt csak <span class="math inline">\(99.05\%\)</span>-RA, azaz <span class="math inline">\(0.95\%\)</span>-KAL csökkent csak le, mivel a
-rétegzéshez használt településtípus csak <span class="math inline">\(1.88\%\)</span>-ban magyarázza csak az éves
-jövedelmek alakulását, aminek az alakulását becsülni
-akartuk</strong>.</p>
-<p>Mindazonáltal az <strong>átlagbecslés háromféle mintavételi
-mód</strong> (IID, SR, PS) <strong>szerinti standard hibája
-között</strong> felállítható a következő <strong>összefüggés</strong>:
-<span class="math display">\[SE_{IID} \geq SE_{SR} \geq
+<p>So, the <strong>standard error decreases to only <span class="math inline">\(99.05\%\)</span></strong>, meaning it <strong>only
+drops by <span class="math inline">\(0.95\%\)</span></strong>, because
+<strong>the stratification variable (settlement type) explains just
+<span class="math inline">\(1.88\%\)</span> of the variation in annual
+income—the variable</strong> (the mean of which we aimed to
+estimate).</p>
+<p>Nonetheless, the <strong>relationship between the standard errors of
+the three sampling methods</strong> —IID, SR, and PS— can be expressed
+as follows: <span class="math display">\[SE_{IID} \geq SE_{SR} \geq
 SE_{PS}\]</span></p>
-<p>Hiszen az SR standard hiba valamivel kisebb, mint az IID a <span class="math inline">\(\sqrt{1-\frac{n}{N}}\)</span> korrekciós tényező
-miatt, és az PS standard hiba valamivel kisebb, mint az SR amiatt, mert
-csak belső szórást használunk a képletben a teljes helyett: <span class="math display">\[\frac{s}{\sqrt{n}} \geq \frac{s}{\sqrt{n}} \times
+<p>This holds because the SR standard error is slightly smaller than IID
+due to the correction factor <span class="math inline">\(\sqrt{1-\frac{n}{N}}\)</span>, and the PS standard
+error is slightly smaller than SR because it uses only within-strata
+variance instead of total variance in the <span class="math inline">\(SE\)</span> formula. <span class="math display">\[\frac{s}{\sqrt{n}} \geq \frac{s}{\sqrt{n}} \times
 \sqrt{1-\frac{n}{N}} \geq \frac{s_w}{\sqrt{n}} \times
 \sqrt{1-\frac{n}{N}}\]</span></p>
 </div>

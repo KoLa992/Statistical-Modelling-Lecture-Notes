@@ -1,7 +1,7 @@
 ---
 title: "Confidence Intervals in SR and Stratified Samples"
 author: "László Kovács"
-date: "15/03/2025"
+date: "16/03/2025"
 output:
   html_document:
     toc: true
@@ -19,21 +19,24 @@ text-align: justify}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 1. Intervallumbecslés visszatevés nélküli egyszerű véletlen (EV) mintákból
+## 1. Confidence Intervals for Simple Random Sampling without Replacement (SR Samples)
 
-Az eddigi hetek tananyagában végig FAE, azaz *visszatevéses* mintavételekkel dolgoztunk. Most nézzük meg, hogy mi a helyzet akko, ha a **mintavételünk visszatevés nélküli véletlen mintavétel**, azaz **EV** minta.
+In the previous chapters, we have consistently worked with IID (Independent, Identically Distributed Samples or in other words, Random Sampling *with Replacement*). Now, let’s examine what happens when we have a **random sample without replacement**, i.e., a **SR** Sample.
 
-Az okoskodásunk onnan indul, hogy azt mondjuk, hogy ha a minta kiválasztási aránya kicsi, azaz **ha a teljes adatsokaságunknak csak egy nagyon kis százalékát választjuk ki, akkor a FAE és EV mintavétel lényegében ugyan az**. Hiszen ebben az esetben még FAE mintavétrel esetén is nagyon kicsi az esélye, hogy a visszatevés miatt ténylegesen ismétlődés legyen, azaz többször is kiválasszuk ugyan azt az egyedet a mintánkba.
+Our reasoning starts from the fact that if the sampling fraction is small, meaning **if we select only a very small percentage of the entire population, then IID and SR are essentially the same**. In this case, even with IID, the probability of actual repetitions due to replacement is very low, meaning it is unlikely that the same unit is selected multiple times in our sample.
 
-A minta **kiválasztási arányát** korábbi jelöléseinkkel élve $\frac{n}{N}$-nek jelöljük. Tehát, ha $\frac{n}{N} \rightarrow 0$, akkor $FAE \approx EV$.
+The **selection ratio**, using our previous notation, is denoted as $\frac{n}{N}$. Thus, if $\frac{n}{N} \rightarrow 0$, then $IID \approx SR$.
 
-Ha viszont $\frac{n}{N}$ egy nagyobb érték, akkor viszont az **EV mintának pontosabbnak, azaz kisebb mintavételi hibájúnak kell lennie, minta FAE mintának**, hiszen minden mintaelem az EV mintában biztos, hogy új információt hoz be a mintába, míg FAE esetben lehet ismétlődés a visszatevés miatt.
+However, if $frac{n}{N}$ takes a larger value, then the **SR sample should be more precise, meaning it should have a smaller sampling error than the IID sample**, because every sampled observation in SR brings in new information, while in IID, redundant selection can occur due to replacement.
 
-Ezt a tényt pedig **úgy képezzük le a konfidencia-intervallum képleteinkben**, hogy FAE mintavételeknél tanult standard hiba képleteket egyszerűen beszorozzuk $\sqrt{1-\frac{n}{N}}$-nel. Tehát: $$SE_{SR}=SE_{IID} \times \sqrt{1-\frac{n}{N}}$$
+We **incorporate this fact into our confidence interval formulas** by simply multiplying the standard error formulas learned for IID by $\sqrt{1-\frac{n}{N}}$. Thus: $$SE_{SR}=SE_{IID} \times \sqrt{1-\frac{n}{N}}$$
 
-Ez a képlet azért végzi azt, amit mi akarunk, mert **ha nagyon $0$ közeli a kiválasztási arány**, akkor az $SE_{IID}$-t gyakorlatilag $1$-gyel szorozzuk, azaz **nem változtatunk rajta semmit**. **Ha** pedig a **kiválasztási arány érdemben nagyobb, mint $0$,** akkor pedig egy $0$ és $1$ közti számmal szorozzuk $SE_{IID}$-t, így a **szorzat ekkor biztosan kisebb lesz, mint $SE_{IID}$ volt**.
+This formula achieves what we need because:
 
-Aki nem hiszi, nyugodtan **kirajzoltathatja Pythonban, az SR korrekciós tényező, azaz a $\sqrt{1-\frac{n}{N}}$ viselkedését** különböző $\frac{n}{N}$ kiválasztási arányok mellett:
+1. **If the selection ratio is very close to $0$**, then we are multiplying $SE_{IID}$ by approximately $1$, meaning we do **not change it at all**.
+2. **If the selection ratio is noticeably greater than $0$**, then we multiply $SE_{IID}$ by a number between $0$ and $1$, which ensures that the **product is always smaller than the original $SE_{IID}$**.
+
+If you don’t believe it, feel free to **plot the SR correction factor, $\sqrt{1-\frac{n}{N}}$, in R** with `ggplot` for different values of the selection ratio $\frac{n}{N}$.
 
 ```{r}
 # Empty vector for SR correction factors
@@ -56,22 +59,20 @@ library(ggplot2)
 ggplot(SR_Data, aes(x=SelectionRatio, y=CorrectionFactor)) + geom_line()
 ```
 
-Látszik, hogy ahogy nő a kiválasztási arány, annál kisebb százalékát kell venni $SE_{IID}$-nek az $SE_{SR}$ számolása során. Éljen! :)
+You can see that as the sampling fraction increases, a smaller percentage of $SE_{IID}$ is taken when calculating $SE_{SR}$. Hooray! :)
 
-Nézzük meg ezt az egész rendszert a gyakorlatban az átlag intervallumbecslése során, nagy mintás esetben!
+Now, let’s see this entire system in practice for interval estimation of the mean in a large-sample case!
 
-### 1.1. Átlag becslése EV mintákból
+### 1.1. Confidence Interval for the Mean in SR Sample
 
-Töltsük be a <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/Households_Income.xlsx" target="_blank">Households_Income.xlsx</a> című Excel fájl tartalmát egy data frame-be!<br>
-A táblában $n=8306$ db magyar háztartás két ismérvét (oszlopát) látjuk:
+Let’s load the contents of the Excel file <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/Households_Income.xlsx" target="_blank">Households_Income.xlsx</a> into a data frame!<br>
+In the table, we see the two variables (columns) of $n=8306$ Hungarian households:
 
-1. Milyen típusú településen található a háztartás (Village, Town, City, Budapest)
-2. A háztartás éves jövedelmét 2019-ben, ezer Ft-ban kifejezve
+1. The type of settlement where the household is located (Village, Town, City, Budapest)
+2. The household's annual income in 2019, expressed in thousand HUF
 
-Az adatok a <a href="https://www.ksh.hu/eletmod" target="_blank">KSH Jövedelmi és Életkörülmény Adatfelvételéből</a> származnak. A KSH linkelt leírása szerint az **adatok a magyar háztartások sokaságából visszatevés nélkül véletlen, azaz EV mintaként kezelhetők**.<br>
-Ez alapján egy nagyon fontos infó, hogy 2019-ben a magyar háztartások teljes száma 4 111 240 db volt. Tehát, a **sokaságunk teljes elemszáma $N=4111240$ db**.
-
-Lássuk is a beolvasást egy data frame-be!
+The data comes from the <a href="https://www.ksh.hu/eletmod" target="_blank">HCSO Income and Living Conditions Survey</a>. According to the linked description by HCSO, the **data can be treated as a simple random sample without replacement (SR) from the population of Hungarian households**.<br>
+Based on this, an important piece of information is that in 2019, the **total number of Hungarian households was $N=4111240$**.
 
 ```{r}
 library(readxl)
@@ -79,9 +80,10 @@ HH <- read_excel("Households_Income.xlsx")
 str(HH)
 ```
 
-Remek: megvan a két keresett oszlopunk mind az $n=8306$ db háztartásra, plusz egy *ID* oszlop az elején, amit nem fogunk semmire sem használni. :)
 
-Ezek után simán bevethetjük az átlagos háztartási jövedelem $99\%$-os megbízhatóságú intervalumbecslésére a jól bevált *mintaátlag +- delta*, azaz $\bar{y}\pm\triangle$ című módszert. Hiszen a $\triangle=k \times SE$ képletben a nagy, $n=8306$-os elemszám miatt a megbízhatósági szorzó simán jöhet standard normális eloszlásból, azaz $k=z_{1-\frac{\alpha}{2}}$. Az $SE$ pedig akkor egy EV minta $SE$-je, ami az előző fejezet alapján $SE_{IID} \times \sqrt{1-\frac{n}{N}}$ módon meghadható.
+Great! We have found our two desired columns for all $n=8306$ households, plus an *ID* column at the beginning, which we won’t be using for anything. :)
+
+Now we can confidently apply the well-known sample *mean ± delta* method, i.e., $\bar{y} \pm \triangle$, to estimate the $99\%$ confidence interval for the average household income. Since in the formula $\triangle = k \times SE$, due to the large sample size $n=8306$, the confidence multiplier can be taken directly from the standard normal distribution, meaning $k = z_{1-\frac{\alpha}{2}}$. The standard error $SE$ in this case is the standard error for an SR sample, which, based on the previous chapter, can be given as $SE_{IID} \times \sqrt{1-\frac{n}{N}}$, and of course we all know that for the mean $SE_{IID}=\frac{s}{\sqrt{n}}$.
 
 ```{r}
 N <- 4111240
@@ -99,9 +101,9 @@ SE_SR <- s/sqrt(n)*sqrt(1-n/N)
 c(sample_mean - k_z*SE_SR, sample_mean + k_z*SE_SR)
 ```
 
-Tehát, viszzatevés nélküli véletlen mintavételként kezelve a HKF adatokat,azt kapjuk, hogy **egy átlagos magyar háztartás éves jövedeleme** $4568$ és $4730$ ezer Ft, azaz **$4.5$ és $4.7$ millió Ft között mozog $99\%$-os valószínűséggel**.
+Thus, treating this Household data as a simple random sample without replacement, we obtain that **the average annual income of a Hungarian household is** between $4568$ and $4730$ thousand HUF, meaning **between $4.5$ and $4.7$ million HUF with $99\%$ probability**.
 
-A kiválasztási arányunk ugyebármost nagyon kicsi: $\frac{n}{N}=\frac{8306}{4111240}=0.002$, szóval az eredmény lényegében nem különbözik attól, mintha az egészet az EV korrekciós szorzó nélkül csináltuk volna végig a műveletet:
+Our selection ratio here is very small: $\frac{n}{N}=\frac{8306}{4111240}=0.002$, so the result is essentially the same as if we had performed the entire calculation without the SR correction factor.
 
 ```{r}
 SE_IID <- s/sqrt(n)
@@ -110,22 +112,22 @@ SE_IID <- s/sqrt(n)
 c(sample_mean - k_z*SE_IID, sample_mean + k_z*SE_IID)
 ```
 
-A várható éves jövedelem így is kb. $4.5$ és $4.7$ millió Ft között mozog $99\%$-os valószínűséggel.
+Thus, the expected annual income is still approximately between $4.5$ and $4.7$ million HUF with $99\%$ confidence.
 
-### 1.2. Arány becslése EV mintákból
+### 1.2. Confidence Interval for the Proportions in SR Sample
 
-Ugyan ez a logika teljesen jól működik az arányok becslése esetén is. Ez nem véletlen, hiszen letisztáztuk az <a href="Gyak05.html" target="_blank">5. heti tananyagban</a>, hogy az arány, mint statisztikai mutató valójában egy olyan adatsor átlaga, hogy az arányban vizsgált tuljadonsággal bíró megfigyelések $1$-gyel vannak kódolva, a többiek pedig $0$-val.
+The same logic works perfectly well for proportion estimation as well. This is no coincidence, as we clarified in <a href="Chapter08.html" target="_blank">Chapter 8</a> that a proportion, as a statistical measure, is actually the mean of a variable where observations possessing the examined characteristic are coded as $1$, while all others are coded as $0$.
 
-Csináljuk is meg egy új oszlopban azt a $0-1$ adatsort, amivel mondjuk a budapesti háztartások aránya becsülhető lesz.
+Let's create this $\{0,1\}$ variable in a new column, which will allow us to estimate the proportion of Budapest households.
 
 ```{r}
 HH$isBP <- ifelse(HH$Settlement=="Budapest", 1, 0)
 mean(HH$isBP)
 ```
 
-Szuper, meg is vagyunk, a megfigyelt mintában a budapesti háztartások aránya $18.55\%$.
+Great, we are done! In the observed sample, the proportion of Budapest households is $18.55\%$.
 
-Ezek után, ha ezen az új oszlopon alkalmazzuk a konfidencia-intervallum képletét az 1.1. fejezetben látott módon a $\sqrt{1-\frac{n}{N}}$ korrekciós tényezővel, akkor meg is van a **budapesti háztartások sokaságiarányának $99\%$-os megbízhatóságú intervallumbecslése**:
+Now, if we apply the confidence interval formula from Section 1.1 to this new column, incorporating the correction factor $\sqrt{1-\frac{n}{N}}$, we **obtain the $99\%$ confidence interval for the proportion of Budapest households in the population**.
 
 ```{r}
 sample_prop <- mean(HH$isBP)
@@ -136,60 +138,61 @@ SE_Prop_SR <- sqrt(sample_prop*(1-sample_prop)/n)*sqrt(1-n/N)
 c(sample_prop - k_z*SE_Prop_SR, sample_prop + k_z*SE_Prop_SR)
 ```
 
-Szóval az **összes magyar háztartásból kb. $17.5\% - 19.6\%$ lehet budapesti**, $99\%$ valószínűséggel.
+Thus, **approximately $17.5\% - 19.6\%$ of all Hungarian households are located in Budapest**, with $99\%$ confidence.
 
-## 2. Átlag becslése Arányosan Rétegzett (AR) mintákból
+## 2. Confidence Interval for the Mean from Proportionally Stratified (PS) Sample
 
-A KSH a HKF adatbázisáról nem csak simán azt állítja, hogy egyszerű véletlen (EV) minta a magyar háztartásokból, hanem, hogy **településtípus szerint arányosan rétegzett EV mita**. Ez azt jelenti, hogy **a $4$ db településtípusból** (Budapest, Nagyváros, Többi város, Község) **külön-külön vettek EV mintát, úgy, hogy a végső $n=8306$ elemű mintában az egyes településtípusok aránya annyi legyen, mint a teljes sokaságban** (összes magyar háztartás) **a településtípusok aránya**. Tehát a minta tökéletesen reprezentatívra lett beállítva a településtípusra.
+The HCSO does not simply state that the HH database is a simple random sample (SR) from Hungarian households; rather, it specifies that it is a **proportionally stratified sample based on settlement type**. This means that **separate SR samples were taken from the four types of settlements** (Budapest, Large City, Other Towns, Villages) in **such a way that their proportions in the final sample of $n=8306$ elements match their proportions in the entire population** (i.e., all Hungarian households). Thus, the sample is perfectly representative regarding settlement type.
 
-Ennek a mintavételi technikának a lényege, hogy ha **meg akarom becsülni a magyar háztartások átlagos éves jövedelmét**, akkor a **standard hibában NEM KELL számolnom a településtípusok KÖZÖTTI jövedelem szórással**! Hiszen ezt a **külső szórást már kezelte a településtípusonkénti külön-különmintavétel!!**<br>
-Magyarul, az $$SE_{SR} = \frac{s}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}}$$
+The essence of this sampling technique is that if we **want to estimate the average annual income of Hungarian households, then in the standard error calculation, we do NOT need to account for income variation BETWEEN settlement types**! This is because this **between variation is already handled by the separate sampling within each settlement type**!<br>
+Meaning that **instead of the formula** $$SE_{SR} = \frac{s}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}}$$
 
-Képlet **helyett elég  a standard hibában csak a belső korrigált mintaszórással**, $s_w$-vel számolnom: $$SE_{PR} = \frac{s_w}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}}$$
+It is sufficient to compute the standard error using only the **within-strata corrected sample standard deviation**, denoted as $s_w$: $$SE_{PR} = \frac{s_w}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}}$$
 
-Amit a fenti formuláshoz tudni kell, hogy egy **számértékű változó teljes (korrigált) varianciája, felbontható a rétegek közötti külső és a rétegeken belüli belső varianciák összegére**.
+To understand this formula, we need to know that **the total (corrected) variance of a numerical variable can be decomposed into the sum of between variance (between strata) and within variance (within strata)**.
 
-A következő képletekben a $j$ index a $j$-edik réteget jelöli, és a rétegek számát pedig $M$-mel jelöljük, azaz $j=1,2,...,M$ és $n=\sum_{j=1}^M{n_j}$.
+In the following formulas, the index $j$ denotes the $j$-th stratum, and the number of strata is denoted by $M$, so $j=1,2,...,M$ and $n=\sum_{j=1}^M{n_j}$.
 
-A belső szórást a **belső variancián, azaz belső szórásnégyzeten keresztül kapjuk meg**. Ez pedig nem más, mint a rétegenkénti **részszórások $s_j^2$ négyzeteinek elemszámok mínusz 1-gyel ($n_j-1$) súlyozott átlaga**. $$s_w^2=\frac{\sum_j{(n_j-1)s_j^2}}{n-1}$$
+The **within standard deviation is obtained through the within variance**, i.e., the within squared deviation. This is calculated as the **weighted average of the squared deviations $s_j^2$ within each stratum, weighted by $n_j-1$**. $$s_w^2=\frac{\sum_j{(n_j-1)s_j^2}}{n-1}$$
 
-A belső szórás pedig egyszerűen a belső variancia gyöke. $s_w=\sqrt{s_w^2}$ Általánosságban $s_w$ azt jelenti, hogy **egy véletlenszerűen kiválasztott egyed konkrét mennyiségi változó értéke várhatóan mennyivel tér el saját csoportjának (rétegének) átlagától**.
+The internal standard deviation is simply the square root of the internal variance: $s_w=\sqrt{s_w^2}$. In general, $s_w$ represents **how much a randomly chosen observation's variable value is expected to deviate from the mean of their own stratum**.
 
-A másik vége a dolognak a külső szórás, ami szintén a négyzetén, a külső variancián keresztül számítható. A külső variancia pedig a **rétegenkénti részátlagok $\bar{y}_j$ elemszámokkal ($n_j$) súlyozott korrigált szórása a mennyiségi változó főátlaga $\bar{y}$ körül**. $$s_b^2=\frac{\sum_j{n_j(\bar{y}_j-\bar{y})^2}}{n-1}$$
+On the other hand, the between standard deviation is also calculated through its squared deviation, the between variance. The between variance is the **weighted corrected variance of the stratum means $\bar{y}_j$, weighted by $n_j$, around the overall mean $\bar{y}$**: $$s_b^2=\frac{\sum_j{n_j(\bar{y}_j-\bar{y})^2}}{n-1}$$
 
-A külső szórás pedig egyszerűen a külső variancia gyöke. $s_b=\sqrt{s_b^2}$ Általánosságban $s_b$ azt jelenti, hogy **egy csoport (réteg) átlaga várhatóan mennyivel tér el a mennyiségi változó főátlagától**.
 
-Ebből a két tényezőből pedig összeadható a **teljes korrigált mintavariancia: $s^2=s_w^2+s_b^2$.** A teljes szórás pedig ennek a mennyiségnek a gyöke: $s=\sqrt{s^2}=\sqrt{s_w^2+s_b^2}$. **Mivel tagonként nem vonhatunk gyököt, így ez az összefüggés ugyebár a szórásokra NEM lesz igaz!!**
+The between standard deviation is simply the square root of the between variance: $s_b=\sqrt{s_b^2}$ In general, $s_b$ **represents how much a stratum's mean is expected to deviate from the overall mean of the numerical variable**.  
 
-A teljes szórás pedig **általánosan ugye azt mutatja meg, hogy egy véletlenszerűen kiválasztott egyed konkrét mennyiségi változó értéke várhatóan mennyivel tér el a mennyiségi változó csoportoktól, azaz rétegzéstől független, teljes főátlagától**.
+From these two components, we can compute the **total corrected sample variance** as: $s^2=s_w^2+s_b^2$ The total standard deviation is then the square root of this quantity: $s=\sqrt{s^2}=\sqrt{s_w^2+s_b^2}$ **Since we cannot take square roots term by term, this relationship does NOT hold for standard deviations!**
 
-**Képzeljük most el ezeket a különböző szórásokat vizuálisan, mint távolságokat**. Az alábbi ábra egy egyszerűbb rendszert mutat, ahol a rétegeket adó változó csak két csoportot alkot (*narancsok* és *zöldek*), nem pedig négyet, mint amennyit a mi négy településtípusunk generál.
+The total standard deviation generally indicates **how much a randomly chosen individual's variable value is expected to deviate from the overall mean of the numerical variable, independent of stratification**.
+
+**Now, let's imagine these different standard deviations visually as distances.** The following figure illustrates a simplified system where the stratifying variable creates only two groups (*oranges* and *greens*), rather than the four settlement types used in our example.
 
 <center>
 ![](varhanyad1.png){width=80%}
 </center>
 
-<br>Tehát vizuálisan a következőképp érdemes gondolni a különböző $s$-ekra:
+<br>So, visually, we should think about the different $s$ values as follows::
 
-- $s_w$: Megfigyelések távolsága saját csoportjuk átlagától
-- $s_b$: Csoportátlag távolsága a főátlagtól
-- $s$: Megfigyelések távolsága a főátlagától
+- $s_w$: Average distance of one observation from its own stratum's mean
+- $s_b$: Average distance of strata means from the overall mean
+- $s$: Average distance of one observation from the overall mean
 
-Ezek alapján nekünk az a jó a csoportosítás, azaz a minőségi ismérv magyarázóereje szempontjából, ha **fix** $s$ mellett $s_b$ **nagy** és $s_w$ **kicsi**. Mert ekkor a **csoportátlagok messze vannak** a főátlagtól és így implicite **egymástól** is, míg a csoportátlagtól az egyes **megfigyelések nagyon kis mértékben térnek csak el saját csoportátlaguktól**:
+Based on this, in terms of stratification —i.e., the explanatory power of the qualitative variable used for the strata— it is best if, for a **fixed** $s$, $s_b$ is **large** and $s_w$ is **small**. This is because in this case, the **strata means are far from the overall mean** and thus, implicitly **far from each other**, while individual **observations deviate only slightly from their own stratum's mean**.
 
 <center>
 ![](varhanyad2.png){width=30%}
 </center>
 
-Ebben az esetben, ahogy az ábráról is látszik a csoportosításunk, azaz a rétegzésünk magyarázóereje nagy! Tehát az kell nekünk, hogy az $s$ minél nagyobb részét tegye ki $s_b$. Viszont, mivel csak a teljes **varianciára** igaz az, hogy **egyenlő a külső és belső VARIANCIA összegével**, így azt mondjuk, hogy **azt szeretnénk látni**, hogy **a $\frac{s_b^2}{s^2}$ hányados nagy legyen**!
+In this case, as the figure illustrates, our grouping (i.e., stratification) has strong explanatory power! Therefore, we want $s$ to be composed mostly of $s_b$. However, since the property that the total **variance** equals the **sum of between and within variance** holds only for variance (not for standard deviation), we **look at the ratio of $\frac{s_b^2}{s^2}$ and we want this ratio to be large**!
 
-Mivel a rétegzett mintavétel lényege éppen az, hogy **minden rétegből külön-külön veszünk EV mintát**. Emiatt pedig a **rétegek közötti** $s_b^2 $ külső **variancával NEM kel számolni a standard hibában**, csak a belsővel. Ezzel a cserével adódik tehát az arányosan rétegzett mintavétel átlagra vonatkozó standard hibájának képlete: $$SE_{PR} = \frac{s_w}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}}$$
+The essence of stratified sampling is that **we take an independent SR sample from each stratum**. As a result, the **between-stratum variance** $s_b^2$ **does not need to be accounted for in the standard error calculation**, only the within variance. Applying this in the original $SE_{SR}$ formula, we get the standard error formula for the mean under proportionally stratified (PS) sampling: $$SE_{PR} = \frac{s_w}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}}$$
 
-A rétegzés tehát akkor jó, ha **a rétegek közötti varianciája a vizsgált változónka nagy részét teszi ki a teljes varianciájának**, mert csak ekkor **kijelenthető, hogy az arányosan rétegzett mintavétel becslési hibája az átlagra kisebb, mint az EV** (vagy a FAE) **mintavételek esetén**: $SE_{PR} \leq SE_{SR}$
+Stratification is therefore most effective when **the variance between strata accounts for a large proportion of the total variance of the examined variable**, because only then can we say that **the estimation error of the proportionally stratified sample is smaller than that of an SR** (or an IID sample): $SE_{PR} \leq SE_{SR}$
 
-Nézzük is meg akkor a dolgot élesben!
+Now, let's test this in practice!
 
-Ugyebár tudjuk, hogy a háztartások átlagos éves jövedeleme a teljes magyar népességben $99\%$-os valószínűséggek $4.5$ és $4.7$ millió Ft körül mozog, ha a HKF adatokat EV mintavételként kezeljük. Most az SE-t rendesen a $SE_{SR}=\frac{s}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}}$ képlettel számoljuk ki.
+We know that the average annual household income in the entire Hungarian population is likely between $4.5$ and $4.7$ million HUF with $99\%$ probability, assuming we treat the **HKF data as an SR sample**. We computed the $SE$ using the $SE_{SR}=\frac{s}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}}$ formula here.
 
 ```{r}
 N <- 4111240
@@ -207,14 +210,14 @@ SE_SR <- s/sqrt(n)*sqrt(1-n/N)
 c(sample_mean - k_z*SE_SR, sample_mean + k_z*SE_SR)
 ```
 
-Viszont, azt mondja az AR minta, hogy a standard hiba $\frac{s}{\sqrt{n}}$ részében **elég csak a településtípusok szerinti belső szórással, $s_w$-vel számolni**. Ehhez viszont kell egy **aggregált segédtábla településtípusonként** a
+However, the PS sample suggests that, in the standard error term $\frac{s}{\sqrt{n}}$, **it is sufficient to use only the within-settlement-type standard deviation, $s_w$**. For this, we need an **aggregated auxiliary (helper) table by settlement type** that includes:
 
-- **mintaelemszámokról** ($n_j$)
-- **mintaátlagokról** ($\bar{y}_j$)
-- **korrigált mintaszórásokról** ($s_j$)
-- **sokasági elemszámokról** ($N_j$)
+- **sample sizes** ($n_j$)
+- **sample means** ($\bar{y}_j$)
+- **corrected sample standard deviations** ($s_j$)
+- **population sizes** ($N_j$)
 
-Láthatjuk, hogy a településtípusokat, azaz a rétegzett mintavétel **rétegeit $j$ indexszel jelöljük**.
+We can see that the settlement types, i.e., the **strata of the stratified sample, are denoted by the index $j$**.
 
 ```{r}
 helper_table <- aggregate(Income ~ Settlement, data = HH, FUN = mean)
@@ -223,27 +226,27 @@ helper_table$sample_size <- table(HH$Settlement)
 helper_table
 ```
 
-Viszont a rend kedvéért **egészítsük ki** az aggregált segédtáblát a **sokasági elemszámokkal**. Itt **kihasználjuk, hogy arányosan rétegzett mintavételről van szó**. Tehát, a rétegek sokasági elemszáma a teljes sokasági elemszámhoz úgy aránylik, mint a rétegek mintabeli elemszáma a teljes mintavétel elemszámához, azaz $$\frac{n_j}{n} = \frac{N_j}{N}, \forall j$$
+However, for the sake of completeness, **let’s supplement** the aggregated helper table with the **population sizes**. Here, we **take advantage of the fact that this is a proportionally stratified sample**. That is, the population size of each stratum is proportional to the total population size in the same way as the sample size of each stratum is proportional to the total sample size: $$\frac{n_j}{n} = \frac{N_j}{N}, \forall j$$
 
-Ebből gyorsan ki tudjuk számolni minden réteg sokasági elemszámát, hiszen tudjuk, hogy $N=4111240$ háztartást jelent. A végén természetesen egészre kerekítjuk az $N_j$-ket:
+From this, we can quickly calculate the population size for each stratum, since we know that $N=4111240$ households in total. At the end, of course, we round the $N_j$-values to integers.
 
 ```{r}
 helper_table$pop_size <- round(helper_table$sample_size/n * N, 0)
 helper_table
 ```
 
-Ezzel is megvagyunk. Akkor minden adott, hogy kiszámoljuk a belső szórást a következő képlettel. $$s_w=\sqrt{\frac{\sum_j{(n_j-1) \times s_j^2}}{n-1}}$$
+Now we are done with this step as well. Everything is ready to calculate the within-group standard deviation using the following formula. $$s_w=\sqrt{\frac{\sum_j{(n_j-1) \times s_j^2}}{n-1}}$$
 
-Ezt gyorsan ki is tudjuk számolni R-ben standard vektor műveletek segítségével.
+We can quickly compute this in R using standard vector operations.
 
 ```{r}
 within_sd <- sqrt(sum((helper_table$sample_size-1)*helper_table$sd^2)/(n-1))
 within_sd
 ```
 
-Tehát, egy konkrét **háztartás éves jövdeleme a megfigyelt mintában várhatóan kb. $s_w=\pm 2.849$ milió Ft-tal **(2849 ezer Ft-tal)** tér el saját településtípusának átlagos jövedelmétől**.
+So, **the expected deviation of a specific household’s annual income from its own settlement type’s average income is approximately** $s_w=\pm 2.849$ million HUF (2849 thousand HUF) in the observed sample.
 
-Ha van első szórásunk, akkor pedig gyorsan meg is van az **arányosan rétegzett standard hiba**, ami kb. $0.298$ ezer Ft-tal ($298$ Ft-tal) **kisebb, mint a sima EV módra számolt standard hiba**:
+Once we have the within-group standard deviation, we can quickly obtain the **proportionally stratified standard error**, which is about **0.298 thousand HUF** (298 HUF) **smaller than the standard error calculated using simple SR sample**.
 
 ```{r}
 SE_PS = within_sd/sqrt(n) * sqrt(1-n/N)
@@ -251,53 +254,53 @@ c(SE_SR, SE_PS)
 SE_PS-SE_SR
 ```
 
-Ez pedig érezteti magát a **némlileg szűkebb, azaz kisebb $\triangle=SE_{PS} \times z_{1-\frac{\alpha}{2}}$ becslési hibahatárral bíró $99\%$-os konfidencia-intervallumban**:
+This causes **slightly narrower -i.e. smaller- confidence interval error margin for the $99\%$ confidence interval** as the formula we have here is $\triangle=SE_{PS} \times z_{1-\frac{\alpha}{2}}$.
 
 ```{r}
 c(sample_mean - k_z*SE_PS, sample_mean + k_z*SE_PS)
 ```
 
-Arányos rétegzéssel a **változatlan megbízhatóságú konfidencia-intervallum** $4567 - 4730$ ezer Ft-ról $4568 - 4729$ ezer Ft-ra **szűkül**.
+With proportional stratification, the **confidence interval with confidence level unchanged shrinks** from $4567–4730$ thousand HUF to $4568–4729$ thousand HUF.
 
-Na jó, ne áltassunk magunkat: **ez szinte nulla csökkenés mind a standard hibában, mind a $\triangle$-ben**! Tehát kb az $PS$ mintavétel nem ért semmit. **Miért van ez? Lássuk a magyarázatot!**
+Alright, let’s not fool ourselves: **this is practically zero reduction in both the standard error and $\triangle$!** So, the **PS** sampling method was almost useless. **Why is that? Let’s see the explanation!**
 
-### 2.1. Az AR mintavételek hatékonysága
+### 2.1. Efficiency of PS Sampling
 
-Az, hogy mennyire jó az $PS$ mintavétel az $SR$-hez képest attól függ, hogy **mekkora a külső szórás mértéke, amit el tudunk hagyni azzal, hogy csak a belső szórással számolunk a standard hibában a teljes szórás helyett**. Ezt pedig **az határozza meg, hogy a rétegzéshez használt minőségi ismérv hány százalékban határozza meg annak a mennyiségi ismérvnek az alakulását, aminek az átlagát becsülni szeretnénk**.<br>
-Egy úgynevezett a **variancia-hányados** nevű mutatószám kell nekünk: $$\eta^2 = \frac{s_b^2}{s^2} = 1-\frac{s_w^2}{s^2}$$
+The effectiveness of proportionally stratified sampling ($PS$) compared to simple random sampling ($SR$) depends on **how much of the between variance can be omitted by using only the within-strata variance in the standard error** instead of the total variance. This is **determined by the extent to which the stratification variable explains the variation of the quantitative variable whose mean we aim to estimate**.<br>
+We need a measure called the **variance ratio**: $$\eta^2 = \frac{s_b^2}{s^2} = 1-\frac{s_w^2}{s^2}$$
 
-És hát valóban a 2. képlettel kiszámolva azt láthatjuk, hogy a **településtípus alig határozza csak meg a háztartások éves jövdelemének alakulását**:
+And indeed, when calculated using this formula, we can see that **the type of settlement barely determines the variation of household annual income**.
 
 ```{r}
 round((1-within_sd^2/s^2) * 100, 2)
 ```
 
-Mindössze $1.88\%$-ban magyarázza a jövdelemek alakulását a településtípus. Ez **megegyezik azzal hány SZÁZALÉKKAL csökkenti az PS mintavétel az SR standard hiba négyzetét**:
+Settlement type explains only $1.88\%$ of income variation. This **exactly equals the percentage by which PS sampling reduces the squared standard error of SR**.
 
 ```{r}
 round((SE_PS^2/SE_SR^2 - 1) * 100, 2)
 ```
 
-Másképpen fogalmazva az **arányos rétegzés annyi SZÁZALÉKRA csökkenti a $SE^2$-et, amennyi az $1-\eta^2$ értéke**. Innentől kezdve ezt a csökkentés hívjuk **relatív hatásfoknak**, azaz: $$Rel=\frac{SE_{PS}^2}{SH_{SR}^2}=1-\eta^2=\frac{s_w^2}{s^2}$$
+Putting it differently, **proportional stratification reduces $SE^2$ by the percentage given by $1-\\eta^2$**. From now on, we call this reduction the **relative efficiency**, i.e.: $$Rel=\frac{SE_{PS}^2}{SH_{SR}^2}=1-\eta^2=\frac{s_w^2}{s^2}$$
 
-Ezek az összefüggések R-ben is szépen kiszámíthatók.
+These relationships can also be computed nicely in R.
 
 ```{r}
 (SE_PS^2/SE_SR^2)
 within_sd^2/s^2
 ```
 
-Tehát, az **arányos rétegzés miatt $98.2\%$-RA csökken csak a standard hiba négyzete**.
+Thus, due to **proportional stratification, the squared standard error is reduced to only $98.2\%$** of its original value.
 
-Természetesen az, hogy maga a **standard hiba hány százalékRA csökken**, azt a fenti összefüggés, zóval a **relatív hatásfok gyöke** adja meg.
+Of course, the percentage by which the **standard error itself decreases** is given by the **square root of the relative efficiency**.
 
 ```{r}
 (SE_PS/SE_SR)
 within_sd/s
 ```
 
-Szóval, a **standard hiba az arányos rétegzés miatt csak $99.05\%$-RA, azaz $0.95\%$-KAL csökkent csak le, mivel a rétegzéshez használt településtípus csak $1.88\%$-ban magyarázza csak az éves jövedelmek alakulását, aminek az alakulását becsülni akartuk**.
+So, the **standard error decreases to only $99.05\%$**, meaning it **only drops by $0.95\%$**, because **the stratification variable (settlement type) explains just $1.88\%$ of the variation in annual income—the variable** (the mean of which we aimed to estimate).
 
-Mindazonáltal az **átlagbecslés háromféle mintavételi mód** (IID, SR, PS) **szerinti standard hibája között** felállítható a következő **összefüggés**: $$SE_{IID} \geq SE_{SR} \geq SE_{PS}$$
+Nonetheless, the **relationship between the standard errors of the three sampling methods** —IID, SR, and PS— can be expressed as follows: $$SE_{IID} \geq SE_{SR} \geq SE_{PS}$$
 
-Hiszen az SR standard hiba valamivel kisebb, mint az IID a $\sqrt{1-\frac{n}{N}}$ korrekciós tényező miatt, és az PS standard hiba valamivel kisebb, mint az SR amiatt, mert csak belső szórást használunk a képletben a teljes helyett: $$\frac{s}{\sqrt{n}} \geq \frac{s}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}} \geq \frac{s_w}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}}$$
+This holds because the SR standard error is slightly smaller than IID due to the correction factor $\sqrt{1-\frac{n}{N}}$, and the PS standard error is slightly smaller than SR because it uses only within-strata variance instead of total variance in the $SE$ formula. $$\frac{s}{\sqrt{n}} \geq \frac{s}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}} \geq \frac{s_w}{\sqrt{n}} \times \sqrt{1-\frac{n}{N}}$$

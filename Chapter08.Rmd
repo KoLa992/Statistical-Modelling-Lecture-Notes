@@ -1,7 +1,7 @@
 ---
-title: "Confidence Interval for the Mean in IID Samples"
+title: "Confidence Interval for Other Parameters in IID Samples. The Bootstrap Method"
 author: "László Kovács"
-date: "12/03/2025"
+date: "16/03/2025"
 output:
   html_document:
     toc: true
