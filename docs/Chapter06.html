@@ -11,7 +11,6 @@
 
 <meta name="author" content="László Kovács" />
 
-<meta name="date" content="2025-09-03" />
 
 <title>Estimating Parameters of Probability Distributions</title>
 
@@ -245,7 +244,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Estimating Parameters of Probability Distributions</h1>
 <h4 class="author">László Kovács</h4>
-<h4 class="date">09/03/2025</h4>
+<h4 class="date">17/03/2025</h4>
 
 </div>
 
@@ -511,15 +510,15 @@ norm_ml$par # optimal parameter values</code></pre>
 <p>Where <span class="math inline">\(\theta=(\mu, \sigma)\)</span>, so <span class="math inline">\(\theta_1=\mu\)</span> and <span class="math inline">\(\theta_2=\sigma\)</span>.</p>
 <p>The <span class="math inline">\(P(y_i|\theta)=f(y_i,\theta)\)</span> probabilities for the Exponential distribution (where <span class="math inline">\(\theta=(\mu, \sigma)\)</span>) are given by the Normal density function: <span class="math display">\[f(y_i, \mu, \sigma)=\frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(y_i-\mu)^2}{2\sigma^2}\right)\]</span></p>
 <p>The likelihood of the whole sample is the individual <span class="math inline">\(y_i\)</span> likelihoods multiplied together because of the <span class="math inline">\(y_i\)</span>s independence (IID sample): <span class="math display">\[L(\mu, \sigma)=\prod_{i=1}^n{\frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(y_i-\mu)^2}{2\sigma^2}\right)}\]</span></p>
-<p>We can expand the product by using the fact that multiplication becomes additive in the power: <span class="math display">\[L(\mu, \sigma)=\left(\frac{1}{2\pi\sigma^2}\right)^{-n/2} \exp\left(-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}\right)\]</span></p>
-<p>Taking the natural logarithm of the likelihood function to produce the log-likelihood: <span class="math display">\[l(\mu, \sigma)=\ln(L(\mu, \sigma))=\ln\left(\left(\frac{1}{2\pi\sigma^2}\right)^{-n/2} \exp\left(-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}\right)\right)\]</span></p>
+<p>We can expand the product by using the fact that multiplication becomes additive in the power: <span class="math display">\[L(\mu, \sigma)=\left(2\pi\sigma^2\right)^{-n/2} \exp\left(-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}\right)\]</span></p>
+<p>Taking the natural logarithm of the likelihood function to produce the log-likelihood: <span class="math display">\[l(\mu, \sigma)=\ln(L(\mu, \sigma))=\ln\left(\left(2\pi\sigma^2\right)^{-n/2} \exp\left(-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}\right)\right)\]</span></p>
 <p>Using logarithm properties we can make the expression additive, so its easier to derivative: <span class="math display">\[l(\mu, \sigma)=\frac{n}{2} \ln(2\pi\sigma^2)-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}\]</span></p>
 <p>Taking the derivative with respect to <span class="math inline">\(\mu\)</span> (remember <span class="math inline">\(\sigma\)</span> is treated as a constant term here): <span class="math display">\[\frac{\partial l(\mu, \sigma)}{\partial\mu}=\sum_{i=1}^n{\frac{y_i-\mu}{\sigma^2}}\]</span></p>
 <p>We’ve used the chain rule to get the derivative of the <span class="math inline">\((y_i-\mu)^2\)</span> part which is <span class="math inline">\(2(y_i-\mu) \times (-1)\)</span>. We can simplify with <span class="math inline">\(2\)</span> in the division. And the <span class="math inline">\(-1\)</span> takes care of the <span class="math inline">\(-\)</span> before the sum.</p>
 <p>So, setting this derivative to zero, we have: <span class="math display">\[0=\sum_{i=1}^n{(y_i-\mu)}\]</span></p>
 <p>And finally, solving for <span class="math inline">\(\mu\)</span> we get that: <span class="math display">\[\mu=\frac{\sum_{i=1}^n{y_i}}{n}=\bar{y}\]</span></p>
 <p>Notice that we actually we just needed to maximize the <span class="math inline">\(-\sum_{i=1}^n{(y_i-\mu)^2}\)</span> part which is equivalent with minimizing <span class="math inline">\(\sum_{i=1}^n{(y_i-\mu)^2}\)</span> according to <span class="math inline">\(\mu\)</span>. So, we can <strong>get the maximum likelihood estimation for the Normal distribution’s expected value by minimizing the squared error</strong>. This is the <strong>ordinary least squares</strong> logic learnt on the <em>Fundamentals of Statistics</em> course!! That is, the <strong>mean is the statistical measure that minimizes the standard deviation, i.e. it has minimal squared error when we substitute all observations with the mean</strong>!</p>
-<p>Now, let’s see the <strong>maximum likelihood estimation of <span class="math inline">\(\sigma\)</span>:</strong> we need to take the derivative of the log-likelihood with respect to <span class="math inline">\(\sigma\)</span> (remember <span class="math inline">\(\mu\)</span> is treated as a constant term here): <span class="math display">\[\frac{\partial l(\mu, \sigma)}{\partial\sigma}=-\frac{n}{2\sigma^2}+\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^4}}\]</span></p>
+<p>Now, let’s see the <strong>maximum likelihood estimation of <span class="math inline">\(\sigma\)</span>:</strong> we need to take the derivative of the log-likelihood with respect to <span class="math inline">\(\sigma\)</span> (remember <span class="math inline">\(\mu\)</span> is treated as a constant term here): <span class="math display">\[\frac{\partial l(\mu, \sigma)}{\partial\sigma^2}=-\frac{n}{2\sigma^2}+\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^4}}\]</span></p>
 <p>Setting this derivative to zero, we have: <span class="math display">\[\frac{n}{2\sigma^2}=\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^4}}\]</span></p>
 <p>Multiplying both sides by <span class="math inline">\(2\sigma^4\)</span>, we get: <span class="math display">\[n \times \sigma^2=\sum_{i=1}^n{(y_i-\mu)^2}\]</span></p>
 <p>Solving for <span class="math inline">\(\sigma^2\)</span>: <span class="math display">\[\sigma^2=\frac{\sum_{i=1}^n{(y_i-\mu)^2}}{n}\]</span></p>

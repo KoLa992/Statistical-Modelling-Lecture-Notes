@@ -1,7 +1,7 @@
 ---
 title: "Estimating Parameters of Probability Distributions"
 author: "László Kovács"
-date: "09/03/2025"
+date: "17/03/2025"
 output:
   html_document:
     toc: true
@@ -383,9 +383,9 @@ The $P(y_i|\theta)=f(y_i,\theta)$ probabilities for the Exponential distribution
 
 The likelihood of the whole sample is the individual $y_i$ likelihoods multiplied together because of the $y_i$s independence (IID sample): $$L(\mu, \sigma)=\prod_{i=1}^n{\frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(y_i-\mu)^2}{2\sigma^2}\right)}$$
 
-We can expand the product by using the fact that multiplication becomes additive in the power: $$L(\mu, \sigma)=\left(\frac{1}{2\pi\sigma^2}\right)^{-n/2} \exp\left(-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}\right)$$
+We can expand the product by using the fact that multiplication becomes additive in the power: $$L(\mu, \sigma)=\left(2\pi\sigma^2\right)^{-n/2} \exp\left(-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}\right)$$
 
-Taking the natural logarithm of the likelihood function to produce the log-likelihood: $$l(\mu, \sigma)=\ln(L(\mu, \sigma))=\ln\left(\left(\frac{1}{2\pi\sigma^2}\right)^{-n/2} \exp\left(-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}\right)\right)$$
+Taking the natural logarithm of the likelihood function to produce the log-likelihood: $$l(\mu, \sigma)=\ln(L(\mu, \sigma))=\ln\left(\left(2\pi\sigma^2\right)^{-n/2} \exp\left(-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}\right)\right)$$
 
 Using logarithm properties we can make the expression additive, so its easier to derivative: $$l(\mu, \sigma)=\frac{n}{2} \ln(2\pi\sigma^2)-\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^2}}$$
 
@@ -399,7 +399,7 @@ And finally, solving for $\mu$ we get that: $$\mu=\frac{\sum_{i=1}^n{y_i}}{n}=\b
 
 Notice that we actually we just needed to maximize the $-\sum_{i=1}^n{(y_i-\mu)^2}$ part which is equivalent with minimizing $\sum_{i=1}^n{(y_i-\mu)^2}$ according to $\mu$. So, we can **get the maximum likelihood estimation for the Normal distribution's expected value by minimizing the squared error**. This is the **ordinary least squares** logic learnt on the *Fundamentals of Statistics* course!! That is, the **mean is the statistical measure that minimizes the standard deviation, i.e. it has minimal squared error when we substitute all observations with the mean**!
 
-Now, let's see the **maximum likelihood estimation of $\sigma$:** we need to take the derivative of the log-likelihood with respect to $\sigma$ (remember $\mu$ is treated as a constant term here): $$\frac{\partial l(\mu, \sigma)}{\partial\sigma}=-\frac{n}{2\sigma^2}+\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^4}}$$
+Now, let's see the **maximum likelihood estimation of $\sigma$:** we need to take the derivative of the log-likelihood with respect to $\sigma$ (remember $\mu$ is treated as a constant term here): $$\frac{\partial l(\mu, \sigma)}{\partial\sigma^2}=-\frac{n}{2\sigma^2}+\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^4}}$$
 
 Setting this derivative to zero, we have: $$\frac{n}{2\sigma^2}=\sum_{i=1}^n{\frac{(y_i-\mu)^2}{2\sigma^4}}$$
 
