@@ -7,7 +7,7 @@ title: |
   Data Science in Business BSc<br><br>
   </center> 
 output: html_document
-date: '17/03/2025'
+date: '22/03/2025'
 ---
 
 ```{r setup, include=FALSE}
@@ -31,4 +31,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Chapter 8 - <a href="Chapter08.html" target="_blank">Confidence Interval for Other Parameters in IID Samples. The Bootstrap Method.</a>
 
 ## Chapter 9 - <a href="Chapter09.html" target="_blank">Confidence Intervals in SR and Stratified Samples</a>
+
+## Chapter 10 - <a href="Chapter10.html" target="_blank">Basic Consepts of Hypothesis Testing</a>
 

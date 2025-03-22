@@ -1,7 +1,7 @@
 ---
 title: "Confidence Interval for the Mean in IID Samples"
 author: "László Kovács"
-date: "07/03/2025"
+date: "22/03/2025"
 output:
   html_document:
     toc: true
@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1. Revision: Standard Error of the Mean in the Time Results of the Balaton Swimmers
 
-As you may recall, in <a href="Chapter05.html" target="_blank">Chapter 5</a>, we thoroughly examined the time results of the participants in the 2022 Balaton Swim event from a sampling and estimation theory perspective. Let's load the data from the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx\" target="_blank">LIDLBalaton2022.xlsx</a> file into a data frame again. This Excel file contains the time results of all participants in the `TIME` column. This dataset will now serve as our **population**.
+As you may recall, in <a href="Chapter05.html" target="_blank">Chapter 5</a>, we thoroughly examined the time results of the participants in the 2022 Balaton Swim event from a sampling and estimation theory perspective. Let's load the data from the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a> file into a data frame again. This Excel file contains the time results of all participants in the `TIME` column. This dataset will now serve as our **population**.
 
 ```{r}
 library(readxl)
