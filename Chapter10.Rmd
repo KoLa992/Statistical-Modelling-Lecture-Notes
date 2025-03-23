@@ -1,7 +1,7 @@
 ---
 title: "Basic Consepts of Hypothesis Testing"
 author: "László Kovács"
-date: "22/03/2025"
+date: "23/03/2025"
 output:
   html_document:
     toc: true
@@ -19,24 +19,24 @@ text-align: justify}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 1. A hipotézisvizsgálat alapgondolata
+## 1. Fundamentals of Hypothesis Testing 
 
-Istenigazából a **hipotézisvizsgálat** csak egy **alternatív mód a konfidencia-intervallumok mellett egy statisztikai mutatószám (paraméter) mintavételi hibájának figyelembe vételére**, amikor a mutatószám egy mintából számított értékéből akarjuk megismerni a valós, sokasági értékét. Azonban, a **hipotézisvizsgálat gondolatvilága a kérdést némileg eltérően közelíti meg, mint az eddig tanult konfidencia-intervallumok**.
+In essence, **hypothesis testing** is simply an **alternative method, alongside confidence intervals, for accounting for the sampling error of a statistical parameter (statistical measure)**, when we aim to infer its true population value from its estimator calculated from a sample. However, the **concept of hypothesis testing approaches the problem somewhat differently compared to the confidence intervals we have studied so far**.
 
-Hipotézisvizsgálat során megfogalmazunk egy **állítást vagy szebb szóval hipotézist egy statisztikai mutatószám** (átlag, arány, medián, szórás, stb.) **valós, sokasági értékéről, és utána megpróbáljuk állítani, hogy ezt a felvetést/hipotézist a megfigyelt mintaadatok alátámasztják-e vagy sem**. Most így alapesetben a paraméteres statisztikai hipotézisvizsgálatokat vagy rövidebben az úgynevezett **paraméteres (statisztikai) próbákat vizsgáljuk**, mert a **megfogalmazott hipotézisünk mindig egy statisztikai paraméter** (azaz statisztikai mutatószám) valós, **sokasági értékéről szól** majd egyelőre.
+In hypothesis testing, we formulate a **statement (or, more formally, a hypothesis) about the true population value of a statistical parameter** (mean, proportion, median, variance, etc.), **and then we attempt to determine whether the observed sample data support or contradict this hypothesis**. For now, we focus specifically on parametric hypothesis tests, or in short, **parametric tests**, because the **hypothesis we formulate will always concern the true population value of a statistical parameter**.
 
-Nézzünk meg **ismét egy $n=100$ elemű FAE mintát a 2022-es Balaton átúszást teljesítők sokaságából** a <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a> fájl alapján.<br>
-Ahogy a <a href="Chapter05.html" target="_blank">Chapter 5</a>-ben is néztük, ebben a fájlban a Balaton átúszás résztvevőinek *neve, neme és percben mért időeredménye* található. Ez az adatsor lesz most is a **sokaságunk**.
+Let's once again **examine an IID sample of size $n=100$ from the population of participants who completed the 2022 Balaton Swim**, based on the following file: <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/LIDLBalaton2022.xlsx" target="_blank">LIDLBalaton2022.xlsx</a>.<br>
+As we also examined in <a href="Chapter05.html" target="_blank">Chapter 5</a>, this file contains the *name, gender, and time* (measured in minutes) of the Balaton Swim participants. This dataset will now represent our **population**.
 
 ```{r}
 library(readxl)
 
-# Adatbeolvasás data frame-be
+# Read the population into a data frame
 swimming_population <- read_excel("LIDLBalaton2022.xlsx")
 str(swimming_population)
 ```
 
-Szuper, vegyük is ki azt az $n=100$ elemű FAE mintát! Rögzítsük meg a `set.seed`-ben  az értéket $1992$-nek, hogy mindannyian ugyan azt a $100$ elemű véletlen mintát kapjuk!
+Great, let's extract that IID sample of $n=100$ elements! Let’s set the value in `set.seed` to $1992$ so that we all get the same random sample of $100$ elements!
 
 ```{r}
 set.seed(1992)
@@ -45,123 +45,126 @@ swimming_sample <- swimming_population[selected_into_sample,]
 str(swimming_sample)
 ```
 
-Namármost. A **teljes sokaság átlagos átúszási idejéről $6$ db különböző állítást tudok megfogalmazni** egy konkrét érték, pl. az $2.5$ óra, azaz $150$perc viszonylatában. A valós, sokasági átlagos időeredményt most is $\mu$-vel jelöljük:
+Now then. Regarding the **average swim time of the entire population, I can formulate $6$ different statements** in relation to a specific value, e.g., $2.5$ hours, i.e., $150$ minutes. As before, we denote the true population mean swim time by $\mu$:
 
-1. Optimista vagyok, és azt mondom, hogy gyorsak voltak a népek és az átlagos átúszási idő a sokaságban kisebb, mint $150$ perc: $\mu < 150$
-2. Pesszimista magyarként azt is mondhatom, hogy lassú volt az úszótömeg és az átlagos időeredmény a sokaságban nagyobb, mint $150$ perc: $\mu > 150$
-3. De még azt is el tudom képzelni, hogy a valós átlag úszási idő épp $150$ perc: $\mu = 150$
-4. Vagy abban is hihetek, hogy a sokaságban az átlag időeredmény minden csak nem $150$ perc: $\mu \neq 150$
-5. A *félig optimista* mondhatja azt, hogy a sokasági átlagos időeredmény *legfeljebb* $150$ perc: $\mu \leq 150$
-6. Kizárásos alapon a *félig pesszimista* pedig úgy fog vélekedni, hogy a sokasági átlagos úszási idő *legalább* $150$ perc: $\mu \geq 150$
+1. I’m optimistic and say that people were fast, and the average swim time in the population is less than $150$ minutes: $\mu < 150$
+2. As a pessimistic Hungarian, I could say that the swimmers were slow, and the average time in the population is greater than $150$ minutes: $\mu > 150$
+3. I can also imagine that the true average swim time is exactly $150$ minutes: $\mu = 150$
+4. Or I might believe that the population’s average swim time is anything but $150$ minutes: $\mu \neq 150$
+5. A semi-optimist might say that the population’s average swim time is at most $150$ minutes: $\mu \leq 150$
+6. By elimination, the semi-pessimist would think that the population’s average swim time is at least $150$ minutes: $\mu \geq 150$
 
-Oké, akkor van $6$ db elméletem...azaz *hipotézis*em. Nézzük meg mennyi az **átlag a megfigyelt $100$ elemű mintában**:
+Alright, so I have 6 theories... or rather, *hypotheses*. Now, let’s check the **average in the observed $100$-element sample**.
 
 ```{r}
 mean(swimming_sample$TIME)
 ```
 
-No, a megfigyelt $100$ átúszó alapján a mintaátlag kb. $161$ perc. Ez alapján a 2. állítás, a pesszimista ürge mondása tűnik igaznak, az **átlag nagyobb, mint** $150$ perc. NODE! **Amit itt látunk az csak $100$ ember átlagos ideje, a teljes sokaságban az átlagos átúszási idő ettől eltérhet!**<br>
-Szebben fogalmazva, **a $161$ és $150$ közti különbség simán betudható a mintavételi hibának is!!**<br>
-**Ezért végzünk hipotézisvizsgálatot**, hogy eldöntsük, hogy a $\mu > 150$ hipotézis (állítás) igaznak vehető-e még a mintavételi hibával együtt is.
+Based on the observed $100$ swimmers, the sample mean is approximately $161$ minutes. At first glance, statement 2, the pessimistic one, seems true, as the **average is greater than $150$ minutes**. BUT! **What we see here is only the average of $100$ people; the population’s true average swim time could be different!**<br>
+To put it more precisely, the **difference between $161$ and $150$ could simply be due to sampling error**!!<br>
+**That’s why we perform hypothesis testing**: To determine whether the hypothesis $\mu > 150$ can be considered as valid, even considering sampling error.
 
-Igazából, ha belegondolunk, akkor mind a $6$ állítás visszavezethető ahhoz a kérdéshez, hogy a valós, sokasági átlag, $\mu$ **eltér-e** annyira a $150$-től, hogy az **eltérés már meghaladja a mintavételi hibát**. Ezt úgy mondjuk szépen, hogy **azt vizsgáljuk, SZIGNIFIKÁNS-e az eltérés a valós $\mu$ és $150$ között!**
+In reality, if we think about it, all 6 statements boil down to the same fundamental question: Does the true population mean $\mu$ differ enough from $150$ that the **difference exceeds sampling error**? In statistical terms, we **test whether the difference between the true $\mu$ and $150$ is SIGNIFICANT**.
 
-Most itt éppen ki tudjuk számolni a teljes sokaság ismeretében, hogy $\mu=167$ perc, ami **tényleg magasabb, mint** $150$.
+Here, we actually have full population data and can compute that $\mu = 167$ minutes, which is **indeed higher than** $150$.
 
 ```{r}
 mean(swimming_population$TIME)
 ```
 
-A **gyakorlatban viszont mindezt NEM tudjatjuk, hiszen csak az $n=100$ elemű minta áll rendelkezésünkre!!** Szóval **marad az, hogy hipotézisvizsgálattal ellenőrizzük, hogy a $\bar{y}=161$ megfigyelt mintaátlag szignifikánsan eltér-e a $150$-től**.
+However, **in practice, we DO NOT know this, because we only have the $n=100$ element sample!** So, our **only option is to use hypothesis testing to check whether the observed sample mean $\bar{y} = 161$ significantly differs from $150$**.
 
-Az eddigi logikánk alapján létre tudunk hozni egy úgynevezett **nullhipotézist** ($H_0$) és **alternatyv hipotézist** ($H_1$) az **eredeti állításunkból**.
+Following this logic, we define a **null hypothesis** $H_0$ and an **alternative hypothesis** $H_1$ **from our original statement**.
 
-A pontos logika itt a következő. A $H_0$-ban mindig olyan állítást fogalmazunk meg, ami **a vizsgált statisztikai paraméter tekintetében megengedi az egyenlőséget**.<br>
-A $H_1$ pedig az **eredeti állítástól függ**:
+The key principle is the following. The null hypothesis $H_0$ always **allows equality for the examined statistical parameter**. The alternative hypothesis $H_1$ **depends on the original statement**:
 
-- Ha az **eredeti állítás megengedi az egyenlőséget**, akkor az állítás $H_0$-ba kerül és **a $H_1$-ben tagadjuk az eredeti állítást**. Ebből adódóan azt várjuk, hogy a hipotézisvizsgálat végén **a $H_0$ állítás bizonyuljon igaznak**. Ebben az esetben azt szeretnénk, hogy **a valós sokasági átlag átúszási idő ne különbözzön szignifikánsan a $150$ perctől**.
-- Ha az **eredeti állítás nem engedi meg az egyenlőséget**, akkor az a $H_1$-be "költözik", és **a $H_0$-ban az eredeti állítást tagadjuk**. Ebből adódóan azt várjuk, hogy a hipotézisvizsgálat végén **a $H_1$ állítás bizonyuljon igaznak**. Ebben az esetben azt szeretnénk, hogy **a valós sokasági átlag átúszási idő szignifikánsan különbözzön a $150$ perctől**.
+- If the **original statement allows equality**, then it becomes $H_0$, and we **negate it in $H_1$**. In this case, we **expect $H_0$ to be true**, meaning that **the true population mean swim time does not significantly differ from $150$ minutes**.
+- If the **original statement does not allow equality**, then it moves to $H_1$, and we **negate it in $H_0$**. Here, we **expect $H_1$ to be true**, meaning that **the true population mean swim time significantly differs from $150$ minutes**.
 
-Ezen elveket figyelembe véve a $6$ eredeti állításunkhoz a következő $H_0$ és $H_1$ párok adhatók meg:
+Using these principles, we can construct the following $H_0$ and $H_1$ pairs for our $6$ original statements:
 
-1. Állítás: $\mu < 150$ || $H_0:\mu \geq 150$ || $H_1:\mu < 150$ || Állítás a $H_1$-ben található.
-2. Állítás: $\mu > 150$ || $H_0:\mu \leq 150$ || $H_1:\mu > 150$ || Állítás a $H_1$-ben található.
-3. Állítás: $\mu = 150$ || $H_0:\mu = 150$ || $H_1:\mu \neq 150$ || Állítás a $H_0$-ban található.
-4. Állítás: $\mu \neq 150$ || $H_0:\mu = 150$ || $H_1:\mu \neq 150$ || Állítás a $H_1$-ben található.
-5. Állítás: $\mu \leq 150$ || $H_0:\mu \leq 150$ || $H_1:\mu > 150$ || Állítás a $H_0$-ban található.
-6. Állítás: $\mu \geq 150$ || $H_0:\mu \geq 150$ || $H_1:\mu < 150$ || Állítás a $H_0$-ban található.
+1. Statement: $\mu < 150$ || $H_0:\mu \geq 150$ || $H_1:\mu < 150$ || Statement is in $H_1$
+2. Statement: $\mu > 150$ || $H_0:\mu \leq 150$ || $H_1:\mu > 150$ || Statement is in $H_1$
+3. Statement: $\mu = 150$ || $H_0:\mu = 150$ || $H_1:\mu \neq 150$ || Statement is in $H_0$
+4. Statement: $\mu \neq 150$ || $H_0:\mu = 150$ || $H_1:\mu \neq 150$ || Statement is in $H_1$
+5. Statement: $\mu \leq 150$ || $H_0:\mu \leq 150$ || $H_1:\mu > 150$ || Statement is in $H_0$
+6. Statement: $\mu \geq 150$ || $H_0:\mu \geq 150$ || $H_1:\mu < 150$ || Statement is in $H_0$
 
-Az 1-2. és 5-6 állításokban, ahol **nem "tiszta" egyenlőség van $H_0$-ban szoktunk úgynevezett technikai nullhipotézist, $H_0^T$-t alkalmazni**. Ez csak annyit jelent, hogy a **nem "tiszta" egyenlőséggel adott $H_0$-t átírjuk tiszta egyenlőségre**.<br>
-Tehát, pl. az **1. és 5. állítás technikai nullhipotézissel**:
+In statements 1, 2, 5, and 6, where **$H_0$ does not have a strict equality sign, we often define a technical null hypothesis $H_0^T$**. This simply means that we **rewrite $H_0$ using a strict equality sign**.<br>
+For example, **for statements 1 and 5, the technical null hypothesis is**:
 
-1. Állítás: $\mu < 150$ || $H_0^T:\mu = 150$ || $H_1:\mu < 150$ || Állítás a $H_1$-ben található.
-5. Állítás: $\mu \leq 150$ || $H_0^T:\mu = 150$ || $H_1:\mu > 150$ || Állítás a $H_0$-ban található.
+1. Statement: $\mu < 150$ || $H_0^T:\mu = 150$ || $H_1:\mu < 150$ || Statement is in $H_1$
+5. Statement: $\mu \leq 150$ || $H_0^T:\mu = 150$ || $H_1:\mu > 150$ || Statement is in $H_0$
 
-A hipotézisvizsgákat vagy más néven **statisztikai próbákat a $H_1$-ben adott relációs jeleik alapján három csoportba kategórizálják**:
+Statistical **tests** (also called hypothesis tests) **are categorized based on the relational sign in $H_1$**:
 
-- Ha $H_1$-ben $\neq$ jel van, akkor **kétoldali próba**
-- Ha $H_1$-ben $<$ jel van, akkor **baloldali próba**
-- Ha $H_1$-ben $>$ jel van, akkor **jobboldali próba**
+- If $H_1$ contains $\neq$, then it is a **two-tailed test**
+- If $H_1$ contains $<$, then it is a **left-tailed test**
+- If $H_1$ contains $>$, then it is a **right-tailed test**
 
-### 1.1. A p-érték fogalma
+### 1.1. The concept of p-value
 
-Ha szépen felírtuk a megfelelő $H_0$ és $H_1$ párokat, akkor meghatározzuk, hogy a megfigyelt mintánk alapjánk melyik tekinthető igaznak a kettő közül. Erre a célra egy **p-érték nevű statisztikai mutatószámot használunk**. A **p-érték megadja, hogy a $H_0$ állítást IGAZnak feltételezve mekkora a valószínűsége, hogy a megfigyelt mintaadataimnál NAGYOBB eltérést kapok $H_0$-tól**. Tehát, nyilvánvalóan a mintából számított statisztikai mutató értéke sosem lesz egyenlő azzal, amit $H_0$-ban állítottam. A kérdés az, hogy **mekkora a valószínűsége, hogy egy random másik mintából nagyobb eltérést kapok a $H_0$-hoz képest, mint amit a jelenlegi mintából megfigyeltem**. Ezt a valószínűséget fejezi ki ez a **p-érték** nevű cucc: $$P(OtherRandomDifference>MyDifference|H_0)$$
+If we have properly written down the corresponding $H_0$ and $H_1$ pairs, we then determine which one is considered true based on our observed sample. For this purpose, we use a **statistical measure called the p-value**.  
 
-Szóval, ha azt kapom, hogy pl. **p-érték = 30%**, akkor azt mondhatom, hogy **30% valószínűséggel kapok nagyobb eltérést egy másik mintában a $H_0$-hoz képest, mint amit a saját adataimban megfigyeltem**. Ez alapján hajlok arra, hogy elfogadjam $H_0$-at, mert ha azt igaznak veszem, akkor elég nagy valószínűséggel kapok még nagyobb eltéréseket $H_0$-tól más random mintákban, mint amit én megfigyeltem. Szóval, **az általam megfigyelt eltérés nem elég nagy a $H_0$-hoz képest (nem szignifikáns), így inkább nem utasítom azt el, mert az adataim nem szolgáltatnak ehhez a döntéshez elég bizonyítékot**.
+The **p-value tells us the probability that, assuming $H_0$ is TRUE, we obtain a deviation from $H_0$ that is GREATER than what we observed in our sample data**. Clearly, the value of the statistical measure calculated from the sample (estimator) will never be exactly equal to what we stated in $H_0$. The question is, **what is the probability that a random new sample will produce a larger deviation from $H_0$ than what we observed in the current sample?** This probability is expressed by the so-called **p-value**: $$P(OtherRandomDifference>MyDifference|H_0)$$
 
-Ellenben, ha azt kapom, hogy pl. **p-érték = 0.1%**, akkor azt mondhatom, hogy **csak 0.1% valószínűséggel kapok nagyobb eltérést egy másik mintában a $H_0$-hoz képest, mint amit a saját adataimban megfigyeltem**. Ez alapján hajlok arra, hogy elutasítsam $H_0$-at, mert ebben az esetben $H_0$-t igaznak véve csak kis valószínűséggel kapok nagyobb eltérést $H_0$-tól, mint amit megfigyeltem. Tehát, **az általam megfigyelt eltérés a $H_0$-hoz képest elég nagy (szignifikáns), így bátran elutasítom, mert az adataim elég bizonyítékot szolgáltatnak ehhez a döntéshez**.
+So, if we obtain, for example, **p-value = 30%**, then we can say that **there is a 30% probability that another sample will show a greater deviation from $H_0$ than what we observed in our own data**. Based on this, we tend to accept $H_0$, because if we assume it to be true, then we would expect to see even greater deviations from $H_0$ in other random samples with a fairly high probability. Thus, **the deviation we observed is not large enough compared to $H_0$ (not significant), so we do not reject it, because our data does not provide enough evidence for such a decision**.  
 
-Midnezek alapján a **döntési szabály** $H_0$ és $H_1$ között a következő. Amennyiben a **p-érték túl magas, elfogadjuk** $H_0$-t, mivel elutasítása túl nagy hibavalószínűséggel járna. Ellenben ha a **p-érték túl alacsony**, akkor elutasítjuk $H_0$-t és **elfogadjuk** $H_1$**-et**.
+However, if we obtain, for example, **p-value = 0.1%**, then we can say that **there is only a 0.1% probability that another sample will show a greater deviation from $H_0$ than what we observed in our own data**. Based on this, we tend to reject $H_0$, because in this case, assuming $H_0$ to be true, we would very rarely see a greater deviation from $H_0$ than what we actually observed. Therefore, **the deviation we observed compared to $H_0$ is large enough (significant), so we confidently reject it, as our data provides sufficient evidence for this decision**.  
 
-A kérdés az hogyan döntöm el, hogy egy p-érték túl magas/alacsony-e? Erre van nekünk az úgynevezett **szignifikancia-szint, amit** $\alpha$**-val jelölünk**. A szignifikancia-szint a **maximális elfogadott hibavalószínűség $H_0$ elutasításához**.
+Based on all this, the **decision rule** between $H_0$ and $H_1$ is as follows.
 
-Tehát, ha azt mondjuk, hogy $\alpha=5\%$, akkor $5\%$ alatti p-érték esetén **elutasítjuk $H_0$-t, mert a megfigyelt adatok elég nagy eltérést mutatnak $H_0$-tól, hogy az elutasítással biztosítani tudjak egy maximum $5\%$ hibavalószínűséget**. Másrészről, ha a p-értékünk $5\%$ feletti, akkor meg **elfogadjuk $H_0$-t, a megfigyelt adatok NEM mutatnak elég nagy eltérést $H_0$-tól, hogy az elutasítással biztosítani tudjak egy maximum $5\%$ hibavalószínűséget**.
+If the **p-value is too high, we accept** $H_0$, because we do not have enough evidence from the observed sample for rejecting it. Conversely, if the **p-value is too low, we reject** $H_0$ and **accept** $H_1$. 
 
-Ezen a ponton tehát a **következőt hinnénk**:
+The question is: how do we decide whether a p-value is too high or too low? For this, we use the so-called **significance level, denoted by** $\alpha$. The significance level represents the **maximum accepted probability of error when rejecting $H_0$**.  
 
-- **p-érték** $>\alpha \rightarrow H_0$
-- **p-érték** $\leq\alpha \rightarrow H_1$
+So, if we say that $\alpha = 5\%$, then for a p-value below $5\%$, we **reject $H_0$, because the observed data shows a large enough deviation from $H_0$ that we can ensure a maximum error probability of $5\%$.** On the other hand, if our p-value is above $5\%$, we **accept $H_0$, because the observed data does NOT show a large enough deviation from $H_0$ to justify rejection with at most a $5\%$ error probability.**  
 
-De természetesen **AZ ÉLET SOSEM ILYEN EGYSZERŰ!!** a fő probléma itt abból jön, hogy **simán lehetnek olyan mintaadataink, hogy a meghozott döntés marhára függ attól mit mondok pontosan $\alpha$-nak!** Pl. oké, maximum megenegedett hibavalószínűségem $\alpha=5\%$. A p-értékre meg kapok egy $4.8\%$-ot. Na akkor $\alpha=5\%$ esetén elutasítanánk $H_0$-t, de egy $\alpha=3\%$-nál már épp elutasítanánk $H_0$-t.<br>
-Emiatt alkalmazzuk a **szokásos szignifikancia-szintek tartományát, ami $1\%-10\%$ között mozog**. Nem akarunk $10\%$-nál nagyobb megenegedett $\alpha$ hibát, mert az már tényleg magas hibavalószínűség. Másrészről meg $0\%$ **hibavalószínűségünk meg csak úgy lehet, ha megfigyeljük az egész sokaságot, és tudjuk mennyi a vizsgált statisztikai paraméter valós, sokasági értéke**. Ekkor meg pont a mintavétel lényegét veszítjük el, hogy nem kell megfigyelni minden múltbeli és jövőbeli adatpontot ahhoz, hogy dönteni tudjunk a vizsgált mutatószámunk valós, sokasági értékéről. Ez utóbbi $\alpha=0\%$ eset hasonló ahhoz, amikor azt mondtuk, hogy a $100\%$ megbízhatóságú konfidencia-intervallumnak sincs semmi értelme, mert akkor azt mondanánk, hogy a mintavételünk alapján a vizsgált statisztikai mutatószámunk (paraméterünk) bárho lehet $\pm\infty$ között... :)<br>
-Továbbá, majd **szimulációkból látni fogjuk, hogy $1\%$ és $10\%$ közti p-értéket simán produkál a valóságban igaz és hamis $H_0$ állítás is**!
+At this point, we might **believe the following**:  
 
-Szóval, az előbbi családregényünk alapján az tűnik egy normálisabb megoldásnak, ha **azt mondjuk, hogy $1\%$ és $10\%$ közti p-érték esetén nem választunk $H_0$ és $H_1$ között, mert ekkor a döntésünk nagyon érzékeny lenne a konkrét $\alpha$ megválasztására**<br>
-Ha egy $1\%$ és $10\%$ közti p-értéket produkálnak a mintaadataink, akkor a legjobb, amit tehetünk, hogy **addig növeljük a mintaméretet ($n$-t) amíg a p-érték egyértelműen $1\%$ alá vagy $10\%$ fölé nem kerül**. Ezt a módszert hívja a statisztika <a href="https://en.wikipedia.org/wiki/Sequential_analysis" target="_blank">szekvenciális analízisnek</a>, és a klinikai gyógyszerkísérletekben és az ipari minőségbiztosításban rendszeresen alkalmazzák. A módszer alapjait pedig egy <a href="https://en.wikipedia.org/wiki/Abraham_Wald" target="_blank">Abraham Wald</a> nevű magar statisztikus dolgozta ki az Amerikai Légierőnek a II. világháború alatt (zsidó származása miatt itthon "nem kellett"). Szóval, mint minden fontos területet a világon, ezt is magyarok találták ki. :)
+- **p-value** $> \alpha \rightarrow H_0$  
+- **p-value** $\leq \alpha \rightarrow H_1$ 
 
-Tehát, az egy fokkal **korrektebb döntés szabályok hipotézisvizsgálat esetén**:
+But of course, **LIFE IS NEVER THAT SIMPLE!!** The main problem here is that **our decision could heavily depend on what exact value we set for $\alpha$!** For example, say we set our maximum allowed error probability to $\alpha = 5\%$. If we then obtain a p-value of $4.8\%$, we would reject $H_0$ under $\alpha = 5\%$, but under $\alpha = 3\%$, we would accept $H_0$.<br>
+Because of this, we typically apply a **range of common significance levels, which fall between $1\%$ and $10\%$**. We do not want to allow an error probability above $10\%$, as that would be unreasonably high. On the other hand, an error probability of **$0\%$ is only possible if we observe the entire population and know the true population value of the examined statistical parameter**. At that point, however, we lose the whole point of sampling — namely, that we do not have to observe every past and future data point to determine the true population value of our statistic. This $ \alpha = 0\%$ case is similar to why a $100\%$ confidence interval is meaningless — because it would say that based on our sample, the parameter could be anywhere between $\pm \infty$... :)<br>
+Furthermore, we will later see from **simulations that both true and false $H_0$ statements can easily produce p-values between $1\%$ and $10\%$ in reality!**  
 
-- **p-érték** $>10\% \rightarrow H_0$
-- $1\% <$ **p-érték** $\leq 10\% \rightarrow$ **nincs döntés**
-- **p-érték** $\leq1\% \rightarrow H_1$
+So, based on this long-winded explanation, a more reasonable solution seems to be to **not make a decision between $H_0$ and $H_1$ when the p-value is between $1\%$ and $10\%$, because the decision would be too sensitive to the exact choice of $\alpha$**.<br>
+If our sample data produces a p-value in the range $1\%$ to $10\%$, the best thing to do is **increase the sample size ($n$) until the p-value clearly falls below $1\%$ or rises above $10\%$**. This method is called <a href="https://en.wikipedia.org/wiki/Sequential_analysis" target="_blank">sequential analysis</a>, and it is widely used in clinical drug trials and industrial quality control. The method was originally developed by a Hungarian statistician, <a href="https://en.wikipedia.org/wiki/Abraham_Wald" target="_blank">Abraham Wald</a>, for the U.S. Air Force during World War II (since he was Jewish, he was not "needed" in Hungary at the time). So, like everything important in the world, this too was invented by Hungarians. :)  
 
-További fejfájásokat okoz, hogy nagyon óvatosan kell bánni az $1\%$ és $10\%$ közti p-értékkel azért is, mert a **p-érték és az $\alpha$ csak egy nézőpontból írják le a hipotézisvizsgálat során elkövethető döntési hibát**! A **p-érték és az $\alpha$ csak az úgyenevzett ELSŐFAJÚ hibáról ad információt: a valóságban igaz $H_0$ elutasításának valószínűségéről**!<br>
-NODE, van nekünk **MÁSODFAJÚ hibánk is**, ami a **valóságban hamis $H_0$ téves elfoggadását jelenti**. Az a rossz hír, hogy ennek a **másodfajú hibának a valószínűségét nem tudjuk megbecsülni és befolyásolni a megfigyelt minta alapján!!**<br>
-Ez a hipotézoisvizsgálat nagy átka: ha **elfogadunk egy $H_0$-t, akkor igazából nem tudjuk, hogy mekkora valószínűséggel hibázunk, csak azt tudjuk, hogy mennyi a $H_0$ elutasításának maximális hibavalószínűsége, mert ez pont a szignifikancia szint**.<br>
-Ezért nagyon sokan fogalmaznak szándékosan ilyen furán a $H_0$-ról, hogy nem elfogadjuk a $H_0$-t, hanem **nem tudjuk elutasítani a $H_0$-t**.
+Thus, the **more correct decision rules in hypothesis testing** are:  
 
-A probléma alaposabb megértésében szerintem remek szolgálatot tesz az alábbi mém. :)
+- **p-value** $>10\% \rightarrow H_0$
+- $1\% <$ **p-value** $\leq 10\% \rightarrow$ **no decision**
+- **p-value** $\leq1\% \rightarrow H_1$ 
+
+Another headache is that we must be very cautious with p-values between $1\%$ and $10\%$, because **p-values and $\alpha$ only describe one type of decision error in hypothesis testing!**  The **p-value and $\alpha$ only provide information about the so-called TYPE I ERROR: the probability of rejecting a true $H_0$.**<br>
+BUT we also have a **TYPE II ERROR**, which is **the probability of mistakenly accepting a false $H_0$.** The bad news is that **we cannot estimate or control the probability of Type II error based on our observed sample!**<br>
+This is the major downside of hypothesis testing: if **we accept $H_0$, we do not actually know how likely we are to be wrong—we only know the maximum probability of rejecting a true $H_0$, because that is the significance level ($\alpha$).**<br>
+For this reason, many statisticians phrase it carefully, saying that we do not "accept" $H_0$, but rather, **we "fail to reject" $H_0$.**  
+
+For a better understanding of the problem, I think the following meme will be of great help. :)
 
 <center>
 ![](Type2.png){width=40%}
 </center>
 
-<br>Most pedig nézzük meg **hogyan kell kiszámolni a p-értéket a megfigyelt minta alapján abban az esetben, amikor a vizsgált statisztikai paraméter az átlag**, azaz $\mu$!
+<br>Now, let’s see **how to calculate the p-value based on an observed sample when the statistical parameter of interest is the mean**, i.e., $\mu$!
 
-## 2. A sokasági átlagra vonatkozó *t-próba*
+## 2. The *t-test* for the Population Mean
 
-A p-érték számításához **mindig szükségünk van egy próbafüggvény nevű statisztikai mutatóra, amit csak a megfigyelt mintaadatokból ki tudunk mindig számolni**. Eztán a **p-értéket a próbafüggvényből egy nevezetes valószínűségi eloszlás (standard normális, t-eloszlás, khi-négyzet, stb.) alapján tudjuk kiszámolni**.
+The calculation of the p-value **always requires a statistical indicator called a test statistic, which we can always compute solely from the observed sample data**. Then, **the p-value is calculated from the test statistic based on a probability distribution (standard normal, t-distribution, chi-square, etc.)**.
 
-Jelöljük a **sokasági átlag HIPOTETIKUS értékét** $\mu_0$-nak. Ez az érték, amit az állításban **feltételezek** a valós, sokasági átlagról. Az 1. fejezetben ez volt a $150$ perc. Ezzel a jelöléssel az alábbi módon néz ki az átlagra vonatkozó próbafüggvény: $$\frac{\bar{y}-\mu_0}{\frac{s}{\sqrt{n}}}$$
+Let us denote the **HYPOTHETICAL value of the population mean** as $\mu_0$. This is the value that I **assume** in the statement about the true population mean. In Section 1, this was $150$ minutes. With this notation, the test statistic for the mean appears as follows: $$\frac{\bar{y}-\mu_0}{\frac{s}{\sqrt{n}}}$$
 
-Tehát, a próbafüggvényünk most nem más, mint a **minta és hipotetikus átlag különbsége osztva az átlag standard hibájával**.
+Thus, our test statistic is **simply the difference between the sample mean and the hypothetical mean, divided by the standard error of the mean**.
 
-Ha a $H_0$-ban jól okoskodunk, és **tényleg sikerült a valós $\mu$ sokasági átlagot venni a $\mu_0$ elvi** (hipotetikus) **átlagnak, akkor sok-sok mintavétel esetén a próbafüggvényünk $n-1$ szabadságfokú t-eloszlást követ**: $$\frac{\bar{y}-\mu}{\frac{s}{\sqrt{n}}} \sim t(n-1)$$
+If our reasoning in $H_0$ is correct, and **we truly managed to take the real population mean $\mu$ as the theoretical** (hypothetical) **mean $\mu_0$, then with many repeated samples, our test statistic follows a t-distribution with $n-1$ degrees of freedom**: $$\frac{\bar{y}-\mu}{\frac{s}{\sqrt{n}}} \sim t(n-1)$$
 
-A képlet mögött az az elv nyugszik, hogy **a $\mu = \mu_0$ technikai nullhipotézist ($H_0^T$) alkalmazzuk mind a 6 különböző típusú $H_0$ és $H_1$ párosnál, így meg tudjuk majd adni a próbafüggvény eloszlását sok-sok mintavétel esetén**.
+The principle behind this formula is that **we apply the technical null hypothesis $\mu = \mu_0$ ($H_0^T$) in all six different types of $H_0$ and $H_1$ pairs, so we can determine the distribution of the test statistic across many samples**.
 
-Ezt az egészet gyorsan ellenőrizni tudjuk, ha **kiveszünk $10000$ db $n=100$ elemű FAE mintát a Balaton átúszók sokaságából**, ahogy a <a href="Chapter05.html" target="_blank">Chapter 5</a>-ben is tettük.<br>
-Most csak **visszatöltjük a $10000$ db FAE mintát tartalmazó Excel táblát egy data frame-be**, amit a <a href="Chapter04.html" target="_blank">Chapter 4</a>-ben hoztunk létre. Ez az Excel fájl <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/SwimmingSamples.xlsx" target="_blank">innen</a> elérhető.
+We can quickly verify this by **drawing $10000$ samples of size $n=100$ from the population of swimmers crossing Lake Balaton**, as we did in <a href="Chapter05.html" target="_blank">Chapter 5</a>.<br>  
+Now, we **reload the Excel table containing $10000$ samples into a data frame**, which we created in <a href="Chapter04.html" target="_blank">Chapter 4</a>. This Excel file is available <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/SwimmingSamples.xlsx" target="_blank">here</a>.
 
 ```{r}
 samples_100 <- as.data.frame(read_excel("SwimmingSamples.xlsx"))
@@ -169,9 +172,9 @@ rownames(samples_100) <- paste0("Sample",1:10000) # indicate in the rownames tha
 head(samples_100)
 ```
 
-Oké, az eredményből látjuk is, hogy úgy néz ki a data frame, hogy **1 sor tartalmaz 1 db 100 elemű mintát és a mintaelemeket** (tehát a mintába besorsolt versenyző percben mért időeredményét) **az oszlopkban tároljuk**.
+Okay, from the results, we see that the data frame is structured such that **each row contains one sample of 100 elements, and the sample elements** (i.e., the recorded time results in minutes for each sampled swimmer) **are stored in columns**.
 
-Kiszámoljuk mindenegyes mintavételre a minta átlagos időeredményét és azok korrigált szórását. Csak figyeljünk, hogy az alkalmazott `sapply` függvények második paramétere `1` legyen, hogy ne oszlopok, hanem sorok szerint vegyük az átlagokat és a szórásokat. Plusz, figyeljünk, hogy a függvényeket minidg csak az első $100$ oszlopra engedjük rá, hiszen ott vannak a tényleges mintaelemek. Pontosan úgy csináljunk mindent tehát, ahogy a <a href="Chapter05.html" target="_blank">Section 2 of Chapter 5</a>-ben tettük.
+We compute the sample mean time and corrected standard deviation for each sample. Be sure that the second parameter of the `sapply` function is `1`, so that we take means and standard deviations row-wise instead of column-wise. Also, ensure that the functions are applied only to the first $100$ columns, as those contain the actual sample elements. Basically, do everything exactly as we did in <a href="Chapter05.html" target="_blank">Section 2 of Chapter 5</a>.
 
 ```{r}
 samples_100$sample_mean <- apply(samples_100[,1:100], 1, mean)
@@ -180,10 +183,10 @@ samples_100$sample_sd <- apply(samples_100[,1:100], 1, sd) # corrected -> unbias
 head(samples_100[,97:102])
 ```
 
-Ezek után pedig **ki tudjuk számolni a próbafüggvényünket egy olyan $H_0$ és $H_1$ párosra, amiről tudjuk, hogy a sokaságban $H_0$ igaz, és egy olyanra, ahol tudjuk, hogy a sokaságban $H_0$ hamis**:
+Then, we can **compute our test statistic for two pairs of $H_0$ and $H_1$, where we know that $H_0$ is true in one case and false in another**:
 
-- **IGAZ** $H_0$ esete: $H_0:\mu=167$ és $H_1: \mu < 167$
-- **HAMIS** $H_0$ esete: $H_0^T:\mu=150$ és $H_1: \mu > 150$
+- Case of **TRUE** $H_0$: $H_0:\mu=167$ and $H_1: \mu < 167$
+- Case of **FALSE** $H_0$: $H_0^T:\mu=150$ and $H_1: \mu > 150$
 
 ```{r}
 mu_0_true <- mean(swimming_population$TIME) # true population mean
@@ -196,8 +199,8 @@ samples_100$test_stat_H0false <- (samples_100$sample_mean - mu_0_false)/(samples
 head(samples_100[,99:104])
 ```
 
-Okké! Akkor miután megvannak a kétféle esetben a próbafüggvényeink, **nézzük meg a kétféle próbafüggvények hisztogramja a $10000$ db mintavétel alapján hogyan alakul a $t(n-1)$, azaz $t(100-1)$ eloszlás sűrűségfüggvényéhez** képest.<br>
-A sűrűségfüggvény hisztogramhoz való illeszkedését ábrázoló kód teljes mértékben az <a href="Chapter03.html" target="_blank">Section 1.3. of Chapter 3</a>-ben lévő kódok logikáját követi.
+Alright! Now that we have the test statistics for both scenarios, **let's examine how the histograms of these test statistics from $10000$ samples compare to the density function of the $t(n-1)$, i.e., $t(100-1)$, distribution**.<br>  
+The code for visualizing the fit of the density function to the histogram follows the exact logic of the code found in <a href="Chapter03.html" target="_blank">Section 1.3 of Chapter 3</a>.
 
 ```{r warning=FALSE}
 library(ggplot2)
@@ -214,28 +217,28 @@ ggplot(samples_100) +
                 col = 'blue', linewidth = 1)
 ```
 
-Szuper! Tehát **igaz $H_0$ esetén tényleg t-eloszlást követ a próbafüggvény a sok-sok mintavételünk esetén**. Hamis $H_0$ esetén pedig valami más szimmetrikus eloszlás rajzolódik ki a hisztogramon, ami NEM a t-eloszlás. De hogy ez most konkrétan mi, nem annyira érdekel minket. :)
+Great! So **when $H_0$ is true, the test statistic does indeed follow a t-distribution in our repeated sampling experiment**. When $H_0$ is false, the histogram forms some other symmetric distribution that is most definately NOT a t-distribution. However, we are not particularly concerned with what this distribution is. :)
 
-Ebből, hogy a próbafüggvény t-eloszlást követ sok-sok mintavétel esetén, ha $H_0$ igaz, **ki tudjuk számolni a p-értéket**. gyakorlatilag területeket számolunk a *t-eloszlás* sűrűségfüggvénye alatt. A konkrét számoláshoz végig kell gondolnunk, hogy **mi a legjobb eset $H_0$ szempontjából a próbafüggvényre nézve**:
+From the fact that the test statistic follows a t-distribution under repeated sampling when $H_0$ is true, **we can compute the p-value**. Essentially, we calculate areas under the *t-distribution* density function. To do this, we must consider **what the best-case scenario for $H_0$ is regarding the test statistic**:
 
-- **Kétoldali** próbák ($H_0: \mu=\mu_0$ és $H_1: \mu \neq \mu_0$) esetén: ha a **próbafüggvény pontosan** $0 \rightarrow$ ez az elvi eset arra utal, hogy a hipotetikus átlag és a valós, sokasági átlag ugyanaz, így $1$ valószínűséggel kaphatok más mintákban nagyobb eltéréseket $H_0$-tól, mint amit ekkor megfigyeltem.
-- **Baloldali** próbák ($H_0: \mu\geq\mu_0$ és $H_1: \mu < \mu_0$) esetén: ha a **próbafüggvény =** $+\infty \rightarrow$ ez az elvi eset arra utal, hogy a sokasági átlag ($\mu$) az pont $+\infty$, aminél minden $\mu_0$ kisebb, így $1$ valószínűséggel kaphatok más mintákban nagyobb eltéréseket $H_0$-tól, mint amit ekkor megfigyeltem.
-- **Jobboldali** próbák ($H_0: \mu=\mu_0$ és $H_1: \mu > \mu_0$) esetén: ha a **próbafüggvény =** $-\infty \rightarrow$ ez az elvi eset arra utal, hogy a sokasági átlag ($\mu$) az pont $-\infty$, aminél minden $\mu_0$ nagyobb, így $1$ valószínűséggel kaphatok más mintákban nagyobb eltéréseket $H_0$-tól, mint amit ekkor megfigyeltem.
+- **Two-tailed** tests ($H_0: \mu=\mu_0$ and $H_1: \mu \neq \mu_0$): If the **test statistic is exactly** $0 \rightarrow$ this theoretical case suggests that the hypothetical mean and the true population mean are identical, so with probability $1$, I would obtain greater deviations from $H_0$ in other samples.
+- **Left-tailed** tests ($H_0: \mu\geq\mu_0$ and $H_1: \mu < \mu_0$): If the **test statistic =** $+\infty \rightarrow$ this theoretical case suggests that the population mean ($\mu$) is exactly $+\infty$, making every $\mu_0$ smaller, so with probability $1$, I would obtain greater deviations from $H_0$ than what's observed.
+- **Right-tailed** tests ($H_0: \mu=\mu_0$ and $H_1: \mu > \mu_0$): If the **test statistic =** $-\infty \rightarrow$ this theoretical case suggests that the population mean ($\mu$) is exactly $-\infty$, making every $\mu_0$ larger, so with probability $1$, I would obtain greater deviations from $H_0$ than what's observed.
 
-Ez alapján,ha **van egy ismert próbafüggvény értékem, amit $t$-vel jelölök, akkor a p-érték a $t(n-1)$ eloszlásból az alábbi ábrán látható módon számítható ki**:
+Based on this, if **we have a known test statistic value denoted as $t$, then the p-value is calculated from the $t(n-1)$ distribution as shown in the following figure**:
 
 <center>
 ![](pval_fromt.jpg){width=90%}
 </center>
 
-<br>Látható, hogy **mindhárom esetben a p-érték úgy lesz kiszámolva, hogy ha a konkrét $t$ próbafüggvényünk messzebb kerül a $H_0$ számára legjobb esettől, akkor a p-érték csökken $\rightarrow$ hiszen egyre kisebb és kisebb valószínűséggel kaphatok a megfigyeltnél nagyobb eltéréseket $H_0$-tól!!**
+<br>As seen, **in all three cases, the p-value is computed such that the further the specific test statistic $t$ moves away from the best case for $H_0$, the smaller the p-value becomes $\rightarrow$ it becomes less and less likely to obtain greater deviations from $H_0$ than observed!!**
 
-Mindezek alapján akkor **számoljuk ki** a `pt` függvény segítségével a **p-értéket mind a $10000$ db mintában a korábban vizsgált két $H_0$ és $H_1$ párunkra, ahol egyszer igaz, egyszer pedig hamis volt a** $H_0$:
+Based on all this, let's **calculate the p-value** using the `pt` function **for all $10000$ samples for the two previously examined pairs of $H_0$ and $H_1$, where $H_0$ was true in one case and false in the other**:
 
-- **IGAZ** $H_0$ esete: $H_0:\mu=167$ és $H_1: \mu < 167$
-- **HAMIS** $H_0$ esete: $H_0:\mu=150$ és $H_1: \mu > 150$
+- **TRUE** $H_0$ case: $H_0:\mu=167$ and $H_1: \mu < 167$
+- **FALSE** $H_0$ case: $H_0:\mu=150$ and $H_1: \mu > 150$
 
-Figyeljünk arra, hogy az $1-$ rész a `pt` függvényen a hamis $H_0$ esetben a **jobboldali próba** miatt van:
+Note that the `1-` part before the `pt` function is included for the false $H_0$ case because it is a **right-tailed test**.
 
 ```{r}
 samples_100$p_value_H0true <- pt(samples_100$test_stat_H0true, df = (n-1))
@@ -244,63 +247,63 @@ samples_100$p_value_H0false <- 1-pt(samples_100$test_stat_H0false, df = (n-1))
 head(samples_100[,101:106])
 ```
 
-Remek! Az első $6$ db minta alapján az elvárt eredményeket kaptuk a p-értékekre: magas értékek igaz $H_0$, alacsony értékek hamis $H_0$ esetén. Pontosabb értelmezéshez nézzük meg **az $4.$ minta esetét**:
+Great! Based on the first six samples, the expected p-value results were obtained: high values when $H_0$ is true, low values when $H_0$ is false. To interpret more precisely, let's examine the **4th sample**:
 
-- **Igaz $H_0$ esetén $69.78\%$-os valószínűséggel kapunk nagyobb eltéréseket $H_0$-tól, mint amit a 4. mintában megfigyeltünk**.
-- **Hamis $H_0$ esetén csak $0.01\%$-os valószínűséggel kapunk nagyobb eltéréseket $H_0$-tól, mint amit a 4. mintában megfigyeltünk**.
+- **When $H_0$ is true, there is a 69.78% probability of obtaining greater deviations from $H_0$ than observed in sample 4**.
+- **When $H_0$ is false, there is only a 0.01% probability of obtaining greater deviations from $H_0$ than observed in sample 4**.
 
-Ugyanakkor az $1.$ mintában látjuk, hogy a p-érték csak $3.5\%$ igaz $H_0$ esetén. Szóval, a **"nem hozunk döntést, ha a p-érték $1\% - 10\%$ között mozog", egy elég jogos szabálynak tűnik**! :)
+At the same time, in sample $1.$, we see that the p-value is only $3.5\%$ when $H_0$ is true. So, the rule **"we do not make a decision if the p-value is between $1\%$ and $10\%$" seems quite reasonable**! :)
 
-Hasonlóan megerősíti az $1\% - 10\%$ közötti p-értékek esetén vett óvatosságot, ha  az igaz és hamis $H_0$ esetén vizsgált p-értékeket doboz ábrán vizsgáljuk:
+Similarly, the caution taken for p-values in the range of $1\%$ to $10\%$ is reinforced when we examine the p-values for true and false $H_0$ using a box plot.
 
 ```{r}
 boxplot(samples_100[,c("p_value_H0true", "p_value_H0false")])
 ```
 
-Ahogyan vártuk is, igaz $H_0$ esetén a p-értékek középső $50\%$-a, azaz interkavrtilis trejedelme ($IQR$) látványosan magasabban van, mint hamis $H_0$ esetében. Ugyanakkor, azt is nagyon fontos látni az ábrán, hogy **a nagy p-értékek kilógó értéknek számítanak hamis $H_0$ esetén, de a kis p-értékek nem kilógó értékek igaz $H_0$ esetében!** Tehát, néha megérheto szigorúbb $\alpha$-t használni, mint $1\%$. Sokan csak akkor utasítják el $H_0$-t, ha a p-érték kisebb, mint $0.1\%=0.001$, szóval $\alpha=0.001$ mellett dolgoznak.
+As expected, when $H_0$ is true, the middle $50\%$ of p-values, that is, the interquartile range ($IQR$), is significantly higher than in the case of false $H_0$. However, it is also very important to observe in the plot that **large p-values are considered outliers when $H_0$ is false, but small p-values are not outliers when $H_0$ is true!** Thus, sometimes it may be worth using a stricter $\alpha$ than $1\%$. Many people reject $H_0$ only if the p-value is smaller than $0.1\%=0.001$, meaning they work with $\alpha=0.001$.
 
-Az eredményeink alapján kiszámolhatjuk a döntési hibák arányát $\alpha=5\%$ mellett igaz $H_0$ esetén. Tehát, az **elsőfajú hiba empirikus valószínűsége** lesz ez: mekkora arányban utasítottunk el valóságban igaz $H_0$-t! Ugye a szignifikancia-szint definíciója alapján ennek az aránynak $5\%$ körül kéne lennie.
+Based on our results, we can calculate the proportion of decision errors when $\alpha=5\%$ and $H_0$ is true. That is, the **empirical probability of a Type I error**: how often did we reject a true $H_0$? According to the definition of the significance level, this proportion should be around $5\%$.
 
 ```{r}
 mean(samples_100$p_value_H0true<0.05)
 ```
 
-Hát az eredmény $6.05\%$, 1 százalékponttal nagyobb, mint $5\%$, de nem sokkal. Nagyjából úgy néz ki, hogy a rendszer működik. Ha még több mintát vizsgálnánk, mint 10000, akkor ez az arány egyre közelebb fog kerülni az $5\%$-hoz.
+Well, the result is $6.05\%$, which is 1 percentage point higher than $5\%$, but not by much. It looks like the system is working properly. If we examined even more samples than 10000, this proportion would get closer and closer to $5\%$.
 
-Sőt, mivel most tudjuk, hogy mikor igaz és hamis $H_0$, ki tudjuk most számolni a **másodfajú hiba empirikus valószínűségét** is $\alpha=5\%$ mellett: mekkora arányban fogadjuk el a valóságban hamis $H_0$-t.
+Moreover, since in this simulation case, we know when $H_0$ is true or false, we can now also calculate the **empirical probability of a Type II error** at $\alpha=5\%$: the proportion of times we accept a false $H_0$.
 
 ```{r}
 mean(samples_100$p_value_H0false>=0.05)
 ```
 
-Egész jó, $0.52\%$!
+Not bad, $0.52\%$!
 
-Figyeljük meg azt a teljesen logikus összefüggést, hogy ha az **elsőfajú hibavalószínűsége (szignifikancia-szint) csökken, akkor a másodfajú hiba valószínásége nő**. Számoljuk ki akkor hát a két empirikus hibavalószínűséget $\alpha=1\%$ mellett. Tehát, az elsőfajú hiba elvárt valószínűségét levittük $1\%$-ra.
+Let us observe the completely logical relationship that if the **probability of a Type I error (significance level) decreases, then the probability of a Type II error increases**. Now, let's calculate the two empirical error probabilities at $\alpha=1\%$. That is, we lowered the expected probability of a Type I error to $1\%$.
 
 ```{r}
 mean(samples_100$p_value_H0true<0.01) # empirical probability of Type I error
 mean(samples_100$p_value_H0false>=0.01) # empirical probability of Type II error
 ```
 
-### 2.1. A *t-próba* beépített függvénnyel
+### 2.1. The *t-test* with a bulit-in R function
 
-Azért van némi szerencsénk, mert az **átlagra vonatkozó t-próba p-értékét szépen ki lehet számolni beépített R függvénnyel** is!
+Luckily, we have an advantage because the **p-value of the t-test for the mean can be nicely computed using a built-in R function**!
 
-Vegyük például a Section 1 elején kivett $n=100$ elemű mintát, amit a `swimming_sample` című R objektumban tároltunk le, ami egy $100\times3$-as data frame:
+For example, let’s take the $n=100$ sample taken at the beginning of Section 1, which we stored in the R object `swimming_sample`, which is a $100\times3$ data frame.
 
 ```{r}
 str(swimming_sample)
 ```
 
-Vizsgáljuk meg ezen a mintán az alábbi $H_0$ és $H_1$ párost:
+Examine the following $H_0$ + $H_1$ pair for this specific sample:
 
 - $H_0^T:\mu=150$
 - $H_1 > 150$
 
-Mivel $H_1$-ben $>$ relációs jel lakik, így **jobboldali** lesz a hipotézisvizsgálat.<br>
-Tudjuk, hogy itt **a $H_1$ lesz igaz, hiszen láttuk korábban, hogy a teljes sokaságban az átlagos átúszási idő $167.5$ perc**. Tehát, valami **jó alacsony p-értéket várunk**!
+Since the $H_1$ hypothesis contains the $>$ relational sign, the hypothesis test will be **right-tailed**.<br>
+We know that here **$H_1$ is true, as we have previously seen that the average swim time in the entire population is $167.5$ minutes**. Therefore, we expect **a very low p-value**!
 
-Ez szépen ki is jön manuálisan is! Először kiszámoljuk a $\frac{\bar{y}-\mu_0}{\frac{s}{\sqrt{n}}}$ **próbafüggvényt** $\mu_0=150$ mellett, hiszen a hipotézisekben azt nézzük, hogy a valós, sokasági átlag szignifikánsan nagyobb-e, mint ez a feltételezett (hipotetikus) $150$ perces átlag.
+This result can be nicely obtained manually! First, we calculate the **test statistic** $\frac{\bar{y}-\mu_0}{\frac{s}{\sqrt{n}}}$ assuming $\mu_0=150$, since in hypothesis testing we examine whether the true population mean is significantly greater than this assumed (hypothetical) $150$-minute mean.
 
 ```{r}
 hypothetical_mean <- 150
@@ -312,57 +315,57 @@ test_stat <- (sample_mean - hypothetical_mean) / (s/sqrt(n))
 test_stat
 ```
 
-Remek! Ebből gyorsan is meg is van a $t(n-1)$ eloszlásból (`pt` függvénnyel) a p-érték. Most ugye a **próbafüggvény felé esés valószínűségét számoljuk, hiszen jobboldali a próba**.
+Great! From this, we can quickly obtain the p-value from the $t(n-1)$ distribution using the `pt` function. Here, we are calculating **the probability of falling above the test statistic, since this is a right-tailed test**.
 
 ```{r}
 p_val_t_distr = 1 - pt(test_stat, df = n-1)
 p_val_t_distr * 100 # in percentage format
 ```
 
-A **p-érték alapján elmonható, hogy a most vizsgált $100$ elemű minta alapján csak $0.203\%$ a valószínűsége annak, hogy egy másik mintában az itt megfigyeltnél nagyobb eltérést találunk $H_0$-hoz képest**. Ez **kisebb még a legkisebb szokásos szignifikancia-szintnél, az $\alpha=1\%$-nál is, így meghozzuk azt a döntést és $H_0$-t elutasítjuk**.<br>
-Ez alapján pedig $H_1$ elfogadható, azaz a **sokaságban az átlagos átúszási idő szignifikánsan** (mintavételi hibát meghaladó mértékben) **nagyobb, mint $150$ perc**.<br>
-Most tudjuk, hogy **helyesen döntöttünk**, mivel láttuk, hogy a sokaságban az átlagos átúszási idő $167.5$ perc.
+**Based on the p-value, we can state that for the examined sample of size $100$, there is only a $0.203\%$ probability that another random sample would show a greater deviation from $H_0$ than what we observed here**. This **is even smaller than the smallest common significance level of $\alpha=1\%$, so we make the decision to reject $H_0$**.<br>
+Based on this, $H_1$ is acceptable, meaning that the **average swim time in the population is significantly** (beyond sampling error) **greater than $150$ minutes**.<br>
+Now we know that **we made the correct decision**, as we have seen that the population average swim time is $167.5$ minutes.
 
-Mindez szerencsére elintézhető a `t.test` függvényével is. Ha a függvény
+Fortunately, all of this can also be handled using the `t.test` function. If the function is provided with:
 
-- első paraméterében megadjuk az aktuális mintánk elemeit tartalmazó oszlopot egy data frame-ből,
-- a `mu` paraméterben az elvi átlagot, azaz $\mu_0$-t,
-- az `alternative` paraméterben pedig a próba oldalát $H_1$ relációs jele alapján
-  * lehetséges értékek: `‘two.sided’, ‘less’, ‘greater’`, rendre a $\neq$, $<$, $>$ relációs jeleket jelölik $H_1$-ben
+- the column containing the observations of our current sample from a data frame as its first parameter,
+- the theoretical mean, i.e., $\mu_0$, in the `mu` parameter,
+- the test direction in the `alternative` parameter based on the relational sign in $H_1$
+  * possible values: `'two.sided'`, `'less'`, `'greater'`, corresponding to the relational signs $\neq$, $<$, and $>$ in $H_1$
 
-Akkor a **függvény megadja a t-próba p-értékét és a próbafüggvényt is**:
+Then the **function provides the p-value of the t-test and the test statistic as well**.
 
 ```{r}
 t.test(swimming_sample$TIME, mu = 150, alternative = "greater")
 ```
 
-Szuper, ugyan úgy megvan a próbafüggvény ($2.9416$) és a $0.2033\%$-os p-érték is! :)
+Awesome, we get the same test statistic ($2.9416$) and the p-value of $0.2033\%$! :)
 
-### 2.2. A *t-próba* előfeltételei
+### 2.2. Assumptions of the *t-test*
 
-Természetesen, ennek a t-próbás hipotézisvizsgálatnak is vannak előfeltételei, mint ahogy a különböző konfidencia-intervallum képleteknek is voltak. **Ha ezek a feltételek nem teljesülnek, akkor bármi is jött ki p-értékre, azt nem használhatjuk döntésre $H_0$-ról és $H_1$-ről**, hiszen az alkalmazott képletek mögötti követelmények az adatokal szemben NEM teljesülnek.
+Of course, this t-test-based hypothesis test also has prerequisites, just as different confidence interval formulas do. **If these conditions are not met, then no matter what the p-value is, it cannot be used to make a decision about $H_0$ and $H_1$**, because the underlying assumptions of the applied formulas are NOT met by the data.
 
-A t-próbának alapvetően **két feltétel**ére kell odafigyelni:
+The t-test essentially has **two conditions** to be considered:
 
-1. Amennyiben **kis mintánk** ($n<100$) van, akkor feltesszük, hogy **az adatok, amikből a mintát vettük normális eloszlást követnek**
-2. Ha a **minta elemszáma nagy** ($n\geq100$), akkor **nem kell semmi extra előfeltételre figyelni**.
+1. If we have a **small sample** ($n<100$), we assume that **the data from which the sample was drawn follows a normal distribution**.
+2. If the **sample size is large** ($n\geq100$), then **no additional assumptions need to be considered**.
 
-Most az $n=100$ elemű mintánk a Balaton átúszók sokaságából már épp nagy minta, hiszen $100\geq100$, de azért nézzünk rá az **időeredmény adatok eloszlására a minta alapján**:
+Now, our sample of $n=100$ from the population of Balaton swimmers is already a large sample, since $100\geq100$, but let's still check the **distribution of the time result data based on the sample**.
 
 ```{r}
 hist(swimming_sample$TIME)
 ```
 
-Hm, bár a nagy mintaelemszám miatt ez nem számít, de azért megnyugtató, hogy az átúszási idők eloszlása nem olyan durván tér el a normális eloszlás sűrűségfüggvényétől. Csak nagyon enyhén van egy kis jobbra elnyúló jellege, de semmi vészes. :)
+Hmm, although this does not matter due to the large sample size, it is reassuring that the distribution of crossing times does not deviate drastically from the density function of a normal distribution. It only has a very slight right-skewed tendency, but nothing alarming. :)
 
-## 3. A sokasági átlagra vonatkozó *z-próba*
+## 3. The *z-test* for the Population Mean
 
-Ugyebár az átlagra vonatkozó konfidencia-intervallumok esetén megfigyeltük, hogy **nagy szabadságfok ($df\geq100$) esetén a t-eloszlás lényegében megegyezik a standard normális eloszlással**.
+Of course, in the case of confidence intervals for the mean, we observed that **for a large degree of freedom ($df \geq 100$), the t-distribution is essentially the same as the standard normal distribution**.
 
-Azaz, kicsit matekosabban fogalmazva: **ha $n \geq100$, akkor igaz nullhipotézis ($H_0$) esetén** (tehát, amikor $\mu_0$ helyére épp a valós, sokasági átlagot, azaz $\mu$-t helyettesítjük), a **próbafüggvényünk standard normális ($N(0,1)$) eloszlást követ**: $$\frac{\bar{y}-\mu}{\frac{s}{\sqrt{n}}} \sim N(0,1)$$
+That is, to put it a bit more mathematically: **if $n \geq 100$, then under the true null hypothesis ($H_0$)** (i.e., when we substitute the true population mean: $\mu$, for $\mu_0$), our **test statistic follows a standard normal ($N(0,1)$) distribution**: $$\frac{\bar{y}-\mu}{\frac{s}{\sqrt{n}}} \sim N(0,1)$$
 
-Ez alapján pontosan **ugyan azon az elven számíthatunk a próbafüggvényből p-értéket, amit a 2. fejezetben a t-eloszlásnál is alkalmaztunk**. Mivel a null-és alternatív hipotézis nem változott meg ($H_0^T:\mu=150$ és $H_1 > 150$), így marad a jobboldali próba, és mivel a mintaelemek sem változtak a 100 elemű mintánkban, így a **próbafüggvény is megegyezik a 2.1. fejezetben használttal**.<br>
-**Mivel maradt a jobboldali próba**, így a **próbafüggvény fölé esés valószínűségét kell megadni a standard normális eloszlásban** a `pnorm` függvény $1-$ verziójával.
+Based on this, we can **compute the p-value from the test statistic using exactly the same principle we applied in Section 2 for the t-distribution**. Since the null and alternative hypotheses remain unchanged ($H_0^T: \mu = 150$ and $H_1 > 150$), we still have a right-tailed test, and since the sample elements remain the same in our 100-element sample, the **test statistic is also the same as the one used in Section 2.1**.<br>
+**Since this remains a right-tailed test**, we must **determine the probability of falling above the test statistic in the standard normal distribution** using the `pnorm` function with the $1-$ version.
 
 ```{r}
 p_val_norm_distr <- 1 - pnorm(test_stat)
@@ -371,27 +374,28 @@ p_val_norm_distr * 100 # percentage format
 p_val_t_distr * 100 # p-value from t-distribution in percentage format
 ```
 
-Mindkét p-érték nagyjából $0.2\%$ körüli, szóval a standard normális és t-eloszlás között tényleg nincs érdemi különbség a p-érték számolás tekintetében.
+Both p-values are around $0.2\%$, so there really is no noticeable difference between the standard normal and t-distribution when calculating the p-value.
 
-## 4. A sokasági arányra vonatkozó *z-próba*
+## 4. The *z-test* for the Population Proportion
 
-Természetesen, nem csak sokasági átlagokra ($\mu$), hanem sokasági arányokra ($P$) is tudunk hipotéziseket tenni. Majd ehhez is tudunk p-értéket számolni és eldönteni, hogy az eredeti állításunkból felírt $H_0$ vagy $H_1$ tekinthető-e igaznak egy adott $\alpha$ szignifikancia-szinten.
+Of course, we can conduct hypothesis tests not only for **population means ($\mu$)** but also for **population proportions ($P$)**. We can then compute p-values for these and decide whether our original hypothesis $H_0$ or the alternative hypothesis $H_1$ is considered true at a given significance level ($\alpha$).
 
-Nézzük meg, hogy **vehető-e 30%-nak a Balatont 3 óra felett átúszók aránya**. Matematikailag az állításom azt mondja, hogy a 3 óra = 180 perc felett átúszók sokasági aránya egyenlő épp 30%: $P = 0.3$. Mivel az **állítás engedi az egyenlőséget, így az a $H_0$-ba kerül**. Ez alapján pedig **a $H_1$-ben az eredeti állítást tagadjuk, és a $H_0$-nak szurkolunk** a hipotézisvizsgálat során. Tehát, a $H_0$ és $H_1$ párunk az alábbi módra fog kinézni:
+Let’s see if **the proportion of people who swim across Lake Balaton in more than 3 hours can be considered 30\%**. Mathematically, this claim or statement means that the population proportion of swimmers taking more than 3 hours = 180 minutes is exactly 30%: $P = 0.3$ Since the **claim allows for equality, it is placed in $H_0$**. Accordingly, **$H_1$ negates the original claim, and we "support" $H_0$ in the hypothesis test**. Thus, our $H_0$ and $H_1$ hypotheses are structured as follows:
 
 - $H_0:P=0.3$
 - $H_1:P\neq0.3$
-- Szurkolunk: $H_0$
+- Statement is in $H_0$
 
-A $H_0$ és $H_1$ párunkból következik, hogy az **elvi arány, azaz $P_0$, amihez képest vizgsálódunk most az $0.3$ érték!!**
 
-Ezek után itt most azt mondanánk <a href="Chapter08.html" target="_blank">Section 2 of Chapter 8</a> alapján, hogy készítünk a megfigyelt mintánkba egy olyan $0-1$ értékekből álló oszlopot, ahol $1$ jelenti a 3 óránál hosszabb idő alatt átúszókat a mintában (arány szempontjából kedvező esetek a mintában), míg $0$ a többieket (arány szempontjából kedvezőtlen esetek a mintában), és ennek az oszlopnak az átlagára vonatkozó hipotézivizsgálatot végzünk (mivel $n=100 \geq 100$ ez simán lehet z-próba).
+From our $H_0$ and $H_1$ hypotheses, it follows that the **theoretical proportion ($P_0$) against which we are testing is precisely $0.3$!!**
 
-Ezzel a fenti elvvel viszont van egy kis gond! Ugyanis **arányra vonatkozó hipotézivizsgálat esetén a próbafüggvényünk az alábbi módon néz ki**:  $$\frac{p-P_0}{\sqrt{\frac{P_0(1-P_0)}{n}}} \sim N(0,1)$$
+Now, based on <a href="Chapter08.html" target="_blank">Section 2 of Chapter 8</a>, we would create a column of $0-1$ values in our observed sample, where $1$ represents swimmers who took more than 3 hours (favorable observations for proportion calculations), while $0$ represents the others (unfavorable observations). Then, we conduct a hypothesis test for the mean of this column (since $n=100 \geq 100$, this can simply be a z-test).
 
-A **"kis gond"** a képlet nevezőjével, azaz a **standard hibával van**. A képlet madártávlatból nézve azt mondja, hogy vegyük minta és hipotetikus arány különbségét ($p-P_0$) osztva az arány standard hibájával. Ami tényleg az átlagra vonatkozó hipotézisvizsgálat próbafüggvényének működési elve, amit láttunk is a 2. fejezetben. DE! A **standard hibában a képlet az elvi arányt ($P_0$)** használja a mintából számolt arány ($p$) helyett. Viszont, ha egy $0-1$ értékekből álló oszlop átlagára vonatkozó hipotézisvizsgálatként számolnánk végig ezt a próbafüggvényt, akkor bizony a nevezőben $\sqrt{\frac{p(1-p)}{n}}$-gyel számolnánk $\sqrt{\frac{P_0(1-P_0)}{n}}$ helyett. Szóval mindenképpen külön, saját magunknak kell kiszámolni a próbafüggvényt manuálisan. A p-érték számolása standard normális ($N(0,1)$) eloszlásból történik már úgy, mint az átlag esetében láttuk a 2. és 3. fejezetekben. Ezért is *z-próba*ként emlegetjük ezt a hipotézisvizsgálatot is.
+However, **there is a small issue with this approach!** Specifically, the **test statistic for a proportion hypothesis test is structured as follows**: $$\frac{p-P_0}{\sqrt{\frac{P_0(1-P_0)}{n}}} \sim N(0,1)$$
 
-A próba elvégzéséhez először ki kell számolni a minta teljes elemszámát ($n$) és az arány szempontjából kedvező esetek számát ($k$), ami most esetünkben a $180$ percnél tovább úszók száma. Ezekből már akár a mintabeli arányt ($p$) is kiszámíthatjuk.
+The **"small issue"** lies in the denominator, i.e., the **standard error**. The formula essentially states that we take the difference between the sample and theoretical proportions ($p-P_0$) divided by the standard error of the proportion. This follows the same principle as the hypothesis test for the mean, as seen in Section 2. BUT! In the **standard error formula, the theoretical proportion ($P_0$) is used** instead of the sample proportion ($p$). However, if we calculated the test statistic as a hypothesis test for the mean of a $0-1$ column, we would use $\sqrt{\frac{p(1-p)}{n}}$ instead of $\sqrt{\frac{P_0(1-P_0)}{n}}$ in the denominator. This means that we must manually compute the test statistic ourselves. The p-value is then obtained from the standard normal ($N(0,1)$) distribution, just as we saw for means in Sections 2 and 3. This is why this hypothesis test is also called a *z-test*.
+
+To perform the test, we first need to compute the total sample size ($n$) and the number of favorable observations ($k$), which in this case refers to the number of swimmers who took more than 180 minutes. From these, we can even calculate the sample proportion ($p$).
 
 ```{r}
 # sample size
@@ -405,9 +409,9 @@ p <- fav/n
 p
 ```
 
-Ezzel látjuk, hogy a mintában a $180$ percnél tovább úszók aránya kereken $27\%$, ami nem egyenlő az $0.3 = 30\%$-al, így **a $H_1$ néz ki igaz állításnak**. Viszont, **ez simán lehet a mintavételi hiba műve is**, hiszen csak egy $n=100$ elemű mintából dolgozom, **nem látom az összes átúszó sokaságát**. Épp **ezért kell a p-érték**, ami megadja, hogy mennyire valószínű, hogy az a tény, hogy a megfigyelt mintában $0.27 \neq 0.30$ szignifikáns eltérés-e mintaarány és elvi arány között.
+From this, we see that the proportion of swimmers who took more than 180 minutes in the sample is exactly $27\%$, which is not equal to $0.3 = 30\%$, so **$H_1$ appears to be true**. However, **this could easily be due to sampling error**, since we are working with only a 100-element sample, **not the entire population of swimmers**. That is exactly why **we need the p-value**, which tells us how likely it is that the observed sample deviation ($0.27 \neq 0.30$) is a significant difference between the sample proportion and the theoretical proportion.
 
-Jöhet akkor megadott képlet szerinti próbafüggvény számítás, majd a bal oldali próba szabályai szerint a p-érték számítás standard normális eloszlásból.
+Now, we compute the test statistic using the given formula and then determine the p-value according to the left-tailed test rules based on the standard normal distribution.
 
 ```{r}
 # hypothetical proportion
@@ -419,26 +423,26 @@ p_val_for_prop <- 2*pnorm(test_stat_p) # two-tailed test -> 2*
 p_val_for_prop
 ```
 
-A p-értékünk magas, $51.2\%$, szóval ennyi esélyünk nagyobb eltérést kapni $H_0$-hoz képest, mint amit megfigyeltünk. Ez jó magas valsózínűség, magasabb, mint a legmagasabb szokásos szignifikancia-szint ($10\%$), így **azt mondjuk, hogy a $H_0$-t nem tudjuk elutasítani**. **Valós, sokasági aránya a $180$ percnél lassabban úszóknak simán vehető $30\%$-nak; a mintaarány és a $0.3$ közötti eltérés NEM szignifikáns**.
+The resulting p-value is high, at $51.2\%$, meaning there is a $51.2\%$ chance of obtaining a greater deviation from $H_0$ than what we observed. This is a very high probability, higher than even the most common significance level ($10\%$), so **we conclude that we cannot reject $H_0$**. **The true population proportion of swimmers taking more than 180 minutes can indeed be considered $30\%$**; the difference between the sample proportion and $0.3$ is **NOT significant**.
 
-A hipotézisvizsgálatnak, mivel z-próba és standard normális eloszlásból számol p-értéket, előfeltétele, hogy nagy mintánk van. Ez most azt jelenti, hogy a $n \times P_0$ és $n \times (1-P_0)$ szorzat is legyen nagyobb mint $10$. Tehát, **az arány szempontjából kedvező és kedvezőtlen esetek száma is legyen legalább $10$ igaz nullhipotézis esetén**.
+Since this is a z-test and the p-value is computed from the standard normal distribution, the test requires that the sample size is sufficiently large. Specifically, both $n \times P_0$ and $n \times (1 - P_0)$ must be greater than $10$. That is, the **number of favorable and unfavorable observations in the sample must each be at least $10$ under the true null hypothesis**.
 
-Lássuk, hogy teljesülnek-e akkor a feltételek:
+Let’s check if these assumptions are met.
 
 ```{r}
 n*P_0
 n*(1-P_0)
 ```
 
-A $30$ és a $70$ is $10$-nél nagyobb szám, szóval rendben vagyunk! :)
+Since both $30$ and $70$ are greater than $10$, so we are good to proceed! :)
 
-## 5. A hipotézisvizsgálat menete madártávlatból
+## 5. The General Procces of Hypothesis Testing
 
-Az eddigiek alapján akkor azt mondhatjuk el, hogy igazából **bármilyen statisztikai mutatóra/paraméterre** (átlag, arány, stb.) **vonatkozik a hipotézisvizsgálatunk, annak mindig $4$ fő lépése van**.
+From all the above, we can conclude that **regardless of the statistical parameter** (mean, proportion, etc.), **every hypothesis test follows four key steps**:
 
-1. Az alapállításból **null- és alternatív hipotézisek** ($H_0$ és $H_1$) felírása
-2. Megfigyelt $n$ elemű mintaadatokból **próbafüggvény** számítása
-3. A próbafüggvény és egy nevezetes eloszlás alapján **p-érték** számítása
-4. A p-érték alapján annak el**döntés**e, hogy $H_0$ vagy $H_1$ vehető-e igaz állításnak a teljes sokaságban
+1. Formulating the **null and alternative hypotheses** ($H_0$ and $H_1$) from the initial claim.
+2. Computing the **test statistic** from the observed $n$-element sample data.
+3. Calculating the **p-value** based on the test statistic and a probability distribution.
+4. Making a **decision** based on the p-value: determining whether $H_0$ or $H_1$ is likely to be true for the entire population.
 
-Ez a $4$ lépés tényleg **minden hipotézisvizsgálat során ugyan ez lesz**, és **az $1.$ és $4.$ pontoknak is mindig ugyan az az elve, amiket eddig láttunk**, ezek nem változnak. Bármi is történik, a $H_0$ és $H_1$ felírás és közöttük a döntés *p-érték* alapján fix szabályok szerint működik. Ami az **egyes esetekben eltérő lehet, az a $2.$ és $3.$ pont**, ahol a próbafüggvényeket és a p-értékeket számoljuk. De **ezekre a pontokra szinte mindig lesz beépített Python függvény, csak azoknak a paraméterezését és a használatok előfeltételét kell** igazából **jól tudni**.
+These $4$ steps remain the **same in every hypothesis test**, and **Steps $1$ and $4$ always follow the same principles as we've seen so far**; they do not change. No matter what happens, the formulation of $H_0$ and $H_1$ and the decision between them based on the *p-value* follow fixed rules. What **can differ in specific cases are Steps $2$ and $3$**, where we compute the test statistics and p-values. However, **there is almost always a built-in R function for these calculations; we just need to know how to configure the parameters of these functions and understand the specific test assumptions properly**.
