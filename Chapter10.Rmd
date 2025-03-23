@@ -1,5 +1,5 @@
 ---
-title: "Basic Consepts of Hypothesis Testing"
+title: "Basic Concepts of Hypothesis Testing"
 author: "László Kovács"
 date: "23/03/2025"
 output:

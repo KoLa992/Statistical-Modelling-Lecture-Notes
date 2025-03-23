@@ -32,5 +32,5 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Chapter 9 - <a href="Chapter09.html" target="_blank">Confidence Intervals in SR and Stratified Samples</a>
 
-## Chapter 10 - <a href="Chapter10.html" target="_blank">Basic Consepts of Hypothesis Testing</a>
+## Chapter 10 - <a href="Chapter10.html" target="_blank">Basic Concepts of Hypothesis Testing</a>
 
