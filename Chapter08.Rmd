@@ -30,7 +30,7 @@ In the next two sections, let’s observe **how every new statistical measure’
 
 ## 2. Confidence Interval for Proportions
 
-Let's revisit the database found in the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/ESS2020.xlsx\" target="_blank">ESS2020.xlsx</a> file! As a reminder, this database contains the responses of 1849 Hungarian participants from the 2020 European Social Survey (ESS2020) to 14 questions (plus an *id* column).
+Let's revisit the database found in the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/ESS2020.xlsx" target="_blank">ESS2020.xlsx</a> file! As a reminder, this database contains the responses of 1849 Hungarian participants from the 2020 European Social Survey (ESS2020) to 14 questions (plus an *id* column).
 
 In <a href="Chapter07.html" target="_blank">Section 4 of Chapter 7</a>, we stated that if an empty value is found in any column of the database, it means that the respondent in that row did not answer the question. The respondents in the database can be considered a random sample drawn from the entire Hungarian population aged 18 and over. We now assume that this random sample was drawn with replacement, meaning it follows the $IID$ assumption. In the next chapter, we will see that this is not an unrealistic assumption.
 

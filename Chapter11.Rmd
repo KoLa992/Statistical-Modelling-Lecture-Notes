@@ -1,0 +1,299 @@
+---
+title: "Further One- and Two-Sample Parametric Tests"
+author: "László Kovács"
+date: "30/03/2025"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. $\chi^2$-test for the Standard Deviation
+
+Let’s bring up the <a href="https://github.com/KoLa992/Statisztika-II-Python-Jegyzet/blob/main/ESS2020.xlsx" target="\_blank">ESS2020.xlsx</a> file again! As a reminder, this database contains the responses of 1849 Hungarian respondents to 13 questions (plus an *id* column) from the 2020 European Social Survey (ESS2020).
+
+In <a href="Chapter 07.html" target="\_blank">Section 4 of Chapter 7</a>, we mentioned that if there is an empty value in any column of the dataset, it means that the respondent in that row did not answer the question. The respondents in the database can be considered as a random sample from the entire Hungarian population aged 18 and over.
+
+First, let’s reload the database from Excel into a data frame and check with the `str` function what columns (i.e., variables) we have!
+
+```{r warning=FALSE}
+library(readxl)
+
+# Read the Excel file into a data frame!
+ess <- read_excel("ESS2020.xlsx")
+str(ess)
+```
+
+We can see that all 13+1 columns are present with the correct data types. Hooray! :)
+
+Now, let’s look at a **hypothesis test concerning the standard deviation** as a statistical parameter.<br>
+We might make a statement that in the total population, the **weekly working hours has a standard deviation of at least 15 hours**. Based on the usual principles, we can translate this into null and alternative hypotheses. The **keyword ‘at least’ allows equality ($\geq$), meaning that the statement itself forms the null hypothesis ($H_0$)**, while **$H_1$ is its negation ($<$), since $H_0$ and $H_1$ must be mutually exclusive**.<br>
+Thus, the hypothesis for the population standard deviation of weekly working hours, $\sigma$ with $H_0$ and $H_1$, is as follows:
+
+- $H_0: \sigma \geq 15$
+- $H_1: \sigma < 15$
+- Szurkolunk: $H_0$
+
+In this formulation, the **theoretical (hypothetical) standard deviation is $15$ hours**, as we will examine the actual population standard deviation in relation to this value based on our sample. We denote this theoretical standard deviation as $\sigma_0=15$.
+
+With this, we have completed the first step of our hypothesis test: formulating $H_0$ and $H_1$. Now, let’s move on to steps 2 and 3: defining the test statistic and calculating the p-value. **For standard deviation, the test statistic** takes the following form: $$\frac{(n-1)s^2}{\sigma_0^2} \sim \chi^2(n-1)$$
+
+
+The notation $\sim \chi^2(n-1)$ indicates that we must calculate **the p-value from a $\chi^2$ distribution with $n-1$ degrees of freedom**.
+
+Unfortunately, **R does not have a built-in function for this test statistic and p-value calculation, so we must compute everything manually**!
+
+However, we already know all the necessary values for the test statistic. We previously established that $\sigma_0$ is the theoretical standard deviation, $n$ is our sample size, and $s$ is the corrected (i.e., unbiased estimate) sample standard deviation. These values can be quickly computed. The weekly working hours data in the ESS database is found in the `WeeklyWork_Hours` column. It’s important to note that **this `WeeklyWork_Hours`  column contains many missing values**, so our $n$ is not $1849$ (the total number of rows in the data frame) but only $685$. We can account for this by counting the number of non-missing values in the `WeeklyWork_Hours` column using the `!is.na()` function. As we have seen in <a href="Chapter 07.html" target="\_blank">Chapter 7</a> and <a href="Chapter 08.html" target="\_blank">Chapter 8</a>, this gives us the number of non-empty values in the column.
+
+```{r}
+hypothetical_sd = 15
+n <- sum(!is.na(ess$WeeklyWork_Hours))
+s = sd(ess$WeeklyWork_Hours, na.rm = TRUE) # second parameter is for not considering NAs for st dev calculation
+s
+```
+
+We see that the sample standard deviation is $s=15.37$, which is greater than the theoretical value of $15$. However, we **cannot automatically accept $H_0$, as this difference might simply be due to sampling error**! That is precisely **why we need to calculate the p-value: to determine the probability that this difference** (i.e., the sample standard deviation exceeding 15) **is merely a result of random sampling error**.
+
+So, let’s compute that nasty test statistic! :)
+
+```{r}
+test_stat = (n-1)*s^2/hypothetical_sd^2
+test_stat
+```
+
+This value is nice, but it doesn’t tell us much on its own. :) Let’s move on to step 3 and calculate the p-value. We have already determined that the p-value is obtained from a $\chi^2(n-1)$ distribution. Additionally, **since $H_1$ uses the $<$ sign, we perform a left-tailed test**, meaning that we are **interested in the probability under the test statistic in the $\chi^2(n-1)$ distribution**. The **concept here is the same as we saw in <a href="Gyak10.html" target="\_blank">Section 2 of Chapter 10</a>.**
+
+Based on this, we calculate the p-value using the `pchisq` function.
+
+```{r}
+pchisq(test_stat, df = n-1)
+```
+
+The p-value is $82.6%$, which means that rejecting $H_0$ based on this sample would result in an error probability of $82.6%$. This is quite a high error probability even at first glance. More importantly, this **p-value is even higher than the highest commonly used significance level**, $10%$, meaning that we **do not reject $H_0$**, as doing so would come with an unacceptably high error rate. Thus, we can conclude that the **population standard deviance of weekly working hours appears to be at least 15 hours**.
+
+Unfortunately, this $\chi^2$ test has the same issue as the $\chi^2$ confidence interval we discussed in <a href="Chapter08.html" target="\_blank">Section 5 of Chapter 8</a>: The **test assumes that the data is normally distributed**. That means our calculated p-value of $82.6%$ is only valid if the variable we are analyzing follows a normal distribution.<br>
+We can quickly check this by plotting a histogram.
+
+```{r}
+hist(ess$WeeklyWork_Hours)
+```
+
+Uh-oh, the distribution of weekly working hours appears highly peaked. This is not a normal distribution, meaning the assumption is violated, and our computed p-value is unreliable... *BigRIP* :(<br>
+We could try filtering out the extreme outlier of $160$ hours to see if that resolves the issue, but unfortunately, even after filtering, the histogram remains quite peaked.
+
+```{r}
+hist(ess$WeeklyWork_Hours[ess$WeeklyWork_Hours < 160])
+```
+
+This is not surprising: most respondents likely entered the "standard" 40-hour workweek (or a value close to it), causing the peak.
+
+Actually, **this assumption is why there is no built-in function for this hypothesis test in R: it's very rare for real-world variables to follow a perfect normal distribution**, making the test unreliable in most cases. Since the chi-square p-value calculation depends on this assumption, the test rarely produces valid results, so no R programmer has bothered to implement it as a built-in function.<br>
+For this reason, the test is rarely useful in practice — we mainly teach it for ‘historical reasons’ and to have more topics to include in exams. :)
+
+## 2. The Principle of Two-Sample Hypothesis Tests 
+
+The hypothesis tests we have learned **so far** for the mean, proportion, and standard deviation were so-called **one-sample hypothesis tests**. This meant that we examined the relationship of a single statistical parameter (a single mean, a single proportion, or a single standard deviation) compared to some theoretical value. Based on this, we formulated our assumptions, i.e., our hypotheses.  
+
+**From now on**, however, we will deal with so-called **two-sample hypothesis tests**, or in other words, **two-sample tests**. This means that in our **hypotheses** (assumptions), we will always **examine the relationship between statistical parameters of two groups** (two means, two proportions, etc.) **compared to each other**.  
+
+So, if I **take the mean as an example** of a statistical parameter, I can state a **two-sample statement** such as **"the average salary of men is higher than the average salary of women in Hungary"**.<br>
+Written in a slightly more mathematical form: **MeanSalary(Men) > MeanSalary(Women)**  
+
+**These hypothesis tests will be two-sample tests because the logic is that we have one sample for the male average and one sample for the female average**. So, in total, we are working with two samples. :)  
+
+The question is how to formulate the null and alternative hypotheses from these two-sample claims. The **trick** is to **rearrange the inequality** describing the claim **so that we examine the relations of the difference between the statistical parameters of two groups to a theoretical difference value**. This theoretical value will be the expected difference, usually denoted as $\delta_0$. In the case of proportions, $\epsilon_0$ is used as the notation for the expected difference.  
+
+In the previous example of average salary, if I continue to denote population means with $\mu$, as in previous chapters, the **rearranged statement** is as follows: $$\mu_{Male} - \mu_{Female} > 0$$
+
+And here we have the case where $\delta_0 = 0$. Based on our **previous principles, we can write $H_0$ and $H_1$ for the difference**:  
+
+1. If the **statement allows equality, it becomes $H_0$; otherwise, it goes to $H_1$**.  
+2. **$H_0$ and $H_1$ must be mutually exclusive, opposing statements**.  
+
+Thus, for our male-female average salary example, the $H_0$ and $H_1$ statements are as follows:  
+
+- $H_0:\mu_{Male} - \mu_{Fmale} \leq 0$
+- $H_1:\mu_{Male} - \mu_{Female} > 0$
+- Statement: $H_1$
+
+Now, let’s look at an example where $\delta_0 \neq 0$! Suppose our statement is that **"the average male salary is at least 100000 HUF higher than the female salary"**. In this case, the first step is to write the statement as if it only said *"the male average salary is at least as much as the female"*—that is, as if the 100000 HUF difference was not even there. Because of the *"at least"* phrase, this becomes a $\geq$ statement: $$\mu_{Male} \geq  \mu_{Female}$$
+
+Now, let’s adjust this inequality by incorporating the 100000 HUF difference. The phrase *"the male average salary is at least 100000 HUF higher than the female"* means, in another way, that **if I add 100000 HUF to the female average salary, the male average salary should still be greater than or equal to that**. This formulation appears in the inequality as follows: $$\mu_{Male} \geq  \mu_{Female} + 100$$
+
+From here, we have our statement, which is now easy to **rearrange** so that **the inequality examines how the difference between the means compares to some theoretical $\delta_0$ value**, which in this case is 100: $$\mu_{Male} -  \mu_{Female} \geq 100$$
+
+So, in this statement, $\delta_0 = 100$. Applying our usual two fundamental principles, we can now quickly divide this into $H_0$ and $H_1$. Since the statement allows equality, it becomes our null hypothesis, while the alternative hypothesis is its negation. Finally, we root for $H_0$, because that’s where our original claim resides:  
+
+- $H_0:\mu_{Male} - \mu_{Female} \geq 100$
+- $H_1:\mu_{Male} - \mu_{Female} < 100$
+- Statement: $H_0$
+
+Now, let's see how we calculate the p-value for these two-sample $H_0$ and $H_1$ pairs in some practical examples! :)
+
+## 3. Two-Sample Welch *t-test* for Means
+
+The ESS database allows us to verify a claim about the entire Hungarian population (i.e., the population) using the columns `SecretGroupInfluenceWorldPol` and `Education_Years`. The claim states that, **on average, those who do not believe that a secret society controls world politics are more educated** (have spent more years in education).
+
+We can express this claim as a mathematical inequality: $\mu_{\text{NotBelieve}} > \mu_{\text{Believe}}$. If we rearrange this statement in terms of the difference of means, we get the inequality $H_1:\mu_{\text{NotBelieve}} - \mu_{\text{Believe}} > 0$. From this, we see that the theoretical difference in the population is $\delta_0=0$.<br>
+Following our usual two fundamental principles, we can now quickly divide this into $H_0$ and $H_1$. Since the statement does *not* allow equality, it becomes our alternative hypothesis ($H_1$), while the null hypothesis ($H_0$) is its negation. Finally, we root for $H_1$, as it contains our original statement:
+
+- $H_0:\mu_{\text{NotBelieve}} - \mu_{\text{Believe}} \leq 0$
+- $H_1:\mu_{\text{NotBelieve}} - \mu_{\text{Believe}} > 0$
+- Statement: $H_1$
+
+According to the second step of hypothesis testing, we now examine our observed sample data. In this case, the difference in average years of education between the two groups (Believe and NotBelieve in the dominance of secret societies over world politics) can be easily calculated using the `aggregate` function. Meanwhile, I also store the theoretical difference ($\delta_0$) of $0$ in a separate object.<br>
+In the first parameter of the `aggregate` function, I provide a `formula` that describes that I want to aggregate the `EducationYears` numeric column to the levels of the `SecretGroupInfluenceWorldPol` nominal column. Notice that the numeric and nominal columns here are separated with a `~` sign. The second parameter is the data frame these columns reside in. The `FUN` parameter specifies the statistical function used for the aggregation: right now I take the `mean` of of the numerical values according to the groups defined by the nominal variable. 
+
+```{r}
+hypothetical_diff_means <- 0
+
+# the two sample means
+aggregate(Education_Years ~ SecretGroupInfluenceWorldPol, data = ess, FUN = mean)
+```
+
+We can see that in the sample, the *NotBelieve* group has a slightly higher average number of years spent in education compared to the *Believe* group. However, we **cannot automatically accept $H_1$ as true, since this phenomenon could just be due to sampling error!** This is precisely why we need to **calculate a p-value—to determine the probability that this phenomenon** (i.e., the higher average in the *NotBelieve* group) **is merely due to sampling error**.
+
+So, let’s calculate that nasty test statistic! :)
+
+The formula for our test statistic is shown below, and from the following equation, we can observe that the probability distribution for p-value calculation is the Student’s t-distribution ($t(v)$): $$\frac{(\bar{y_1}-\bar{y_2})-\delta_0}{\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}} \sim t(v)$$
+
+We see that the formula for the test statistic is not overly complicated. We take the difference between the two sample means ($\bar{y_1}-\bar{y_2}$) and compare how much it deviates from the theoretical difference ($\delta_0$), then scale this by the sum of the squared standard errors of the two means under the square root. Notice that since we just add up the two squared standard errors in the denominator, we assume that the correlation between the two samples is $0$. As $Var(X+Y)=Var(X)+Var(Y)$ is only true if $Cov(X,Y)=0$, as we have learnt in probability theory. So we **assume** that the **two samples are independent of each other, meaning that there cannot be an overlap between the observation of the two groups**. Practically, this means that there cannot be anyone who is a non-believer and a believer as well. It's an easy thing to assume. :)<br>
+However, the degrees of freedom for the t-distribution are derived using a somewhat complex formula, where $v_i=n_i-1$, which represents the "one-sample" t-distribution degrees of freedom for the $i$-th sample (naturally, $i={1,2}$). Specifically: $$v=\frac{\left(\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}\right)^2}{\frac{s_1^4}{n_1^2v_1}+\frac{s_2^4}{n_2^2v_2}}$$
+
+This complex degrees of freedom formula is known as the **Welch correction**, which ensures that we **do NOT need to assume equal variances in the two populations for the test to be valid**!
+
+Fortunately, R provides a **built-in function for this so-called two-sample t-test** (specifically, the already familiar `t.test`), which calculates both the test statistic and the p-value, so we **don’t have to compute it manually**. :)<br>
+The reason this is called a *t-test* is that the test statistic follows a Student’s $t$-distribution, which is used to compute the p-value.
+
+However, we must **recognize that since the reference distribution for p-value calculation is Student’s t, both samples** (*Believes* and *NotBelieve*) **must be large** ($n>100$) for the test to be performed! **If the large sample condition is not met** (i.e., at least one $n_i<100$), then **we must assume normality of the data in both groups** to perform the test!<br>
+The easiest way to check this for the `SecretGroupInfluenceWorldPol` column is by using the `table` function to get its frequency table.
+
+```{r}
+table(ess$SecretGroupInfluenceWorldPol)
+```
+
+Since $1301>100$ and $548>100$, the **large sample condition is satisfied**.
+
+Now, let’s **calculate the p-value** using the built-in `t.test` function.<br>
+The **following parameters** must be provided to the function:
+
+- `formula`: A special syntax where we specify the name of the numerical variable first (whose mean we are testing), followed by a tilde and then the nominal variable that distinguishes the two groups: `NumericalVariable ~ Nominalvariable`.
+- `data`: The name of the data frame containing the two variables specified in the formula. Fortunately, the function is smart enough to automatically ignore missing values, so we don’t need to handle them separately.
+- `mu`: The theoretical difference in means as per our hypotheses. Here, we have $\delta_0=0$.
+- `alternative`: The relational operator in the alternative hypothesis, provided as text.
+  * possible values: `‘two.sided’, ‘less’, ‘greater’`, which correspond to $\neq$, $<$, and $>$ relational operators in $H_1$
+
+And let's see how this works in practice.
+
+```{r}
+t.test(Education_Years ~ SecretGroupInfluenceWorldPol, data = ess, mu = 0, alternative = "greater")
+```
+
+The first element in the result is the test statistic, second is the Welch-corrected degrees of freedom and the third is the p-value. Thus, our **p-value is $3.05\%$**. This means that rejecting $H_0$ would come with a $3.05\%$ error probability. If our allowed error probability (significance level, $\alpha$) is $1\%$, then we cannot reject $H_0$, as the error would exceed the allowed threshold. However, if our significance level is $\alpha=5\%$, then $H_0$ can be rejected, as the error probability is within the allowed range.<br>
+Thus, we are **now in the common significance level range with the p-value** (between 1% and 10%), meaning that the **responsible conclusion is not to make a definitive decision and instead request a larger sample, as the decision is too sensitive to the exact significance level choice**.<br>
+Ultimately, we **CANNOT definitively conclude that the observed difference in average years of education** between the *Believe* and *NotBelieve* groups is **statistically significant** (i.e., that the difference is not just due to sampling error). To **resolve this question, a larger sample** would be needed.
+
+## 4. The Two-Sample *z-test* for Proportions
+
+The ESS database columns `SecretGroupInfluenceWorldPol` and `TrustInParlament` can be used to verify a statement about the entire Hungarian population (i.e., the population), which claims that **"the proportion of those who trust the parliament is more than 2 percentage points lower among those who believe in secret societies"**.
+
+The statement in bold in the paragraph above may be quite mind-boggling at first read, but **it is perhaps** immediately **apparent that it pertains to population proportions**, i.e., $P$. If we **encounter a statement about such proportions, there are two things worth extracting** from the text:
+
+1. **What is the proportion under examination?** $\rightarrow$ In this case, it is the **proportion of those who trust the parliament**.
+2. **What are the two samples?** $\rightarrow$ Here, it refers to whether someone **believes or does not believe in the dominance of secret societies** over world politics.
+
+Based on this, the **mathematically formulated statement** regarding the proportion of those who trust the parliament is: $$P_{\text{Belive}} < P_\text{NotBelieve} - 0.02$$
+
+This follows **the principle we saw in Section 2**. If we focus solely on the term *"lower"* in the statement, the inequality would be $P_{\text{Belive}} < P_{\text{NotBelieve}}$. However, due to the *"more than 2 percentage points"* part, we say that even if we subtract 2 percentage points ($0.02$) from $P_\text{NotBelieve}$, $P_\text{Belive}$ remains lower (i.e., smaller). Thus, we arrive at our final inequality that mathematically describes the fundamental statement: $P_{\text{Belive}} < P_\text{NotBelieve} - 0.02$.
+
+If we **rearrange this initial inequality in terms of the difference of proportions**, we get the inequality $P_\text{Belive} - P_\text{NotBelieve} < -0.02$.
+
+Based on the usual two fundamental principles, we can quickly decompose this into $H_0$ and $H_1$. Since the statement does *not* allow for equality, it becomes our $H_1$, and we negate this statement in $H_0$. Ultimately, we root for $H_1$, because it contains our original statement:
+
+- $H_0:P_\text{Belive} - P_\text{NotBelieve} \geq -0.02$
+- $H_1:P_\text{Belive} - P_\text{NotBelieve} < -0.02$
+- Statement: $H_1$
+
+Now comes the second step of hypothesis testing, where we start examining the observed sample data. We **calculate the proportion of those who trust the parliament in both samples ($1=\text{Belive}$ and $2=\text{NotBelieve}$), i.e., $p_1$ and $p_2$!** To do this, we must look at the **total sample sizes** ($n_1$ and $n_2$) and the **number of favorable cases** ($k_1$, $k_2$) in terms of the proportion.
+
+```{r}
+k_1 <- sum((ess$TrustInParlament=='Yes') &
+             (ess$SecretGroupInfluenceWorldPol=='Yes'))
+n_1 <- sum(ess$SecretGroupInfluenceWorldPol=='Yes')
+
+k_2 <- sum((ess$TrustInParlament=='Yes') &
+             (ess$SecretGroupInfluenceWorldPol=='No'))
+n_2 <- sum(ess$SecretGroupInfluenceWorldPol=='No')
+
+# the sample proportions
+
+k_1/n_1 # Believers
+
+k_2/n_2 # Non-Believers
+```
+
+Looking at the sample, the proportion of those who trust the parliament in the *Believe* group is indeed more than 2 percentage points lower than in the *NotBelieve* group ($11.1 - 14.68 = -3.58$). However, we **cannot automatically accept $H_1$, because this phenomenon might just be due to sampling error!** That is precisely why we need to **calculate the p-value—to determine the probability that this phenomenon** (i.e., the proportion of those who trust the parliament is this much lower in the Believe group) **is merely due to sampling error**.
+
+The formula for our test statistic is shown below, and we can observe from the equation that the distribution used for the p-value calculation is standard normal ($N(0,1)$): $$\frac{(p_1-p_2)-\epsilon_0}{\sqrt{\frac{p_1(1-p_1)}{n_1}+\frac{p_2(1-p_2)}{n_2}}} \sim N(0,1)$$
+
+We can see that the formula for the test statistic is not overly complex. We take the difference of the two sample proportions ($p_1 - p_2$), check how much it deviates from the theoretical difference ($\epsilon_0$), and normalize it using the sum of the standard errors squared under the square root.<br>
+Notice again like in Section 3 that since we just add up the two squared standard errors in the denominator, we assume that the correlation between the two samples is $0$. So we **assume again** that the **two samples are independent of each other, meaning that there cannot be an overlap between the observation of the two groups**. Practically, this means that there cannot be anyone who is a non-believer and a believer as well. It's an easy thing to assume. :) <br>
+It is important to understand this, as there is **NO built-in R function for this test**. Therefore, we will have to compute the test statistic and the p-value ourselves.<br>
+Once again, this hypothesis test is called a *z-test* because the test statistic follows a standard normal, or $z$, distribution for the p-value calculation.
+
+We must also **ensure that both samples are sufficiently large for the p-value calculation to be valid**, given that the **underlying distribution is standard normal** ($N(0,1)$). In a two-sample hypothesis test for proportions, this means that **each sample must contain at least $10$ favorable and $10$ unfavorable observations**.
+
+We can easily check this using our previously calculated values of $k_1$, $k_2$, $n_1$, and $n_2$.
+
+Let's examine the number of favorable cases (observations) for each sample.
+
+```{r}
+k_1 > 10
+k_2 > 10
+```
+
+The condition holds for both samples, so we are good to proceed.
+
+Now, let's check the number of unfavorable cases. The basic principle here is that any case in the sample that is *not* favorable must be considered unfavorable.
+
+```{r}
+n_1 - k_1 > 10
+n_2 - k_2 > 10
+```
+
+Again, the condition holds for both samples, so we are good. Yay! :)
+
+Now, let's calculate the test statistic. We compute the sample proportions $p_1$ and $p_2$ and substitute them into the equation above. It is important to ensure that, since our hypotheses involve subtracting the non-believers' data from the believers', we maintain this order here as well. Thus, we always subtract the values of index 2 (non-believers) from index 1 (believers), following the convention used in our previous codes.
+
+```{r}
+p_1 <- k_1/n_1
+p_2 <- k_2/n_2
+
+hypothetical_diff_props <- -0.02
+
+test_stat_prop <- ((p_1-p_2) - hypothetical_diff_props)/(sqrt((p_1*(1-p_1)/n_1) + (p_2*(1-p_2)/n_2)))
+test_stat_prop
+```
+
+It is evident that the test statistic is $-0.9314$, which is quite close to $0$, suggesting that $H_0$ is likely to hold. However, what we really need is a p-value.
+
+Now, p-value calculation is done on the **left side** since the inequality in $H_1$ is $<$, as per the principles discussed in <a href="Gyak10.html" target="_blank">Section 2 of Chapter 10</a>. This can be easily computed using the `pnorm` function.
+
+```{r}
+p_val_props <- pnorm(test_stat_prop)
+p_val_props
+```
+
+Our p-value turns out to be $17.6\%$. Thus, **rejecting $H_0$ would result in an error probability of $17.6\%$**. This is **higher than the maximum allowed common significance level**, $\alpha = 10\%$, so we do not reject $H_0$. Rejecting $H_0$ would entail a higher error probability than the allowed threshold in $\alpha$. Therefore, ultimately, the **difference between the two proportions in the population is considered to be less than 2 percentage points**.
+In other words, the **observed difference in sample proportions, which exceeds 2 percentage points, is NOT statistically significant** based on our sample.

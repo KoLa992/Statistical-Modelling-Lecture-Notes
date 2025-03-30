@@ -7,7 +7,7 @@ title: |
   Data Science in Business BSc<br><br>
   </center> 
 output: html_document
-date: '23/03/2025'
+date: '30/03/2025'
 ---
 
 ```{r setup, include=FALSE}
@@ -33,4 +33,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Chapter 9 - <a href="Chapter09.html" target="_blank">Confidence Intervals in SR and Stratified Samples</a>
 
 ## Chapter 10 - <a href="Chapter10.html" target="_blank">Basic Concepts of Hypothesis Testing</a>
+
+## Chapter 11 - <a href="Chapter11.html" target="_blank">Further One- and Two-Sample Parametric Tests</a>
 
