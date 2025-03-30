@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1. $\chi^2$-test for the Standard Deviation
 
-Let’s bring up the <a href="https://github.com/KoLa992/Statisztika-II-Python-Jegyzet/blob/main/ESS2020.xlsx" target="\_blank">ESS2020.xlsx</a> file again! As a reminder, this database contains the responses of 1849 Hungarian respondents to 13 questions (plus an *id* column) from the 2020 European Social Survey (ESS2020).
+Let’s bring up the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/ESS2020.xlsx" target="\_blank">ESS2020.xlsx</a> file again! As a reminder, this database contains the responses of 1849 Hungarian respondents to 13 questions (plus an *id* column) from the 2020 European Social Survey (ESS2020).
 
 In <a href="Chapter 07.html" target="\_blank">Section 4 of Chapter 7</a>, we mentioned that if there is an empty value in any column of the dataset, it means that the respondent in that row did not answer the question. The respondents in the database can be considered as a random sample from the entire Hungarian population aged 18 and over.
 
