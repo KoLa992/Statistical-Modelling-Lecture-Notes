@@ -117,8 +117,8 @@ A p-értékünk $7.1\%$ Ez beza benne van a szokásos szignifikancia- szintek ta
 
 Előfeltételünk, hogy minden elvi gyakoriság legalább $5$, azaz $f^*_j \geq 5$. Ellenőrizzük le gyorsan!
 
-```{python}
-elvi_gyak >= 5
+```{r}
+nrow(sfH)*theor_probs >= 5
 ```
 
 Mind a három esetben van legalább $5$ megfigyelés az elvi esetben, jók vagyunk! Wuhú! :)
