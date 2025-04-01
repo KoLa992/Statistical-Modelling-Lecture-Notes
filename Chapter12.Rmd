@@ -1,7 +1,7 @@
 ---
 title: "Non-Parametric Tests"
 author: "László Kovács"
-date: "30/03/2025"
+date: "01/04/2025"
 output:
   html_document:
     toc: true
@@ -98,7 +98,7 @@ observed_freq <- table(sfH$Employment)
 observed_freq
 ```
 
-Jöjjenek az elvi $P_j$ valószínűségek! Milyen valószínűséggel következnének be az egyes munkakör típusok, ha az $n=210$ elemű minta teljesen reprezentatív lenne?
+Jöjjenek az elvi $P_j$ valószínűségek! Milyen valószínűséggel következnének be az egyes munkakör típusok, ha az $n=210$ elemű minta teljesen reprezentatív lenne? Figyeljünk, hogy olyan sorrendben adjukmeg őket, ahogy az `observed_freq` vektorban jönnek a munkakörök.
 
 ```{r}
 theor_probs <- c(0.85, 0.04, 0.11)
@@ -129,8 +129,8 @@ Mind a három esetben van legalább $5$ megfigyelés az elvi esetben, jók vagyu
 
 Szemmelverés = Hisztogram
 
-```{python}
-sfH.Age1stCode.hist()
+```{r}
+hist(sfH$Age1stCode)
 ```
 
 Nagyjából normális eloszlású a hisztogram, de kicsit jobbra nyúlik. 
@@ -145,34 +145,41 @@ Az `Age1stCode` ismérvre legjobban illeszekdő normális eloszlás: az a normá
 
 A megfelelő átlag és szórás számolása. Szórás korrigált, hiszen mintában vagyunk, nem szeretnénk torzítást! :)
 
-```{python}
-átlag = np.mean(sfH.Age1stCode)
-s = np.std(sfH.Age1stCode, ddof=1)
+```{r}
+sample_mean = mean(sfH$Age1stCode)
+s = sd(sfH$Age1stCode)
 ```
 
 Normális eloszlás ötödölő pontjai a `scipy` csomag `stats.` függvényévek. Ötödölő pontok (kivintilisek) listaként való átadása. Technikai okok miatt kell a $0$ és $1=100\%$ sztópont is a $0.2$ egységekre bontó pontok = ötödölő pontok = kvintilisek mellett.
 
-```{python}
-norm_kvint=stats.norm.ppf([0,0.2, 0.4, 0.6, 0.8,1], loc=átlag, scale=s)
-norm_kvint
+```{r}
+norm_quintiles <- qnorm(c(0,0.2, 0.4, 0.6, 0.8,1), mean = sample_mean, sd = s)
+norm_quintiles
 ```
 
 Tapasztalati gyakorisági tábla, $f_j$-k megadása a normális eloszlás kvintiliseire.
 
-```{python}
-gyak_tábla = np.histogram(sfH.Age1stCode, bins=norm_kvint)
-gyak_tábla
+```{r}
+observed_freq <- table(cut(sfH$Age1stCode, breaks = norm_quintiles))
+observed_freq
 ```
 
-Elvi gyakoriság, ha $H_0$,azaz a normális eloszlás igaz lenne $f^*_j=\frac{n}{5}=\frac{210}{5}=42$. Ez a `stats.chisquare` alapbeállítása $f^*_j$-re.
+Elvi gyakoriság, ha $H_0$,azaz a normális eloszlás igaz lenne $f^*_j=\frac{n}{5}=\frac{210}{5}=42$. Ez a `chisq.test` alapbeállítása $f^*_j$-re. Azaz a függvény `p` paraméterében végig $1/5=0.2$-t feltételez alapesetben, ha mást nem adunk itt meg.
 
 Számoljuk ki a próbafüggvényt és p-értéket ezzel az alapfeltételezéssel $f^*_j$-re. Van minden: $f_j$ és $f^*_j$ is. De most az eloszlás p-értékhez $\chi^2(k-1-b)$, ahol $b$ a becsült paraméterek száma. Ez most a legjobban illeszkedő normális eloszlás átlaga és szórása volt, így $b=2$. Ezzel a $b=2$ értékkel felül kell írni a `stats.chisquare` függvény alapbeálítását a szabadságfok (`ddof`) paraméterre. Ezen a `ddof` paraméteren csak a $b=2$-t kell átadni, így tudni fogja a függvény, hogy a szabadságfokot $k-1-b$ módon kell kiszámolnia.
 
-```{python}
-stats.chisquare(gyak_tábla[0], ddof=2)
+```{r}
+chi2_result <- chisq.test(observed_freq)
+p_value_chi2 <- 1-pchisq(chi2_result$statistic, df = 5-1-2)
+p_value_chi2*100 # in percentage format
 ```
 
 A p-értékünk $0.0075\%$, ami kisebb még a legkisebb szokásos szignifikancia-szintnél, az $1\%$-nál is. Azaz, a $H_0$ stabilan elvethető, így az eloszlás **nem tekinthatő normálisnak**
+
+```{r}
+chi2_result$expected
+```
+
 
 Tehát, a hisztogramon észrevehető enyhe jobbra nyúlás a normális eloszláshoz képest NEM mintavételi hiba műve, hanem egy szignifikáns (jelentős) eltérés, ami megmarad a mintán kívüli világban is!
 
@@ -188,9 +195,11 @@ Más szóval, függetlenségvizsgálat esetén azt vizsgáljuk, hogy a sokaságb
 
 Úgy járunk el, mint Statisztika I-en két nominális ismérv kapcsoaltának vizsgálatánál: készítünk egy kereszttávlát, ami megadja a két ismérv *együttes* gyakoriságait.
 
-```{python}
-kereszt = pd.crosstab(sfH.JobSat, sfH.OpSys)
-kereszt
+```{r}
+sfH$OpSys_Simplified <- ifelse(sfH$OpSys=="Windows", "Windows", "Not Windows")
+
+crosstab <- table(sfH[, c("JobSat", "OpSys_Simplified")])
+crosstab
 ```
 
 Tehát, pl. $31$ főnyi munkájával nagyon elégedett Windows felhasználó van a megfigyelt mintánkban.
@@ -199,22 +208,19 @@ Sajnos, a kereszttáblában van olyan elem (azaz van olyan $i$ sor és $j$ oszlo
 
 Emiatt a problémát úgy hidaljuk át, hogy a *Very satisfied* és *Slightly satisfied* kategóriákból készítünk egy *Satisfied* kategóriát, a többiekből pedig egy *Not satisdfied kategóriát*. Ezt a `numpy` csomag `where` függvényével tudjuk intézni, mint az <a href="Gyak05.html" target="_blank">5. heti tananyag 2. fejezetében</a> az arányok konfidencia-intervallum számolásához a $0-1$ értékű új oszlop létrehozását.
 
-```{python}
-sfH['JS_v2'] = np.where(sfH.JobSat.isin(['Very satisfied',
-                                         'Slightly satisfied']),
-                        'Satisfied', 'Not satisf.')
+```{r}
+sfH$JobSat_v2 <- ifelse(sfH$JobSat %in% c("Very dissatisfied", "Slightly dissatisfied"), "Dissatisfied", sfH$JobSat)
 
-
-kereszt = pd.crosstab(sfH.JS_v2, sfH.OpSys)
-kereszt
+crosstab <- table(sfH[, c("JobSat_v2", "OpSys_Simplified")])
+crosstab
 ```
 
 Remek, már csak két érték van a munkahelyi elégdettséggel kapcsoaltos új oszlopban (`JS_v2`). Innentől kezdve **homogenitásvizsgálat**ot végzünk. Ugyanis, ha az egyik nominális ismérvnek csak $2$ lehetséges értéke van, akkor *függetlenségvizsgálat = homogenvizsgálat*. Mivel ekkor két nominális csoporton belül vizsgáljuk, hogy egy másik nominális ismérv arányai azonosnak vehetők-e. Azaz vizsgáljuk, hogy a két nominális ismérv független-e.
 
 Nézzük meg az elégedettségi arányok oprendszereken belül!
 
-```{python}
-pd.crosstab(sfH.JS_v2, sfH.OpSys, normalize='columns')
+```{r}
+prop.table(crosstab,2)
 ```
 
 Ezen **arányok eltérése oprendszerek között csak a mintavételi hiba műve-e?** $\rightarrow$ Hiptézisvizsgálat! :)
@@ -225,11 +231,11 @@ A **p-érték** itt is **jobboldali módon** számolható, mint az illeszkedésv
 
 Próbafüggvény és p-érték számolás a `stats.chi2_contingency` beépített függvénnyel. Bemenet csak a kereszttábla, a szabadságfokot is ebből ki tudja számoln a függvény.
 
-```{python}
-stats.chi2_contingency(kereszt)
+```{r}
+chisq.test(crosstab)
 ```
 
-A p-értékünk itt $12\%$, ami nagyobb még a legnagyobbszokásos szignifikancia-szintnél a $10\%$-nál is. A mintán kívüli világban, azaz a **sokaságban a két ismérv függetlennek tekníthtő**.<br>
+A p-értékünk itt $17\%$, ami nagyobb még a legnagyobbszokásos szignifikancia-szintnél a $10\%$-nál is. A mintán kívüli világban, azaz a **sokaságban a két ismérv függetlennek tekníthtő**.<br>
 Az a tény, hogy a megfigyelt mintában az elégedettségi arányok eltérnek oprendszerek között csak a mintavételi hiba műve, nem szignifikáns!
 
 A függvény eredményéül kapott listában a $4.$ elem az a kereszttábla, ami igaz $H_0$, azaz a két ismérv függetlensége esetén lenne.
@@ -238,12 +244,10 @@ Ha $H_0$ elutasítható lenne, akkor érdekes lenne, hogy a megfiyelt mintában 
 
 Ezeket az $f_{ij}-f^*_{ij}$ eltérések szépen lehetne vizualizálni hőtérképen a `seaborn` csomag segítségével.
 
-```{python}
-eltérés = kereszt - stats.chi2_contingency(kereszt)[3]
-eltérés
+```{r}
+homogenity_result <- chisq.test(crosstab)
 
-import seaborn as sns # seaborn csomag importja
-sns.heatmap(eltérés, cmap='RdYlGn') # eltérés vizualizáció hőtérképen
+homogenity_result$observed - homogenity_result$expected
 ```
 
-Látható, hogy kb. $6$-tal több elégedett Linuxos van a mintában, mint függetlenség ($H_0$) esetén lennie kéne, és kb. $4$-gyel kevesebb elégedet Windowsos van a mintában, mint függetlenség esetén kéne.
+Látható, hogy kb. $7$-tel kevesebb nagyon elégedett Windowsos van a mintában, mint függetlenség ($H_0$) esetén lennie kéne, és kb. $2$-vel több elégedetlen Windowsos van a mintában, mint függetlenség esetén kéne.
