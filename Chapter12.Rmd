@@ -1,7 +1,7 @@
 ---
 title: "Non-Parametric Tests"
 author: "László Kovács"
-date: "01/04/2025"
+date: "06/04/2025"
 output:
   html_document:
     toc: true
@@ -19,36 +19,35 @@ text-align: justify}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 1. Nemparaméteres próbák elve
+## 1. The General Concept of Non-Parametric Tests
 
-Továbbra is hipotézisvizsgálatokat végzünk.
+We continue performing hypothesis tests.
 
-EDDIG az úgynevezett **paraméteres próbák** esetét vizsgáltunk. Ekkor statisztikai mutatószámokra, azaz statisztikai paraméterek (pl. átlagra, szórásra, arányra, stb.) lehetséges sokasági értékeire fogalmaztunk meg állításokat, *hipotéziseket*.
+UP UNTIL NOW, we examined the case of so-called **parametric tests**. In those, we made statments — hypotheses — about possible population values of statistical indicators, i.e. statistical parameters (e.g., mean, standard deviation, proportion, etc.).
 
-MOST az úgynevezett **nemparaméteres próbák** esetét kezdjük vizsgálni. Ekkor **ismérvek sokasági eloszlására vonatkozó állításokat, hipotéziseket teszünk**. Ugyebár egy ismérv eloszlása gyakorlatilag azt jelenti, hogy megadjuk, hogy a lehetséges ismérvértékek milyen arányban fordulnak elő. Szóval valójában nagyon **sok arány értékéről egyszerre** mondunk itt valamit a hipotézisben megfogalmazott alapállításainkban.
+NOW, we begin exploring the case of so-called **non-parametric tests**. In this case, we **make statements — hypotheses about the population distribution of variables**. A variable’s distribution basically means specifying what proportion each possible value of the variable occurs with. So really, in these hypotheses, we are making statements about **many proportion values at once**.
 
-De a **négy alaplépés változatlan** az eddigiekhez képest!
+However, the **four fundamental steps remain unchanged** compared to before!
 
-1. $H_0$ és $H_1$ felírása
-2. Próbafüggvény számítása a megfigyelt mintából
-3. A p-érték számítása  próbafüggvény és egy nevezetes eloszlás alapján
-4. Döntés p-érték alapján $\rightarrow H_0$ vagy $H_1$ vehető-e igaznak a sokaságban?
+1. Writing $H_0$ and $H_1$
+2. Computing the test statistic from the observed sample
+3. Calculating the p-value based on the test statistic and a probability distribution
+4. Decision based on the p-value $\rightarrow$ Can $H_0$ or $H_1$ be accepted as true for the population?
 
+We will explore the topic of non-parametric tests using the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/StackOverflowHungary2020.xlsx" target="\_blank">StackOverflowHungary2020.xlsx</a> dataset, which comes from Stack Overflow's 2020 global survey of amateur and professional programmers across *60* variables. The full dataset (as well as past and future surveys) is available at [this link]((https://insights.stackoverflow.com/survey)).<br>
+Our Excel file available on Moodle contains responses from only the *210 Hungarian respondents* of the 2020 survey, with data for the following *9* variables:
 
-A nemparaméteres próbák témakörét a <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/StackOverflowHungary2020.xlsx" target="_blank">StackOverflowHungary2020.xlsx</a> adattáblán járjuk majd végig, ami a Stack Overflow programozói közösségi oldal 2020-as felmérése a világ amatőr és profi programozóiról *60* változó szerint. A teljes adatbázis (és a korábbi+újabb évek felmérései) [erről a linkről](https://insights.stackoverflow.com/survey) elérhető.<br>
-A mi Moodle-n található Excel fájlunkban csak a 2020-as felmérés *210 magyar kitöltőjének* válaszai szerepelnek az alábbi *9* változó szerint :
+- **Age**: Respondent’s age (in years)
+- **Age1stCode**: Age when the respondent wrote their first line of code (in years)
+- **YearsCodePro**: Years of programming experience (excluding time spent studying)
+- **MonthlyHuf**: Gross monthly salary in Hungarian Forints
+- **Gender**: Respondent’s gender
+- **EdLevel**: Highest level of completed education
+- **Employment**: Employment status (full-time; part-time; self-employed)
+- **JobSat**: Satisfaction with current job
+- **OpSys**: Operating system preferred (Windows; Linux; MacOS)
 
-- **Age**: A válaszadó életkora (év)
-- **Age1stCode**: A válaszadó életkora első sor programkódjának megírásakor (év)
-- **YearsCodePro**: Programozási tapasztalat a tanulmányokat nem beleszámítva (év)
-- **MonthlyHuf**: Havi bruttó fizetés Forintban
-- **Gender**: Válaszadó neme
-- **EdLevel**: Legmagasabb befejezett iskolai végzettség
-- **Employment**: Foglalkoztatási státusz (teljes munkidő; részmunkaidő; egyéni vállalkozó)
-- **JobSat**: Elégedettség a jelenlegi munkahelyen
-- **OpSys**: Használt operációs rendszer (Windows; Linux; MacOS)
-
-Töltsök be az adatbázist az Excelből egy `pandas` data frame-be és nézzük meg az `info` metódussal megvan-e minden fenteb felsorolt ismérvünk!
+Let’s load the dataset from Excel into a data frame and check with the `str` function whether all the variables listed above are present!
 
 ```{r}
 library(readxl)
@@ -58,196 +57,239 @@ sfH <- read_excel("StackOverflowHungary2020.xlsx")
 str(sfH)
 ```
 
-Olybá tűnik, mind a $210$ megfigyelésünk és a vizsgált $9$ változónk. Yeah! :)
+It seems that all $210$ observations and the $9$ variables we are analyzing are there. Yeah! :))
 
-## 2. Illeszkedésvizsgálatok
+## 2. Goodness-of-Fit Tests
 
-A nemparaméteres próbák egyik nagy alesete az illeszkedésvizsgálatok esete. Ekkor mindig azt vizsgáljuk, hogy a **megfigyelt mintaelemek eloszlása illeszkedik-e valami általunk megadott elméleti eloszláshoz** (pl. egyenletes eloszlás vagy normális eloszlás, ilyesmik).
+One major subtype of non-parametric tests is the case of goodness-of-fit tests. In these, we always examine whether the **distribution of the observed sample elements fits a theoretical distribution specified by us** (e.g., uniform distribution or normal distribution, things like that).
 
-### 2.1. Reprezentativitás vizsgálat
+### 2.1. Test of Representativity
 
-**Reprezentativitás egy ismérv szerint**: a minta eloszlása egy konkrét ismérv szerint kb. ugyan az, mint az ismérv eloszlása a teljes adatsokaságban.
+**Representativeness according to a single variable**: the sample’s distribution with respect to a specific variable is approximately the same as the distribution of that variable in the entire (unobserved) population.
 
-A KSH 2020-as adatai szerint a magyar infokommunikációs-szektorban tevékenykedők
+According to data from the Hungarian Central Statistical Office (HCSO) from 2020, in the Hungarian information and communication technology sector:
 
-- $85\%$-a teljes állásban foglalkoztatott,
-- $4\%$ részmunkaidős
-- $11\%$ egyéni vállalkozó.
+- $85\%$ are employed full-time,
+- $4\%$ are part-time,
+- $11\%$ are self-employed.
 
-Ezen munkakör tíous arányok (azaz munkakör típus eloszlás) mellett **reprezentatív-e a StackOverflow kérdőív magyar mintája munkakör típusra?**
+Given these proportions of employment types (i.e., the distribution of job types), **is the Hungarian sample from the StackOverflow questionnaire representative in terms of employment types?**
 
-Ekkor:
+In this case:
 
-- $H_0:$ A minta **reprezentatív**
-- $H_1:$ A minta **NEM reprezentatív**
+- $H_0:$ The sample is **representative**
+- $H_1:$ The sample is **NOT representative**
 
-Próbafüggvényünk és p-értékhez az eloszlásunk a következő $$\sum_{j=1}^{k}{\frac{(f_j-f^*_j)^2}{f^*_j}} \sim \chi^2(k-1)$$
+Our test statistic and the distribution used to compute the p-value under the assumption that $H_0$ is true is the following: $$\sum_{j=1}^{k}{\frac{(f_j-f^*_j)^2}{f^*_j}} \sim \chi^2(k-1)$$
 
-A képletben szereplő betűk jelentése:
+Meaning of the symbols in the formula:
 
-- $k$: A vizsgált ismérv lehetséges rtékeinek (kategóriáinak) száma
-- $f_j$: tény gyakoriságok
-- $f^*_j$: reprezentativitás esetén fennálló elvi gyakoriságok a mintában
+- $k$: the number of possible values (categories) of the variable under examination
+- $f_j$: observed frequencies of each variable value
+- $f^*_j$: theoretical frequencies of the examined variable values in the sample if it were representative
 
-A **p-érték**et a $\chi^2(k-1)$ eloszlásból **mindig jobboldali** módon számítjuk. Részletek a jobboldali p-érték számításról a <a href="Chapter10.html" target="_blank">Section 2 of Chapter 10</a>.
+The **p-value** is **always** calculated from the $\chi^2(k - 1)$ distribution in a **right-tailed** manner. For more details on calculating right-tailed p-values, see <a href="Chapter10.html" target="_blank">Section 2 of Chapter 10</a>.
 
-Számítsuk ki a szükséges $n_j$ gyakoriságokat.
+Let’s compute the necessary $f_j$ frequencies.
 
 ```{r}
 observed_freq <- table(sfH$Employment)
 observed_freq
 ```
 
-Jöjjenek az elvi $P_j$ valószínűségek! Milyen valószínűséggel következnének be az egyes munkakör típusok, ha az $n=210$ elemű minta teljesen reprezentatív lenne? Figyeljünk, hogy olyan sorrendben adjukmeg őket, ahogy az `observed_freq` vektorban jönnek a munkakörök.
+Now, let’s move on to the theoretical $P_j$ probabilities! What would be the probability of each job type if the $n = 210$ sample were completely representative? Be sure to provide them in the same order as the job types appear in the `observed_freq` vector.
 
 ```{r}
 theor_probs <- c(0.85, 0.04, 0.11)
 theor_probs
 ```
 
-Az eltérés elvi és tény gyakoriságok között betudható-e a mintavételi hibának? $\rightarrow$ Hipotézisvizsg :)
+Could the difference between the theoretical and actual frequencies, calculated from $P_j$, be attributed to sampling error? $\rightarrow$ Hypothesis test :)
 
-Próbafüggvény és p-érték beépített R függvénnyel. Most a szabadságfok $df=k-1=3-1=2$. Ez a szabadságfok értelmezés (tehát a $df=k-1$) a függvény alapértelmezése, így ezt nem kell külön paraméterben beállítanunk.
+We can calculate the test statistic and p-value using a built-in R function called `chisq.test`. Here, the degrees of freedom are $df = k - 1 = 3 - 1 = 2$. This interpretation of degrees of freedom (i.e., $df = k - 1$) is the function’s default, so we don’t need to set it separately.
 
 ```{r}
 chisq.test(observed_freq, p = theor_probs)
 ```
 
-A p-értékünk $7.1\%$ Ez beza benne van a szokásos szignifikancia- szintek tartományában (1%-10%). **Nagyobb minta alapján kéne dönteni**. De közelebb vagyunk a $10\%$-oz, mint az $1\%$-hez $\rightarrow$ **inkább tűnik a minta reprezentatívnak, mint nem**. :)
+Our p-value is $7.1\%$. This falls within the typical significance level range (1%–10%). We would **need a larger sample to make a definitive decision**. But since we're closer to $10\%$ than to $1\%$ $\rightarrow$ the **sample seems more representative than not**. :)
 
-Előfeltételünk, hogy minden elvi gyakoriság legalább $5$, azaz $f^*_j \geq 5$. Ellenőrizzük le gyorsan!
+Our assumption is that each expected frequency is at least $5$, i.e., $\forall f^*_j \geq 5$. Let’s check that quickly!
 
 ```{r}
 nrow(sfH)*theor_probs >= 5
 ```
 
-Mind a három esetben van legalább $5$ megfigyelés az elvi esetben, jók vagyunk! Wuhú! :)
+In all three cases, we have at least $5$ expected observations, so we’re good! Woohoo! :)
 
-### 2.2. Normalitás vizsgálat
+By the way, we can also retrieve the $f^_j$ values if we save the result of the `chisq.test` function into an R memory object. This will be a `list`-type object, and the expected frequencies used for the test statistic calculation (i.e., the $f^*_j$ frequencies under $H_0$) are stored in the `expected` element of the list.
 
-Állításunk, hogy a **magyar programozók sokaságának az első kód megírásakor a koreloszlása normális eloszlású**.
+```{r}
+representativity_result <- chisq.test(observed_freq, p = theor_probs)
+representativity_result$expected
+```
 
-Szemmelverés = Hisztogram
+Again, we can see that in all three cases there are at least $5$ expected observations — we’re good! Don’t be scared by the fractional numbers — we see those because these are **theoretical frequencies measured in an imagined state of the world**, where $H_0$ (representativeness) is entirely true. In such imaginary worlds, fractional frequencies are totally allowed. :)
+
+### 2.2. Test of Normality
+
+Our statement is that the **age distribution of Hungarian programmers at the time they wrote their first code follows a normal distribution**
+
+The first way to test this claim is the "*eyeball test*" = histogram.
 
 ```{r}
 hist(sfH$Age1stCode)
 ```
 
-Nagyjából normális eloszlású a hisztogram, de kicsit jobbra nyúlik. 
+The histogram is roughly normally distributed, but it has a slight right tail.
 
-Kérdés enyhe jobbra nyúlás a mintavételi hiba műve-e? $\rightarrow$ Hipotézisvizsgálat! :)
+Question: Is this slight right-skew due to sampling error? $\rightarrow$ Hypothesis test! :)
 
-- $H_0:$ **Normális** az eloszlás
-- $H_1:$ **NEM normális** az eloszlás
+- $H_0:$ The distribution is **normal**
+- $H_1:$ The distribution is **NOT normal**
 
-A **próbafüggvény és p-érték számoláshoz trükközünk**! Kiszámoljuk az `Age1stCode` ismérvre legjobban illeszekdő normális eloszlás kvintiliseit, azaz ötödölő pntjait! Pl. $K_2$ az az érték, aminél az adatok 40%-a ($2/5$) kisebb, 60%-a ($3/5$) nagyobb.<br>
-Az `Age1stCode` ismérvre legjobban illeszekdő normális eloszlás: az a normális eloszlás, aminek átlaga és szórása ugyan az, mint az `Age1stCode` ismérvé.
+To **compute the test statistic and p-value, we'll use a trick**! We calculate the quintiles (i.e., 5-part dividing points) of the normal distribution that best fits the `Age1stCode` variable. For example, $K_2$ is the value below which 40% (i.e., $2/5$) of the data fall, and above which 60% ($3/5$) lie.<br>
+The best-fitting normal distribution for the `Age1stCode` variable is the one that has the same mean and standard deviation as the observed `Age1stCode` values.
 
-A megfelelő átlag és szórás számolása. Szórás korrigált, hiszen mintában vagyunk, nem szeretnénk torzítást! :)
+Let’s compute the appropriate mean and standard deviation. The standard deviation should be corrected (sample-based) so that we avoid bias! This is essentially *method-of-moments* based fitting. :)
 
 ```{r}
 sample_mean = mean(sfH$Age1stCode)
 s = sd(sfH$Age1stCode)
 ```
 
-Normális eloszlás ötödölő pontjai a `scipy` csomag `stats.` függvényévek. Ötödölő pontok (kivintilisek) listaként való átadása. Technikai okok miatt kell a $0$ és $1=100\%$ sztópont is a $0.2$ egységekre bontó pontok = ötödölő pontok = kvintilisek mellett.
+The quintiles of the normal distribution can be calculated using the `qnorm` function. The quintile values must be passed as a vector to the function. For technical reasons, we also need the $0$ and $1 = 100\%$ cut points in addition to the $0.2$ increments = quintiles = five-part points.
 
 ```{r}
 norm_quintiles <- qnorm(c(0,0.2, 0.4, 0.6, 0.8,1), mean = sample_mean, sd = s)
 norm_quintiles
 ```
 
-Tapasztalati gyakorisági tábla, $f_j$-k megadása a normális eloszlás kvintiliseire.
+Next, we create a frequency table of the $f_j$ values corresponding to the normal distribution quintiles. First, we use the `cut` function to split the variable according to the quintile values given in the `breaks` parameter. Then we use the `table` function to count the frequencies within these intervals.
 
 ```{r}
 observed_freq <- table(cut(sfH$Age1stCode, breaks = norm_quintiles))
 observed_freq
 ```
 
-Elvi gyakoriság, ha $H_0$,azaz a normális eloszlás igaz lenne $f^*_j=\frac{n}{5}=\frac{210}{5}=42$. Ez a `chisq.test` alapbeállítása $f^*_j$-re. Azaz a függvény `p` paraméterében végig $1/5=0.2$-t feltételez alapesetben, ha mást nem adunk itt meg.
+If $H_0$ (i.e., normal distribution) were true, then these quintiles would split the sample perfectly into five equal parts. So, the expected frequencies would be: $f^*_j = \frac{n}{5} = \frac{210}{5} = 42$. This is the default setting for $f^*_j$ in `chisq.test`. That is, unless we specify otherwise, the function assumes $1/5 = 0.2$ for each category in the `p` parameter.
 
-Számoljuk ki a próbafüggvényt és p-értéket ezzel az alapfeltételezéssel $f^*_j$-re. Van minden: $f_j$ és $f^*_j$ is. De most az eloszlás p-értékhez $\chi^2(k-1-b)$, ahol $b$ a becsült paraméterek száma. Ez most a legjobban illeszkedő normális eloszlás átlaga és szórása volt, így $b=2$. Ezzel a $b=2$ értékkel felül kell írni a `stats.chisquare` függvény alapbeálítását a szabadságfok (`ddof`) paraméterre. Ezen a `ddof` paraméteren csak a $b=2$-t kell átadni, így tudni fogja a függvény, hogy a szabadságfokot $k-1-b$ módon kell kiszámolnia.
+Let’s compute the test statistic and the p-value with this default assumption for $f^*_j$. We have everything: we know the $f_j$ and the $f^*_j$ values. However, for the p-value, the appropriate distribution is $\chi^2(k - 1 - b)$, where $b$ is the number of estimated parameters. In our case, these are the mean and standard deviation of the best-fitting normal distribution, so $b = 2$. We must override the default degrees of freedom (`df`) in `chisq.test` using this $b = 2$ value. We do this by manually computing the p-value based on the test statistic returned from `chisq.test`, using the $\chi^2(k - b - 1)$ distribution. So, Degrees of freedom = $k - 1 - b$. Here, $k = 5$ (due to quintiles) and $b = 2$ (mean + standard deviation estimated from sample).
 
 ```{r}
 chi2_result <- chisq.test(observed_freq)
-p_value_chi2 <- 1-pchisq(chi2_result$statistic, df = 5-1-2)
+p_value_chi2 <- 1-pchisq(chi2_result$statistic, df = 5-2-1)
 p_value_chi2*100 # in percentage format
 ```
 
-A p-értékünk $0.0075\%$, ami kisebb még a legkisebb szokásos szignifikancia-szintnél, az $1\%$-nál is. Azaz, a $H_0$ stabilan elvethető, így az eloszlás **nem tekinthatő normálisnak**
+Our p-value is $0.0075\%$, which is smaller than even the most conservative standard significance level of $1\%$. Thus, $H_0$ can be confidently rejected — the **distribution cannot be considered normal**.
 
 ```{r}
 chi2_result$expected
 ```
 
+So, the slight right-tail observed in the histogram compared to the normal distribution is NOT due to sampling error — it’s a significant deviation that would persist even outside the observed sample!
 
-Tehát, a hisztogramon észrevehető enyhe jobbra nyúlás a normális eloszláshoz képest NEM mintavételi hiba műve, hanem egy szignifikáns (jelentős) eltérés, ami megmarad a mintán kívüli világban is!
+Naturally, this method works with other quantiles too — e.g., deciles! Just make sure your chosen quantiles satisfy the condition $\forall f^*_j \geq 5$. In our case, deciles (10-part division points) would work too, because $210 / 10 = 21 > 5$. It may even be beneficial to use more cut points, as this lets us more accurately assess the distribution in the test statistic. After all, a decision based on 10 frequency counts is better than one based on 5.
 
-## 3. Homogenitásvizsgálat
+Furthermore, this quantile-based trick is not only usable for checking normality — it works for fitting any probability distribution (exponential, Poisson, log-normal, etc.)!
 
-Vizsgáljuk meg azt az állítást, miszerint, az összes magyar programozó sokaságában az **egyes operációs rendszereket használó fejlesztők ugyan olyan munkahelyi elégedettségi arányokkal bírnak**. Másképpen fogalmazva a munkahelyi elégedettség és az operációs rendszer között **összefüggés ll fenn**.
+## 3. Test of Homogenity
 
-Más szóval, függetlenségvizsgálat esetén azt vizsgáljuk, hogy a sokaságban, azaz **a mintán kívüli világban, két nominális** (szöveges) **ismérv között összefüggés áll fenn**. Ezt pedig a következő null- és alternatív hipotézis párossal írjuk le.
+Let’s examine the statement that, in the entire Hungarian programming population, **developers using Windows and those using other operating systems have the same level of job satisfaction**. In other words, the distribution of job satisfaction between Windows and non-Windows users is **homogeneous**.
 
-- **Két nominális** ismérv: `JobSat` és `OpSys`
-- $H_0:$ A két ismérv **független**
-- $H_1:$ A két ismérv **összefügg**
+We describe this base assumption using the following null and alternative hypothesis pair:
 
-Úgy járunk el, mint Statisztika I-en két nominális ismérv kapcsoaltának vizsgálatánál: készítünk egy kereszttávlát, ami megadja a két ismérv *együttes* gyakoriságait.
+- $H_0:$ The two groups (Windows and non-Windows) have **identical distributions** in the population
+- $H_1:$ The two groups (Windows and non-Windows) have **different distributions** in the population
+
+To compute this, we first need to group the values of the `OpSys` variable into two categories — Windows and non-Windows — in a new variable, since it contains more than just "Windows" or "not Windows" values.
 
 ```{r}
-sfH$OpSys_Simplified <- ifelse(sfH$OpSys=="Windows", "Windows", "Not Windows")
+unique(sfH$OpSys)
+```
 
-crosstab <- table(sfH[, c("JobSat", "OpSys_Simplified")])
+The `ifelse` function is excellent for this kind of grouping.
+
+```{r}
+sfH$OpSys_Groupped <- ifelse(sfH$OpSys=="Windows","Windows","NotWindows")
+table(sfH$OpSys_Groupped)
+```
+
+To compute the test statistic, we need a contingency frequency table (crosstab) — just like the one we created for stacked bar plots in <a href="Chapter02.html" target="_blank">Section 4.4 of Chapter 2</a>.
+
+This table shows the frequencies of each job satisfaction level (`JobSat`) for both the Windows and non-Windows groups.
+
+```{r}
+crosstab <- table(sfH[, c("JobSat", "OpSys_Groupped")])
 crosstab
 ```
 
-Tehát, pl. $31$ főnyi munkájával nagyon elégedett Windows felhasználó van a megfigyelt mintánkban.
+So for example, we observe that $31$ Windows users in our sample are very satisfied with their job.
 
-Sajnos, a kereszttáblában van olyan elem (azaz van olyan $i$ sor és $j$ oszlop), ahol a gyakoriság kisebb, mint $5$, azaz $\exists f_{ij}<5$. Láasd pl. A semleges érzelmű Linuxosok esetét. Ekkor **valószínűleg NEM fog teljesülni a nagy minta előfeltétel**, mert nem lesz minden kereszttábla gyakoirság legalább $5$.
-
-Emiatt a problémát úgy hidaljuk át, hogy a *Very satisfied* és *Slightly satisfied* kategóriákból készítünk egy *Satisfied* kategóriát, a többiekből pedig egy *Not satisdfied kategóriát*. Ezt a `numpy` csomag `where` függvényével tudjuk intézni, mint az <a href="Gyak05.html" target="_blank">5. heti tananyag 2. fejezetében</a> az arányok konfidencia-intervallum számolásához a $0-1$ értékű új oszlop létrehozását.
-
-```{r}
-sfH$JobSat_v2 <- ifelse(sfH$JobSat %in% c("Very dissatisfied", "Slightly dissatisfied"), "Dissatisfied", sfH$JobSat)
-
-crosstab <- table(sfH[, c("JobSat_v2", "OpSys_Simplified")])
-crosstab
-```
-
-Remek, már csak két érték van a munkahelyi elégdettséggel kapcsoaltos új oszlopban (`JS_v2`). Innentől kezdve **homogenitásvizsgálat**ot végzünk. Ugyanis, ha az egyik nominális ismérvnek csak $2$ lehetséges értéke van, akkor *függetlenségvizsgálat = homogenvizsgálat*. Mivel ekkor két nominális csoporton belül vizsgáljuk, hogy egy másik nominális ismérv arányai azonosnak vehetők-e. Azaz vizsgáljuk, hogy a két nominális ismérv független-e.
-
-Nézzük meg az elégedettségi arányok oprendszereken belül!
+Now let’s look at the proportions of job satisfaction within each operating system group!
+We use the prop.table function with the second parameter set to 2, because we want to calculate proportions within the columns (2nd dimension) of the contingency table (i.e., percentage by column total).
 
 ```{r}
 prop.table(crosstab,2)
 ```
+So for instance, $38.8\%$ of non-Windows users are very satisfied with their job, while only $24.8\%$ of Windows users report the same level of satisfaction.
 
-Ezen **arányok eltérése oprendszerek között csak a mintavételi hiba műve-e?** $\rightarrow$ Hiptézisvizsgálat! :)
+But are these **differences in satisfaction proportions between operating systems just due to sampling error**? $\rightarrow$ Hypothesis test! :)
 
-Próbafüggvényünk a Stat. I-en megismert $\chi^2$ mutató, és igaz $H_0$ esetén a próbafüggvény eloszlása sok-sok mintavételből $\chi^2((r-1)(c-1))$, ahol $r$ a kereszttábla sorainak (*rows*), míg $c$ a kereszttábla oszlopainak (*columns*) a darabszáma: $$\sum_{i=1}^{r}\sum_{j=1}^{c}\frac{(f_{ij}-f^*_{ij})^2}{f^*_{ij}}\sim\chi^2((r-1)(c-1))$$
+Our test statistic is the following: $$\sum_{i=1}^{r}\sum_{j=1}^{c}\frac{(f_{ij}-f^*_{ij})^2}{f^*_{ij}}\sim\chi^2((r-1)(c-1))$$
 
-A **p-érték** itt is **jobboldali módon** számolható, mint az illeszkedésvizsgáaltok esetében.
+A fenti képlet alapján igaz $H_0$ esetén a próbafüggvény eloszlása sok-sok mintavételből $\chi^2((r-1)(c-1))$, ahol $r$ a kereszttábla sorainak (*rows*), míg $c$ a kereszttábla oszlopainak (*columns*) a darabszáma.<br>
+Az $f^*_{ij}$ elvi gyakoriság ebben az esetben azt mutatja meg, hogy mennyi olyan $i$ elégedettségi értékű megfigyelés lenne a $j$ operációsrendszer csoportban, ha az $i$ értékek eloszlása a $j$ csoportokban azonos lenne. Ez más szóval azt jelenti, hogy a **homogenitás $H_0$-ja azt jelenti, hogy az $i$ és $j$ értékek egymástól FÜGGETLENEK** --> A $j$ csoportosítás nem befolyásolja az $i$ értékek eloszlását, emiatt minden $j$ csoportban azonos. Emiatt az $f^*_{ij}$ elvi gyakoriságok a független valószínűségekre vonatkozó szorzési szabály (független $i$ és $j$ esetén egy adott $ij$ páros bekövetkezési valószínűsége az $i$ és $j$ külön-külön vett valószínűségeinek szorzata) alapján számítható: $$f^*_{ij}=\frac{f_{i.}f_{.j}}{n}$$
 
-Próbafüggvény és p-érték számolás a `stats.chi2_contingency` beépített függvénnyel. Bemenet csak a kereszttábla, a szabadságfokot is ebből ki tudja számoln a függvény.
+Ahol $f_{i.}$ és $f_{.j}$ értékek rendre az összes $i$ és összes $j$ értékek előfordulási gyakoriságai a mintában. Más néven az úgynevezett **peremgyakoriságok**.
+
+A próbafüggvény megadása után a **p-érték** itt is **jobboldali módon** számolható, mint az illeszkedésvizsgáaltok esetében.
+
+Próbafüggvény és p-érték számolás a `chisq.test` beépített függvénnyel most is megoldható. Bemenet csak a kereszttábla, ebben az esetben a szabadságfokot is ebből ki tudja számoln a függvény.
 
 ```{r}
 chisq.test(crosstab)
 ```
 
-A p-értékünk itt $17\%$, ami nagyobb még a legnagyobbszokásos szignifikancia-szintnél a $10\%$-nál is. A mintán kívüli világban, azaz a **sokaságban a két ismérv függetlennek tekníthtő**.<br>
-Az a tény, hogy a megfigyelt mintában az elégedettségi arányok eltérnek oprendszerek között csak a mintavételi hiba műve, nem szignifikáns!
+A p-értékünk itt $20.4\%$, ami nagyobb még a legnagyobbszokásos szignifikancia-szintnél a $10\%$-nál is. A mintán kívüli világban, azaz a **sokaságban a munkával vett elégedttségek eloszlása AZONOSNAK tekinthető Windows és nem Windows felhasználók esetén**.<br>
+Az a tény, hogy a megfigyelt mintában az elégedettségi arányok eltérnek operációs rendszerek között csak a mintavételi hiba műve, nem szignifikáns!
 
-A függvény eredményéül kapott listában a $4.$ elem az a kereszttábla, ami igaz $H_0$, azaz a két ismérv függetlensége esetén lenne.
-
-Ha $H_0$ elutasítható lenne, akkor érdekes lenne, hogy a megfiyelt mintában a kereszttábla (az $f_{ij}$-k) hol tér el a legjobban a függetlenség esetén várt gyakoriságoktól, az $f^*_{ij}$-ktől.
-
-Ezeket az $f_{ij}-f^*_{ij}$ eltérések szépen lehetne vizualizálni hőtérképen a `seaborn` csomag segítségével.
+A `chisq.test` függvény eredményéül kapott listában az `expected` elem az a kereszttábla, ami igaz $H_0$, azaz a két ismérv függetlensége esetén lenne. A `prop.table` függvénnyel ellenőrizhető is, hogy ebben a kereszttáblában az oszlopösszeg (azaz a két operációs rendszer csoport) százalékában kifejezett arányok azonosak itt, ahogy a $H_0$ állítja.
 
 ```{r}
 homogenity_result <- chisq.test(crosstab)
+prop.table(homogenity_result$expected,2)
+```
 
+
+Ha $H_0$ elutasítható lenne, akkor érdekes lenne, hogy a megfiyelt mintában a kereszttábla (az $f_{ij}$-k) hol tér el a legjobban a függetlenség esetén várt gyakoriságoktól, az $f^*_{ij}$-ktől.
+
+Ezeket az $f_{ij}-f^*_{ij}$ eltéréseket ekemezve szépen látható, hogy hogy kb. $7$-tel kevesebb nagyon elégedett Windowsos van a mintában, mint függetlenség ($H_0$) esetén lennie kéne, és kb. $3$-al több enyhén elégedetlen Windowsos van a mintában, mint függetlenség esetén kéne.
+
+```{r}
 homogenity_result$observed - homogenity_result$expected
 ```
 
-Látható, hogy kb. $7$-tel kevesebb nagyon elégedett Windowsos van a mintában, mint függetlenség ($H_0$) esetén lennie kéne, és kb. $2$-vel több elégedetlen Windowsos van a mintában, mint függetlenség esetén kéne.
+A **próba elvégzésének előfeltétele**, hogy a $H_0$ szerinti elvi kereszttáblában minden $f^*_{ij}\geq5$. Szerenére ez teljesül is.
+
+```{r}
+homogenity_result$expected>=5
+```
+
+Ha esetleg ez a feltétel mégsem teljesülne a mintánkon, akkor itt pl. úgy lehetne áthidalni a problémát, hogy a **logikusan összevonható kategóriákat összevonjuk**. Pl. a *Very satisfied* és *Slightly satisfied* kategóriákból készítünk egy *Satisfied* kategóriát, a többiekből pedig egy *Not satisdfied kategóriát*. Ezt az `ifelse` függvénnyel tudjuk itt is simán intézni.
+
+```{r}
+sfH$JobSat_v2 <- ifelse(sfH$JobSat %in% c("Very dissatisfied", "Slightly dissatisfied"), "Dissatisfied", sfH$JobSat)
+
+crosstab_v2 <- table(sfH[, c("JobSat_v2", "OpSys_Groupped")])
+crosstab_v2
+```
+
+És erre az új kereszttáblára is el tudjuk végezni a homogenitásvizsgálatot.
+
+```{r}
+chisq.test(crosstab_v2)
+```
+
+Látjuk, hogy érdemben nem kapunk más eredményt. A p-értékünk itt $17.1\%$, ami továbbra is magasabb a legnagyobb szokásos szignifikancia-szintnél (10%) is, így a $H_0$ most sem utasítható el.
