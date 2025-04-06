@@ -88,6 +88,14 @@ Meaning of the symbols in the formula:
 - $f_j$: observed frequencies of each variable value
 - $f^*_j$: theoretical frequencies of the examined variable values in the sample if it were representative
 
+We need to note here that technically the $H_0$ and $H_1$ pairs of these non-parametric tests state the following:
+
+- $H_0: f_j=f^*_j ,\forall j$
+- $H_1: \exists j: f_j \neq f^*_j$
+
+So, even if in one category $j$ we have a significant difference in the observed frequency $f_j$ and the theoretical frequency $f^*_j$ under $H_0$, then $H_0$ is rejected, no matter that in the rest of the categories the observed frequencies fit to the theoretical distribution assumed in $H_0$.<br>
+That is why **these $\chi^2$ non-parametric tests very much favor $H_1$, as it is a very strong statement**. This technical $H_0$ and $H_1$ pair remains in all subsequent non-parametric test of this chapter, so **this behavior of $H_1$ being a strong statement remains in all further $\chi^2$ non-parametric tests that we are covering in this chapter**.
+
 The **p-value** is **always** calculated from the $\chi^2(k - 1)$ distribution in a **right-tailed** manner. For more details on calculating right-tailed p-values, see <a href="Chapter10.html" target="_blank">Section 2 of Chapter 10</a>.
 
 Let’s compute the necessary $f_j$ frequencies.
@@ -122,7 +130,7 @@ nrow(sfH)*theor_probs >= 5
 
 In all three cases, we have at least $5$ expected observations, so we’re good! Woohoo! :)
 
-By the way, we can also retrieve the $f^_j$ values if we save the result of the `chisq.test` function into an R memory object. This will be a `list`-type object, and the expected frequencies used for the test statistic calculation (i.e., the $f^*_j$ frequencies under $H_0$) are stored in the `expected` element of the list.
+By the way, we can also retrieve the $f^*_j$ values if we save the result of the `chisq.test` function into an R memory object. This will be a `list`-type object, and the expected frequencies used for the test statistic calculation (i.e., the $f^*_j$ frequencies under $H_0$) are stored in the `expected` element of the list.
 
 ```{r}
 representativity_result <- chisq.test(observed_freq, p = theor_probs)
@@ -239,45 +247,55 @@ But are these **differences in satisfaction proportions between operating system
 
 Our test statistic is the following: $$\sum_{i=1}^{r}\sum_{j=1}^{c}\frac{(f_{ij}-f^*_{ij})^2}{f^*_{ij}}\sim\chi^2((r-1)(c-1))$$
 
-A fenti képlet alapján igaz $H_0$ esetén a próbafüggvény eloszlása sok-sok mintavételből $\chi^2((r-1)(c-1))$, ahol $r$ a kereszttábla sorainak (*rows*), míg $c$ a kereszttábla oszlopainak (*columns*) a darabszáma.<br>
-Az $f^*_{ij}$ elvi gyakoriság ebben az esetben azt mutatja meg, hogy mennyi olyan $i$ elégedettségi értékű megfigyelés lenne a $j$ operációsrendszer csoportban, ha az $i$ értékek eloszlása a $j$ csoportokban azonos lenne. Ez más szóval azt jelenti, hogy a **homogenitás $H_0$-ja azt jelenti, hogy az $i$ és $j$ értékek egymástól FÜGGETLENEK** --> A $j$ csoportosítás nem befolyásolja az $i$ értékek eloszlását, emiatt minden $j$ csoportban azonos. Emiatt az $f^*_{ij}$ elvi gyakoriságok a független valószínűségekre vonatkozó szorzési szabály (független $i$ és $j$ esetén egy adott $ij$ páros bekövetkezési valószínűsége az $i$ és $j$ külön-külön vett valószínűségeinek szorzata) alapján számítható: $$f^*_{ij}=\frac{f_{i.}f_{.j}}{n}$$
+Under $H_0$, the distribution of this test statistic — based on many samples — follows the $\chi^2((r-1)(c-1))$ distribution, where $r$ is the number of rows (job satisfaction levels), and $c$ is the number of columns (OS groups) in the contingency table.<br>
+Here, $f^*_{ij}$ is the expected frequency — it tells us how many observations of satisfaction level $i$ we’d expect in OS group $j$ if the distribution of $i$ were identical across all $j$ groups. In other words, **the homogeneity $H_0$ states also means that job satisfaction and operating system are INDEPENDENT as random variables** $\rightarrow$ the grouping variable $j$ does not influence the distribution of $i$, and hence it is the same (homogeneous) in all groups.
 
-Ahol $f_{i.}$ és $f_{.j}$ értékek rendre az összes $i$ és összes $j$ értékek előfordulási gyakoriságai a mintában. Más néven az úgynevezett **peremgyakoriságok**.
+Thus, the expected frequencies can be computed using the multiplication rule for independent probabilities, which states in case of independent $i$ and $j$ the probabaility of the $ij$ pair occurring together is the multiplication of the probabilities that $i$ and $j$ occurs separately: $$f^*_{ij}=\frac{f_{i.}f_{.j}}{n}$$
 
-A próbafüggvény megadása után a **p-érték** itt is **jobboldali módon** számolható, mint az illeszkedésvizsgáaltok esetében.
+Where $f_{i.}$ and $f_{.j}$ are the total counts of the values $i$ and $j$ in the sample respectively — also known as the **marginal frequencies**.
 
-Próbafüggvény és p-érték számolás a `chisq.test` beépített függvénnyel most is megoldható. Bemenet csak a kereszttábla, ebben az esetben a szabadságfokot is ebből ki tudja számoln a függvény.
+We need to note here too that technically the $H_0$ and $H_1$ pairs of this test of homogeneity state the following:
+
+- $H_0: f_{ij}=f^*_{ij} ,\forall i,j$
+- $H_1: \exists i,j: f_{ij} \neq f^*_{ij}$
+
+So, even if in one $i$ and $j$ pairing, we have a significant difference in the observed frequency $f_{ij}$ and the theoretical frequency $f^*_{ij}$ under $H_0$, then $H_0$ is rejected, no matter that in the rest of the pairs, the observed frequencies fit to the homogeneous distribution assumed in $H_0$.<br>
+That is why **this $\chi^2$ test of homogeneity also very much favors $H_1$, as it is a very strong statement here as well**.
+
+After calculating the test statistic, the **p-value** is computed in a **right-tailed** manner — just like in goodness-of-fit tests.
+
+We can calculate the test statistic and p-value using the built-in `chisq.test` function. We only need the contingency table (frequency crosstab) as input — the function can calculate the degrees of freedom automatically.
 
 ```{r}
 chisq.test(crosstab)
 ```
 
-A p-értékünk itt $20.4\%$, ami nagyobb még a legnagyobbszokásos szignifikancia-szintnél a $10\%$-nál is. A mintán kívüli világban, azaz a **sokaságban a munkával vett elégedttségek eloszlása AZONOSNAK tekinthető Windows és nem Windows felhasználók esetén**.<br>
-Az a tény, hogy a megfigyelt mintában az elégedettségi arányok eltérnek operációs rendszerek között csak a mintavételi hiba műve, nem szignifikáns!
+In our case, the p-value is $20.4\%$, which is higher than even the highest typical significance level of $10\%$.
+So **in the population** (i.e., outside of our sample), **the distrobution of job satisfaction levels can be considered IDENTICAL between Windows and non-Windows users**.<br>
+In other words, the observed difference in satisfaction rates between operating systems in our sample is likely due to sampling error alone — not statistically significant.
 
-A `chisq.test` függvény eredményéül kapott listában az `expected` elem az a kereszttábla, ami igaz $H_0$, azaz a két ismérv függetlensége esetén lenne. A `prop.table` függvénnyel ellenőrizhető is, hogy ebben a kereszttáblában az oszlopösszeg (azaz a két operációs rendszer csoport) százalékában kifejezett arányok azonosak itt, ahogy a $H_0$ állítja.
+The `expected` element in the result list returned by `chisq.test` is the contingency table that would occur if $H_0$ were true (i.e., if the two groups were to have the same job satiosfaction distrobution). We can verify using `prop.table` that in this theoretical contingency table, the proportions within columns = OS groups are indeed equal — just as $H_0$ states.
 
 ```{r}
 homogenity_result <- chisq.test(crosstab)
 prop.table(homogenity_result$expected,2)
 ```
 
+If $H_0$ could be rejected, it would be interesting to see where the observed values $f_{ij}$ differ most from the expected $f^*_{ij}$.
 
-Ha $H_0$ elutasítható lenne, akkor érdekes lenne, hogy a megfiyelt mintában a kereszttábla (az $f_{ij}$-k) hol tér el a legjobban a függetlenség esetén várt gyakoriságoktól, az $f^*_{ij}$-ktől.
-
-Ezeket az $f_{ij}-f^*_{ij}$ eltéréseket ekemezve szépen látható, hogy hogy kb. $7$-tel kevesebb nagyon elégedett Windowsos van a mintában, mint függetlenség ($H_0$) esetén lennie kéne, és kb. $3$-al több enyhén elégedetlen Windowsos van a mintában, mint függetlenség esetén kéne.
+By examining the differences $f_{ij} - f^*_{ij}$, we can clearly see, for example, that there are about $7$ fewer very satisfied Windows users in the sample than we would expect under independence ($H_0$), and about $3$ more slightly dissatisfied Windows users than expected under $H_0$.
 
 ```{r}
 homogenity_result$observed - homogenity_result$expected
 ```
 
-A **próba elvégzésének előfeltétele**, hogy a $H_0$ szerinti elvi kereszttáblában minden $f^*_{ij}\geq5$. Szerenére ez teljesül is.
+The **assumption for performing this test of homogeneity** is that all expected frequencies $f^*_{ij} \geq 5$. Fortunately, this condition is met.
 
 ```{r}
 homogenity_result$expected>=5
 ```
 
-Ha esetleg ez a feltétel mégsem teljesülne a mintánkon, akkor itt pl. úgy lehetne áthidalni a problémát, hogy a **logikusan összevonható kategóriákat összevonjuk**. Pl. a *Very satisfied* és *Slightly satisfied* kategóriákból készítünk egy *Satisfied* kategóriát, a többiekből pedig egy *Not satisdfied kategóriát*. Ezt az `ifelse` függvénnyel tudjuk itt is simán intézni.
+If this condition were not met in our sample, we could resolve it by **merging logically related categories**. For example, we could merge *Very satisfied* and *Slightly satisfied* into a new *Satisfied* category, and merge the others into a *Not satisfied* category. We can again use `ifelse` to perform this grouping.
 
 ```{r}
 sfH$JobSat_v2 <- ifelse(sfH$JobSat %in% c("Very dissatisfied", "Slightly dissatisfied"), "Dissatisfied", sfH$JobSat)
@@ -286,10 +304,10 @@ crosstab_v2 <- table(sfH[, c("JobSat_v2", "OpSys_Groupped")])
 crosstab_v2
 ```
 
-És erre az új kereszttáblára is el tudjuk végezni a homogenitásvizsgálatot.
+We can then repeat the test of homogeneity on this new contingency table.
 
 ```{r}
 chisq.test(crosstab_v2)
 ```
 
-Látjuk, hogy érdemben nem kapunk más eredményt. A p-értékünk itt $17.1\%$, ami továbbra is magasabb a legnagyobb szokásos szignifikancia-szintnél (10%) is, így a $H_0$ most sem utasítható el.
+We see that the result does not change meaningfully: our p-value is $17.1\%$, still above the most common significance level of $10\%$, so we again fail to reject $H_0$.
