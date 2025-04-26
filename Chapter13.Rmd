@@ -1,0 +1,670 @@
+---
+title: "Testing of Bivariate Relationships"
+author: "László Kovács"
+date: "26/04/2025"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. The Basic Concepts of Bivariate Statistical Relationships
+
+A <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/CSOK.xlsx" target="_blank">CSOK.xlsx</a> fájl egy olyan adattábla, ami 15796 db véletlenszerűen kiválasztott eladó magyar ingatlanról (lakásról és kertes házról) 5 változó (oszlop) adatát tárolja:
+
+- **price**: price in million HUF
+- **area**: land area in squared meters
+- **settlement**: type of settlement (Budapest, City, City with county rights, Municipality) 
+- **CSOK3children**: is it possible to apply for the 10+15 million HUF support for families with three children? (1=yes, 0=no)
+- **type**: type of real estate (flat, house)
+
+Az adatok forrása az [ingatlan.com](https://ingatlan.com/), a változók letöltését 2021 január-februárjában végeztük webscraping segítségével.
+
+Olvassuk be az adattáblát egy R `data frame`-be a `readxl` csomag segítségével.
+
+```{r}
+library(readxl)
+CSOK <- read_excel("CSOK.xlsx")
+str(CSOK)
+```
+
+Láthatjuk, hogy az adatokon van mit dolgozni: az árak és a terület tökéletes `numeric` adattípusban kezelve, de a településtípust és a lakás típusát állítsuk át `factor` adattípusra, míg a CSOK-ot jelző változót `logical` típusra. Mivel a `type` változó is technikailag csak 2 értékkel bír (flat vagy house), így ő is lehetne logical, de itt talán beszédesebb lenne megőrizni a *flat/house* címkéket a jobb értelmezhetőség érdekében, így maradunk a `factor` adattípusnál.
+
+```{r}
+CSOK$settlement <- as.factor(CSOK$settlement)
+CSOK$type <- as.factor(CSOK$type)
+CSOK$CSOK3children <- as.logical(CSOK$CSOK3children)
+str(CSOK)
+```
+
+Ok, így már úgy néz ki rendben vagyunk adattípus-ügyileg.
+
+Rá is állhatunk a fő feladatunkra: a **statisztikai kapcsolatvizsgálat**ok elemzésére! Ennél a feladattípusnál kilépünk az eddig vizsgált *egyváltozós elemzések* témaköréből, és azt vizsgáljuk, hogy **két változó milyen kapcsolatban áll egymással**. Ezt mindig **három nézőpontból vizsgáljuk**:
+
+- Milyen a két változó közötti **kapcsolat jellege**?
+  * Erre általában egy megfelelő **grafikon** segítségével válaszolhatunk.
+- Milyen **erős/szoros** a két változó közti kapcsolat?
+  * Erre egy **0-1 közötti értékeket felvehhető statisztikai mutatószám** adja meg a választ.
+- A vizsgált kapcsolat **általánosítható-e** a megfigyelt adatokon kívül világra, azaz **a sokaságra**?
+  * Ezt pedig **hipotézisvizsgálat** segítségével tudjuk eldönteni.
+
+A fenti három szempont szerinti **konkrét számításaink módját** és képleteit **az határozza meg**, hogy a kapcsolatban résztvevő változóink **minőségi (nominális+ordinális mérrési skála) vagy mennyiségi (intervallum+arány mérési skála) változók**nak tekinthetők-e.<br>
+A tanult statisztikai módszereket ennek a minőségi/mennyiségi beosztásnak megfelelően az alábbi táblázat foglalja össze:
+
+```{r, echo=FALSE}
+
+x <- data.frame("Type of Relationship" = c("Mixed", "Association", "Correlation"),
+                "Scales of Measurement" = c("categorical-numerical", "categorical-categorical", "numerical-numerical"),
+                "Visualization" = c("Groupped Box Plot", "Stacked Column Chart", "Scatter Plot"),
+                "Statistical Tools" = c("ANalysis Of VAriances (ANOVA)", "Cramer's V and Chi-squared Test", "Correlation and Simple Linear Regression"))
+
+knitr::kable(
+  x, align = "cc"
+)
+```
+
+## 2. ANOVA
+
+Vizsgáljuk meg azt, hogy milyen kapcsolatban áll a lakásár (*mennyiségi* változó) és az, hogy a házra lehet-e CSOK kedvezményt kapni 3 gyerek után (*minőségi* változó).
+
+A kapcsolat jellegét legjobban egy **csoportosítottdoboz ábrával** lehet leírni: azaz nézzük meg egymást mellett a CSOK-ra jogosult és nem logosult házak/lakások árainak doboz ábráját.
+
+Nézzük meg hogyan lehet itt egy `factor` vagy `logical` típusú változó szerinti csoportosítást megoldani a doboz ábrák szintjén `gpplot2`-ben. Kicsit cselesen, mert itt a kitöltési szín paraméterén (`fill`) keresztül kell jelezni a csoportosítási szándékunkat valamelyik változó szerint az első réteg `aes` függvényének paraméterein belül. Cserébe a gépállat megszínezi nekünk külön színekkel az egyes kerületek ár szerinti doboz ábráit. Ha az *x* tengelyre is beírjuk a minőslgi változónkat, akkor az *x* tengelyre is kiírja annak lehetséges értékeit:
+
+```{r}
+library(ggplot2)
+ggplot(data = CSOK, aes(y = price, x=CSOK3children, fill = CSOK3children)) +
+  geom_boxplot()
+```
+
+Nagyon szép! Láthatjuk, hogy a CSOK-ra jogosult eladó ingatlanok esetében a medián ár gyakorlatilag annyi, mint a nem CSOK-os ingatlanok esetén az árak felső kvartilise! Plusz, a legangyobb, enyhén felfelé kilógó árak is a CSOK-ra jogosult ingatlanok körébe tartoznak.<br>
+Ez talán nem meglepő: a rendes 3 gyerekkel tervező nagycsalásoknak kell a tér és a jól felszerelt, drága lakás!
+
+Tehát a kapcsolat jellege tekintetében elmondhatjuk, hogy a CSOK-os lakások középső 50% tekintetében is egy magasabb árszínvonalat képviselnek és ide koncentrálódnak a felfelé kilógó értékek is.
+
+De kérdés, hogy mennyire erős ez a kapcsolat? **Hány százalékban magyarázza mégis a CSOK kedvezmény a lakásárak ingadozását?** Erre a kérdésre adja meg a választ a **variancia-hányados** becenevű statisztikai mutató.
+
+### 2.1. A variancia-hányados
+
+A variancia-hányados számolásához szükséges dolgokat az R `aov` függvénye adja meg. Egyszerűen rá kell ereszteni a függvényt a mennyiségi és minőségi változóra **hullámjelekkel elválasztva**: *mennyiségi változó ~ minőségi változó* --> a sorrend számít! Elöl van mindig a mennyiségi változó neve hátul a minőségi változó neve! Itt nem muszáj a változók nevére `$` jellel hivatkozni a `data frame`-n keresztül. A vizsgált két változót tartalmazó `data frame` objektum nevét meg lehet adni a függvény `data` paraméterében:
+
+```{r}
+aov(price ~ CSOK3children, data = CSOK)
+```
+
+Az eredmények két fontos **négyzetösszeg** (in inglis *Sum of Squares*) mutatót adnak meg:
+
+- **Sum of Squares Between = $SSB$**: A **minőségi változó csoportátlagainak** összes négyzetes **eltérése a mennyiségi változó főátlagától**.
+ * Esetünkben most $SSB=1956779$
+- **Sum of Squares Residuals = $SSR$**: Az egyes **megfigyelések** mennyiségi változó szerinti összes négyzetes **eltérése saját minőségi változó csoportjuk átlagtól**. Ez egyébként ugyan az, mint a **Sum of Squares Within = SSW** volt az arányosan rétegzett minták esetében.
+ * Esetünkben most $SSR=13970044$
+- A két érték összege a **Sum of Squares Total = $SST=SSB+SSR$**: Ez nem más, mint a mennyiségi változó varianciájának "*teteje*", az egyes **megfigyelések** összes négyzetes **eltérése a mennyiségi változó főátlagától**.
+  * Esetünkben most $SST=1956779+13970044=15926823$
+
+Az összefüggést a mennyiségi változó varianciájával (szórásnégyzetével) könnyen ellenőrizni tudjuk:
+
+```{r}
+sd(CSOK$price)^2 * (nrow(CSOK)-1)
+```
+
+Vizuálisan gondolva erre a jelenségre azt mondhatjuk, hogy az egyes $SS$ mutatók az alábbi **távolságok** négyzetes összegét jelentik. A négyzetre emelésre a távolságok *eltérő előjelének kiküszöbölése* miatt van szükség (mint a szórásképlet kapcsán néztük):
+
+<center>
+![](ANOVA_1.png){width=75%}
+</center>
+
+Tehát vizuálisan a következőképp érdemes gondolni a különböző $SS$-ekre:
+
+- $SSR=SSW$: Megfigyelések távolsága saját csoportjuk átlagától
+- $SSB$: Csoportátlag távolsága a főátlagtól
+- $SST$: Megfigyelések távolsága a főátlagától
+
+Ezek alapján nekünk az a jó a csoportosítás, azaz a minőségi magyarázóváltozó magyarázóereje szempontjából, ha **fix** $SST$ mellett $SSB$ **nagy** és $SSR=SSW$ **kicsi**. Mert ekkor a **csoportátlagok messze vannak** a főátlagtól és így implicite **egymástól** is, míg a csoportátlagtól az egyes **megfigyelések nagyon kis mértékben térnek csak el saját csoportátlaguktól**:
+
+<center>
+![](ANOVA_2.png){width=35%}
+</center>
+
+Ebben az esetben, ahogy az ábráról is látszik a csoportosításunk, azaz a minőségi változónk magyarázóereje nagy! Tehát az kell nekünk, hogy az $SST$ minél nagyobb részét tegye ki $SSB$, azaz, hogy **az $\frac{SSB}{SST}$ hányados nagy legyen**! Ez a mutató pedig a **variancia-hányados**, és a most elvégzett módszer neve a **variancia-analízis, azaz ANOVA = ANalysis Of VAriances**.
+
+Mivel $SST=SSB+SSR$, így a $\frac{SSB}{SST}$ variancia-hányados biztos, hogy $0-1$ közötti, és **százalékosan** is értelmezhető, hiszen $SSB$ része $SST$-nek. Ez alapján nekünk most:
+
+$\frac{SSB}{SST} = \frac{1956779}{1956779+13970044}=0.1228606=12.3\%$ --> **A CSOK jogosultság az ingatlanárak alakulásának (varianciájának) 12.3%-át magyarázza a megfigyelt mintában!** Ez egy **enyhén közepes magyarázóerő**, mivel a variancia-hányadost a következőképpen "*korszakoljuk*":
+
+- **variancia-hányados < 10% --> gyenge kapcsolat**
+- **10% <= variancia-hányados <= 50% --> közepes kapcsolat**
+- **variancia-hányados > 50% --> erős/szoros kapcsolat**
+
+Szokás értelmezni a vegyes kapcsolat erősségét a variancia-hányados **gyökével**, a **szórás-hányadossal** is. Ez szintén $0-1$ közti mutató, de már **százalékosan NEM értelmezhető**. Mivel a gyökvonás után nem lesz az igaz, hogy $\sqrt{SSB}$ része $\sqrt{SST}$-nek, hiszen tagonként nem lehet gyököt vonni, azaz $\sqrt{SSB+SSR}\neq\sqrt{SSB}+\sqrt{SSR}$<br>
+Emiatt a "*korszakolási  határok*" is gyök alá kerülnek: $\sqrt{0.5}\approx0.7$ és $\sqrt{0.1}\approx0.3$. azért nem vesszük a gyökvonást pontosabban, hogy szórás-hányadosra is "*szép*" számokat kapjunk határoknak:
+
+- **szórás-hányados < 0.3 --> gyenge kapcsolat**
+- **0.3 <= szórás-hányados <= 0.7 --> közepes kapcsolat**
+- **szórás-hányados > 0.7 --> erős/szoros kapcsolat**
+
+Láthatjuk, hogy $\sqrt{0.123}=0.3507$, tehát a *CSOK - Ár* kapcsolat továbbra is küzepes erősségű marad.
+
+### 3.2. Az F-próba vegyes kapcsolatra
+
+A **variancia- és szórás-hányadosok a kapcsolat erejét csupán a megfigyelt mintán belül írják le!** Kell egy **hipotézisvizsgálat annak eldöntésére, hogy a megfigyelt kapcsolat általánosítható-e az ingatlanok sokaságára**, azaz a megfigyelt mintán kívüli világra. Ez a hipotézisvizsgálat az **ANOVA** vagy **F-próba**.
+
+A próba hipotézisei a következők:
+
+- $H_0:$ A kapcsolat a sokaságban **nem szignifikáns**, azaz **variancia-hányados = 0 a sokaságban**
+- $H_1:$ A kapcsolat a sokaságban **szignifikáns**, azaz **variancia-hányados > 0 a sokaságban**
+
+Tehát, ebben az esetben $H_1$-nek szurkolunk, mert az állítja azt, hogy a variancia-hányados, azaz a kapcsolat magyarázóereje nem csupán a mintavételi hiba miatt nem nulla az összes magyar ingatlan sokaságában.
+
+This $H_0$ can be formulated alternatively as that the between sum of squares ($SSB$) is zero. Meaning that all group means in the population (all the $\mu_j$s for every $j$ groups) are equal to the global mean ($\mu$). The denial of this statement (which is our $H_1$) is that there is at least one $j$ group where the mean in the population is NOT equal to the global population mean, so we have $SSB>0$ significantly. By introducing $M$ as the number of groups defined by the categorical variable (), we have the following alternative $H_0$ and $H_1$ pair for our F-test
+
+- $H_0:\mu_1=\mu_2=...=\mu_M=\mu$
+- $H_1: \exists j \rightarrow \mu_j \neq \mu$
+
+A próbának az úgynevezett **Welch-korrekciózott verzió**ját használjuk, aminek így egyetlen **előfeltétele**, hogy a megfigyelt **mintánk elemszáma a nominális változó minden csoportjában nagy** legyen (legalább 100-as elemszám kell minden csoportoban a legtöbb szimulációs kutatás alapján):
+
+```{r}
+table(CSOK$CSOK3children)
+```
+
+Láthatjuk, hogy a feltétellel most rendben vagyunk, mivel a kisebb gyakoriságú, CSOK-ra nem jogosult ingatlanok csoportjában is a megfigyelések száma $4784$ db.
+
+Ha *valamelyik csoportban* a mintánk *elemszáma kicsi* (kisebb, mint 100), akkor a teszt erősen *felteszi a vegyes kapcsolat numerikus változójának normális eloszlását*, ami a letöbb gyakorlati esetben bajosan teljesül. Pl. a lakásárak eloszlása is jobbra elnyúló mindkét csoportban, ahogy a doboz ábrán is láttuk.
+
+Mivel a nominális változó mindkét csoportjában áll a nagy minta feltétel, így továbbmegyünk az **F-próva p-értékének kiszámításához**.
+
+A titok nyitja az F-próba p-értékéhez, hogy a korábban használt `oneway.test` függvényt kell használni úgy, mint az `aov` függvényt használtuk korábban: *mennyiségi változó ~ minőségi változó* --> a sorrend számít! Illetve, itt is a vizsgált két változót tartalmazó `data frame` objektum nevét meg kell adni a függvény `data` paraméterében.<br>
+Továbbá, szabályozni kell egy `var.equal = FALSE` paramétert is a függvényben. Ez utóbbi beállítás "kapcsolja be" az F-próba *Welch-korrekció*ját, ami a próbafüggvény számításban eszközöl pár módosítást. Ha ez a korrekció nem lenne, akkor a teszt feltételezné azt, hogy a nominális változó csoportjaiban a numerikus változó szórásai a nem megfigyelt sokaságban azonosak! De ha figyelünk erre a paraméterre, és bekapcsoljuk a *Welch-korrekció*t, akkor ettől a feltételtől megszabadulhatunk.:)
+
+```{r}
+oneway.test(price ~ CSOK3children, data = CSOK, var.equal = FALSE)
+```
+
+Az eredmény alapján a **p-érték kisebb, mint $2\times10^{-16}$**. Ez kisebb még a legkisebb szokásos szignifikancia-szintnél, az $\alpha=1\%$-nál is, így egyértelműen és stabilan elfogadható a $H_1$, ami szerint a CSOK jogosultság magyarázóereje az árakra nézve szignifikánsan több a sokaságban is, mint 0.<br>
+Azaz a **a magyarázóerő NEM a mintavételi hiba műve**.
+
+**Figyelem!** Ilyen 0 közeli p-érték simán kijöhet $10\%$ alatti variancia-hányados esetén is! Ez azt jelenti, hogy az a **gyenge magyarázóerő, amit a mintában értünk általánosítható a mintán kívüli világra is**. Tehát a kapcsolat a sokaságban is megvan. Szóval, **csak a kis p-érték alapján NE mondjuk soha, hogy a kapcsolat erős, mert a p-érték NEM ezt méri!!!** Hanem azt mutatja meg, hogy a **mintában megfigyelt kapcsolat, aminek erősségét a variancia-hányados mutatja ki, általánosítható-e a mintán kívüli világra, vagy sem!!!**
+
+Mindenesetre, végkövetkeztetésül azt mondhatjuk el, hogy **a magyar inngatlanpiacon van egy közepes erősségű és az ingatlanok sokaságában is szignifikáns, $12.3\%$-os, közepes magyarázóerejű áremelő hatása annak, ha egy lakás CSOK kedvezményre jogosult**.
+
+## 3. Association
+
+Vizsgáljuk meg azt, hogy milyen kapcsolatban áll a lakás településének típusa, a `Settlement` (*minőségi* változó) és az, hogy a házra lehet-e CSOK kedvezményt kapni 3 gyerek után (*minőségi* változó).
+
+A kapcsolat jellegét legjobban egy **halmozott oszlop** diagrammal lehet leírni. Ez megmutatja, hogy az egyik minőségi változó kategóriáin (értékein) belül hogyan oszlanak meg a másik minőségi változó kategóriái (értékei).
+
+```{r}
+ggplot(data = CSOK, aes(x = settlement, fill = CSOK3children)) +
+  geom_bar()
+```
+
+Az ábráról láthatjuk, hogy a legtöbb ingatlant kisvárosokban (*Town*) kínálják eladásra, míg a legkevesebbet a fővárosban, Budapesten. Érzésre azt mondanánk, hogy a CSOK-ra jogosult ingatlanok legnagyobb arányban a kisvárosokban (*Town*) fordulnak elő és Budapesten a legkevésbé, de ezen arányok összehasonlítását így szemmelveréssel nehézzé teszi, hogy az egyes településítpusok oszlopai eltérő méretűek. Hiszen pl. a *Town* kategóriában *azért is van darabra olyan sok CSOK-ra jogosult ingatlan, mert eleve ott van a legtöbb ingatlan*.
+
+Szóval valahogy jó lenne **100%-ig halmozott oszlop** diagrammá alakítani a fenti ábrát, hogy lássuk egyes településtípsok szerint a CSOK-ra jogosult ingatlanok **arányát**. Ezt az átalakítást a `geom_bar` függvény `position` paraméterének `"fill"`-ra állításával érhetjük el:
+
+```{r}
+ggplot(data = CSOK, aes(x = settlement, fill = CSOK3children)) +
+  geom_bar(position = "fill")
+```
+
+Így már látszik is, hogy az előbbi ábrán a szemmel megérzett dolgok tényleg bejöttek. De itt már egyértelműbben látszik, hogy a **legkisebb arányban Budapesten vannak CSOK-ra jogosult ingatlanok és a legnagyobb arányban a kisvárosokban (Town)**. Ez tehát a két változó közti **kapcsolat jellege**.
+
+Megnézhetjük a diagram mögötti **kétváltozós gyakorisági táblázat** (leánykori nevén *kereszttábla* vagy *kontingencia tábla*) tényleges gyakoriság adatait is. Ehhez egy ismerős függvényt, a `table`-t kell alkalmazni a két vizsgált nominális változóra:
+
+```{r}
+table(CSOK[,c("settlement", "CSOK3children")])
+```
+
+A táblából látszik, hogy *1685* darab budapesti és CSOK-ra jogosultingatlan található a táblában.
+
+A `prop.table` bevetésével az arányok is ismét lekérdezhetők:
+
+```{r}
+round(prop.table(table(CSOK[,c("settlement", "CSOK3children")]))*100, 1)
+```
+
+A kisvárosokban (*Town*) lévő CSOK-ra jogosult lakások aránya a tábla teljes elemszámhoz képest 22.3%.
+
+De itt már lekérhetjük az úgynevezett **peremeloszlásokat** is! Pl. ha külön szeretnénk megnézni a budapesti ingatlanokon **belül** a CSOK-ra jogosultak arányát:
+
+```{r}
+round(prop.table(table(CSOK[,c("settlement", "CSOK3children")]), 1)*100, 1)
+```
+
+Budapesten a CSOK-ra jogosult ingatlanok aránya 64.2%, míg kisvárosokban (*Town*) már 10 %-ponttal magasabb, 74.2%.
+
+A `prop.table` függvény **második paraméter**ében lévő $1$ adta meg, hogy az **arányosítást** a sorrendben először átadott változó, azaz a **Settlement részösszegei szerint** nézzük.
+
+### 3.1. A Khi-négyzet próba
+
+A kérdés az, hogy az előbbi 100%-ig halmozott oszlopdiagramon megfigyelt kapcsolat (legkisebb arányban Budapesten vannak CSOK-ra jogosult ingatlanok és a legnagyobb arányban a kisvárosokban) csak a mintavételi hiba műve-e vagy az ingatlanok nem megfigyelt sokaságában is megmarad-e?
+
+Egy **hipotézisvizsgálat kell annak eldöntésére, hogy a megfigyelt kapcsolat általánosítható-e az ingatlanok sokaságára**, azaz a megfigyelt mintán kívüli világra. Ez a hipotézisvizsgálat a $\chi^2$-féle függetlenségvizsgálat. A $\chi$ a "*Khi*" görög betű szimbóluma.
+
+A próba hipotézisei a következők:
+
+- $H_0:$ A kapcsolat a sokaságban **nem szignifikáns**
+- $H_1:$ A kapcsolat a sokaságban **szignifikáns**
+
+Tehát, ebben az esetben $H_1$-nek szurkolunk, mert az állítja azt, hogy a kapcsolat magyarázóereje nem csupán a mintavételi hiba miatt nem nulla az összes magyar ingatlan sokaságában.
+
+A számolás alapötlete, hogy a fentebb, a `table` függvénnyel létrehozott kétváltozós gyakorisági táblából legyártunk egy olyan verziót, ahogy az a *kapcsolat teljes hiánya, azaz függetlenség* esetén ez *kinézne*. Tehát pl. kiszámoljuk azt, hogy hány budapesti CSOK-ra jogosult lakás lenne, ha a két változó 0%-ban magyarázná egymást.
+
+Leírni $f_{ij}$-vel és $f^*_{ij}$-vel.
+
+```{r}
+table(CSOK[,c("settlement", "CSOK3children")])
+```
+
+A hipotézisvizsgálathoz p-értéket a `chisq.test` függvénnyel kapunk, amit a kétdimenziós gyakorisági táblára kell ráengedni.
+
+```{r}
+test_of_indep <- chisq.test(table(CSOK[,c("settlement", "CSOK3children")]))
+test_of_indep
+```
+
+Az eredmény alapján a **p-érték kisebb, mint $2\times10^{-16}$**. Ez kisebb még a legkisebb szokásos szignifikancia-szintnél, az $\alpha=1\%$-nál is, így egyértelműen és stabilan elfogadható a $H_1$, ami szerint a településtípus (*Settlement*) magyarázóereje a CSOK jogosultság nézve szignifikánsan több a sokaságban is, mint 0.<br>
+Azaz a **a magyarázóerő NEM a mintavételi hiba műve**.
+
+Testing the large sample size assumptions of the $\chi^2$-test that $f^*_{ij}\geq5, \forall i,j$.
+
+```{r}
+test_of_indep$expected
+```
+
+Még ez a legrosszabb esetünk is nagyobb, mint 795, rendben vagyunk.
+
+**Figyelem!** Attól, hogy a magyarázóerő szignifikáns hatással bír a sokaságban, attól az még lehet egy **gyenge magyarázóerő**. Ezt a megfigyelt adatok alapján meg kell mérni egy külön statisztikai mutatóval, egy normalizált (pl. 0-tól 1-ig) terjedő skálán. Ez a mutató lesz asszociáció esetén a Cramer-együttható.
+
+### 3.2. Cramer's V
+
+A mutatószám képlete: $$V=\sqrt{\frac{\chi^2}{n \times \min(r-1,c-1)}}$$
+
+Maga a mutató tehát $0-1$ közötti, de **NEM értelmezzük százalékban**, mivel a műveletei között van egy *gyökvonás*, így a **szórás-hányadossal összemérhető mutató**.
+
+Ennek megfelelően a **Cramer-együttható értelmezési határai az alábbiak**:
+
+- **Cramer < 0.3 --> gyenge kapcsolat**
+- **0.3 <= Cramer <= 0.7 --> közepes kapcsolat**
+- **Cramer > 0.7 --> erős/szoros kapcsolat**
+
+A mutatót számolni R-ben a képlet közvetlen alkalmazásával lehet.
+
+```{r}
+sqrt(test_of_indep$statistic/(nrow(CSOK)*(2-1)))
+```
+
+Az eredményül kapott $0.0786$-ra kerekítható érték **gyenge erősségű** kapcsolatot mutat a két minőségi változónkra a *fentebb megadott értékhatárok szerint*. Tehát annyira nem erős összefüggés a megfigyelt ingatlanok között az, amit kimutattunk a halmozott oszlopdiagrammal, hogy jellemzően a kisvárosokban (*Town*) vannak a CSOK-ra jogosult ingatlanok.
+
+Tehát, a $\chi^2$-próba eredményével összefésülve a Cramér's V eredményét azt mondhatjuk, hogy azt **a gyenge erősségű kapcsolatot lehet kiálítalánosítani a lakások sokaságára is a mintából, ami szerint a CSOK-ra jogosult lakások leginkább a kisvárosokra** (*Town*) és **legkevésbé Budapestre jellemzők**.
+
+## 4. Correlation and Simple Linear Regression
+
+The <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/BP_Flats.xlsx\" target="_blank">BP_Flats.xlsx</a> file is a data table that stores data for 10 variables (columns) for 1406 apartments in Budapest:
+
+- Price_MillionHUF: price of the flat in million HUF
+- Area_m2: area of the flat in square meters
+- Terrace: number of terraces in the flat
+- Rooms: number of rooms in the flat
+- HalfRooms: number of half-rooms in the flat
+- Bathrooms: number of bathrooms in the flat
+- Floor: the number of floor the flat is on
+- IsSouth: is the flat looking at the South? (1 = yes; 0 = mo)
+- IsBuda: is the flat in Buda? (1 = yes; 0 = no)
+- District: district of Budapest the flat is in (1 - 22)
+
+Read the data table from Excel into an R `data frame` the usual way!
+
+```{r echo=FALSE}
+BP_Flats <- read_excel("BP_Flats.xlsx")
+str(BP_Flats)
+```
+
+At first glance, everything looks good: we have 10 columns = variables with appropriate column names, and everywhere there are 1406 observations. We won’t bother with the datatypes, we can let everything stay numerical for now.
+
+We've used this dataset already to examine the correlation coefficient in <a href="Chapter02.html" target="_blank">Section 5 of Chapter 2</a>. As a reminder, let’s look at the correlation matrix containing the actual numerical variables and the two binary variables (IsSouth, IsBuda). We thus inspect the correlation between the variables in the first 9 columns.
+
+```{r}
+library(corrplot)
+CorrMatrix <- cor(BP_Flats[,1:9])
+corrplot(CorrMatrix, method="number")
+```
+
+We pay special attention to the correlations between the prices of the flats and the other variables. We can see, that the prices correlate really well (above 0.7) with Area and Rooms.
+
+From gathering this information, one might assume that a model containing the area of the flats as an explanatory variable could predict the prices of the flats (this variable’s correlation is the highest with **Price** in absolute value.) The model we will build is called the **bivariate (simple) linear regression**!
+
+This regression model is the line that fits best on the dots in a $y = Price$ and $x = Area$ scatter plot.
+
+```{r}
+ggplot(data = BP_Flats, aes(x = Area_m2, y = Price_MillionHUF)) +
+  geom_point() +
+  stat_smooth(method=lm) # this chunk of code gives us the line best fitting the dots on the plot
+```
+
+The line has a noticeably positive slope (the connection is one-way) and the dots are close to it (the connection is significant). The blurred strip behind the line is the 95% confidence interval. This means that the actual line we try to predict from the sample is between these boundaries in the statistical population (in the world outside the 1406 flats inspected).
+
+We can also check this by calculating the correlation:
+
+```{r}
+cor(BP_Flats$Price_MillionHUF, BP_Flats$Area_m2)
+```
+
+The correlation is positive and its absolute value is over 0.7, so there is a tight one-way connection between `Area` and `Price`.
+
+Taking the square of the correlation ($r$) we obtain the coefficient of determination $R^2$ = $r^2$. Since correlation falls into the interval $[-1, +1]$, its square will fall into $[0,1]$, thus it can be interpreted as a percentage: it shows how well $x$ can explain the change/variance of $y$:
+
+```{r}
+cor(BP_Flats$Price_MillionHUF, BP_Flats$Area_m2)^2 * 100
+```
+
+In our case, **Area explains 73.889% of the change in Price**. Or put differently: knowing the Area of a certain flat, we can predict the Price of said flat with an accuracy of 73.889% using the best regression line (also known as trend line). This is a pretty good model, since we say that a model with an $R^2$ less than 10% has **weak** explanatory power, between 10%-50% is considered **moderate**, and over 50% is **strong**.
+
+Let’s see how we can use this regression line for prediction, and take a look at how we can plot this line with the `ggplot` package on a scatter plot.
+
+### 4.1. OLS Estimation and Prediction in Simple Linear Regression
+
+In the previous section we introduced the basic notations, but as a reminder let’s recap:
+
+- $y$ := Price (**Target** variable, which we want to predict)
+- $x$ := Area (**Predcitor** variable, which we want to use to predict the target variable)
+
+In high school we used the following equation to describe a line in the $x$, $y$ coordinate system:
+
+$$y=mx+b$$
+
+Here, $m$ is the slope of the line, while $b$ is some constant, or the intercept of the $y$ axis. $b$ gives us the place our line intercepts the $y$ axis, while $m$ gives the change in $y$ required to stay on the line when we step forward by one unit on the $x$ axis. In other words, the slope tells us how fast the line decreases/increases.
+
+The equation above takes the following form in a linear regression:
+
+$$\hat{y}=\beta_1x+\beta_0$$
+
+Here $\hat{y}$ is the **predicted price**. This is the most important modification in the equation, since $\hat{y} \neq y$!! would be the actual value of $y$ (the real price of the flat), while $\hat{y}$ is the predicted value given by the known $Area$. $\hat{y} = y$ can only be true if $R^2=100\%$, but as we saw on the scatter plot, the **line does not fit the dots perfectly**! We can also see that we basically renamed the slope and intercept to: $\beta_1=m$ and $\beta_0=b$.
+
+In the equation $x$ is known for each flat, so we only have to determine $\beta_0$ and $\beta_1$ to be able to predict $y$. This is exactly what ggplot does when it creates the line on the scatter plot.
+
+Determining the $\beta_i$ is very logical, given ($y$) we strive for obtaining coefficients to get the **smallest prediction error**. We measure prediction error with the so called Sum of Squared Errors or $SSE$ : $$SSE = \sum_{i=1}^n(y_i-\hat{y_i})^2$$
+In $SSE$, our error function, we take the squares of $y_i - \hat{y_i}$ for two reasons:
+
+- We have to penalize the predictions below and above the actual value …
+- …BUT the absolute value function is not differentiable, which is necessary to minimize a function.
+
+Let’s see how $SSE$ works in practice! First, let’s give some **initial guesses** for $\beta_j$s, then we calculate all the $\hat{y_i}$.
+
+```{r}
+# Initially we set all Beta to 1
+Beta0 <- 1
+Beta1 <- 1
+
+# We calculate the predicted y with these Betas
+BP_Flats$PredPrice <- Beta1*BP_Flats$Area_m2 + Beta0
+
+# We can calculate the prediction error for each flat
+BP_Flats$Error <- BP_Flats$Price_MillionHUF - BP_Flats$PredPrice
+
+# Let's see what we created
+head(BP_Flats[,c("Price_MillionHUF", "PredPrice", "Error")])
+```
+
+We can see, that our initial predictions for the Betas are not too good, our prediction is like 22-24 million HUF off for each flat.
+
+Let’s look at the shape of the regression line determined by the $\hat{y_i}$-s in `PredPrice` takes, given all the Betas are equal to 1! Here I will use a little trick, in `ggplot` I put an `aes` function into `geom_point`, and set the coordinate $y$ of the plot in here, not in the `ggplot` function. After this in a different layer I draw a line diagram using `geom_line`, and use `aes` in its input to define the $y$ coordinates. This way I can plot two variables at the same time:
+
+```{r}
+ggplot(data = BP_Flats, aes(x = Area_m2)) +
+  geom_point(aes(y = Price_MillionHUF, color="Actual Prices")) +
+  geom_line(aes(y = PredPrice, color="Predicted Prices"))
+```
+
+Our regression line is quite pathetic, it’s way higher than it should be, it doesn’t fit the dots at all.
+
+Let’s calculate the $SSE$! We use the fact that we can calculate with the columns of a data frame as `vectors` in R:
+
+```{r}
+# One method
+sum(BP_Flats$Error^2)
+
+# Other method
+sum((BP_Flats$Price_MillionHUF - BP_Flats$PredPrice)^2)
+```
+
+The $SSE$ is enormous, but we are not surprised given the plot we saw previously :)
+
+Based on the scatter plot we have seen just now, we can conclude, that the regression line starts too high on the $y$ axis, and its slope is very high (it increases too rapidly). Thus we have to use smaller $\beta_j$s. Just by looking at the plot it could be a good idea to have the interception at -0.5 ($\beta_0 = -0.5$), and cut the rate of increase in half: $\beta_1 = 0.5$. Let’s see what we created:
+
+```{r}
+# Redefine the Betas
+Beta0 <- -0.5
+Beta1 <- 0.5
+
+# Calculate the predicted prices using the new Betas
+BP_Flats$PredPrice <- Beta1*BP_Flats$Area_m2 + Beta0
+
+# We can also calculate the prediction error
+BP_Flats$Error <- BP_Flats$Price_MillionHUF - BP_Flats$PredPrice
+
+# Let's plot our new regression line on a scatter plot
+ggplot(data = BP_Flats, aes(x = Area_m2)) +
+  geom_point(aes(y = Price_MillionHUF, color="Actual values")) +
+  geom_line(aes(y = PredPrice, color="Predicted values"))
+```
+
+This looks way better! Did the $SSE$ also decrease?
+
+```{r}
+sum(BP_Flats$Error^2)
+```
+
+Yepp, $352004.7<4767764$, so we can objectively conclude that the fitting significantly improved. :)
+
+Before going further I will now introduce a new notation, we will refer to the error or residual term of the regression as $\epsilon$. With this, the first equation looks like this: $SSE=\sum_{i=1}^n(\epsilon_i)^2$.
+
+After all this we can stop doing everything manually. Let’s ask the machine to find the best Betas which result in the smallest $SSE$!
+
+To do this, we create a function to calculate $SSE$, which takes the form $SSE(\beta_0,\beta_1)$. The function will give us the $SSE$ as a function of the $\beta_j$s:
+
+```{r}
+# Define the function
+SSE <- function(x) {
+  sum((BP_Flats$Price_MillionHUF-(x[1]+x[2]*BP_Flats$Area_m2))^2)
+}
+
+# Using the function with $\beta_j$ = 1 as its parameters
+SSE(c(1,1))
+```
+Surprise, surprise, we got the same $SSE$ with the same $\beta_j$s as before :)
+
+Now, using this $SSE$ function we can make our computer find the $\beta_j$s that result in the smallest Sum of Squared Errors.
+
+```{r}
+result <- optim(c(1,1),SSE) # We set (1,1) as our initial beta values, we start the optimization from here
+```
+
+From the new result object which is a list we can obtain the $\beta_j$s we were looking for:
+
+```{r}
+result$par # par - parameters, these our our Betas
+result$value # The minimalized SSE
+```
+
+Our final equation is: $PredPrice=-4.328 + 0.400\times Area$. This is the solution of the so called **Ordinary Least Squares problem**.
+
+We can look at the regression line determined by the $\beta_j$s we found. This is exactly the same as the one `ggplot` gave us:
+
+```{r}
+# Redefine the Betas
+Beta0 <- result$par[1]
+Beta1 <- result$par[2]
+
+# Calculate the predicted prices
+BP_Flats$PredPrice <- Beta1*BP_Flats$Area_m2 + Beta0
+
+# We can also calculate the prediction error
+BP_Flats$Error <- BP_Flats$Price_MillionHUF - BP_Flats$PredPrice
+
+# We can plot the new regression line on a scatter plot
+ggplot(data = BP_Flats, aes(x = Area_m2)) +
+  geom_point(aes(y = Price_MillionHUF, color="Actual Prices")) +
+  geom_line(aes(y = PredPrice, color="Predicted Prices"))
+```
+
+One thing that is very important to note is that these $\beta_j$s **are exact**, so they are always the same no matter how many times we run the optimization. We can always take the sum of the incorrect values, but the computer makes no mistakes! There is always a chance we obtain different $\beta_j$s when we calculate manually, and we couldn’t even decide if the $\beta_j$s we got actually do minimize the $SSE$.
+
+This problem is nonexistent while using the squared error terms and making the computer do all the heavy lifting. The reason for this is that the computer **doesn’t actually search** for the $\beta_j$s. The OLS task has an exact solution that gives us the $\beta_j$s with the smallest $SSE$.
+
+The computer obtains the minima of the function $SSE(\beta_0,\beta_1)=\sum_{i=1}^n(y_i-\hat{y_i})^2=\sum_{i}(y_i-\beta_0-\beta_1x_i)^2$ . Since in our data frame the dependent variable ($y$) and explanatory variables ($x_i$) are known, these are constant, so the only two variables of the function are $\beta_0$ and $\beta_1$. Thus we can find the minima of the function by taking the partial derivatives of the $SSE(\beta_0,\beta_1)$ error function by the $\beta_j$s, and make them equal 0.
+
+Simply put, we solve the following system of equations:
+
+$$\frac{\partial SSE(\beta_0,\beta_1)}{\partial \beta_0}=0$$
+
+$$\frac{\partial SSE(\beta_0,\beta_1)}{\partial \beta_1}=0$$
+
+Solving the system of equations, we can find the exact equation which produces the $\beta_0$ and $\beta_1$ that minimize the error function:
+
+$$\hat{\beta_1}=\frac{\sum_{i=1}^n{(x_i-\bar{x})(y_i-\bar{y})}}{\sum_{i=1}^n{(x_i-\bar{x})^2}}$$
+
+$$\hat{\beta_0}=\bar{y}-\hat{\beta_1}x$$
+
+We see that the function `optim` is not even necessary to solve the problem because the problem has an exact solution. **This is the reason people like to use OLS regression and will continue to use it for a long time: the $\beta_j$s can be found using a fixed equation, and we don’t have to optimize!**
+
+### 4.2. Measuring the Explanatory Power of the OLS Regression
+
+We can measure how well the (%) variance of the flats’ area can explain the variance of their prices around the average value. We have already done this using the square of the correlation, the coefficient of determination ($R^2$) and we obtained $73.899\%$. This value can also be calculated by our $SSE$ error function as well!
+
+To do this, we have to calculate the total “fluctuation” of the dependent variable, or the information that can be explained. We measure this by looking at what the $SSE$ would be in case we tried to predict the flat prices using 0 explanatory variables. The idea is that this is the worst possible model we can possibly produce, so we can only reduce the sum of error using a nonempty model. If we have no explanatory variables, our prediction will be the average price for all flats: $\hat{y}=\bar{y}$.
+
+We can say that our null modell’s $SSE$ is in fact the $SumOfSquaredTotals=SST=\sum_{i=1}^n(y_i-\bar{y})^2$, which is the sum of the squared differences between each of the flats and the mean price. We call this the total explainable information in the dependent variable.
+
+Let’s calculate this!
+
+```{r}
+SST <- sum((BP_Flats$Price_MillionHUF - mean(BP_Flats$Price_MillionHUF))^2)
+SST
+```
+
+If we want to calculate the error rate of the model, we can simply divide the $SSE$ by $SST$. By doing this we get the percentage our model could not explain from the total explainable information ($SSE$).
+Obviously, if we take the complement of this quotient (1-), we get the explained information ratio. This is the already familiar R-squared, or the coefficient of determination: $R^2=1-\frac{SSE}{SST}$.
+
+Let’s calculate it:
+
+```{r}
+1 - result$value / SST
+```
+
+The **area of the flats can explain 73.889% of the variance of the flats’ prices**. This is still not a bad model! :)
+
+To sum up:
+
+<center>
+![](Rnegyzet.jpg){width=50%}
+</center>
+
+### 4.3. Explanatory Power of Regression on Unobserved Data
+
+It’s very nice to see that my regression’s explanatory power is 74%, but this only tells us that **area can explain 74% of the variance in prices for only our 1406 observations**! Since I would like to use the $\hat{y}$ predictions to predict the prices of flats in Budapest not seen before, we have to check the behavior of our regression considering the whole **population of flats** in Budapest!
+
+The tool to do this is **hypothesis testing**!
+
+The question we want to answer is: what happens when we apply our regression model for flats not in our sample? Will our generalized model’s $R^2$ stay roughly the same or will it be useless?
+
+The general process of statistical hypothesis testing
+
+1. **Formulating our two hypothesis (statements)**
+    1. We always need a null hypothesis ($H_0$), which is always some equality ($=$).
+    2. We also always need an alternative hypothesis ($H_1$), which can be everything but an equality: $\{>, <, ≠\}$
+2. **Calculation of the empirical test statistic from our sample**
+3. **Calculation of the p-value via some probability distribution**
+    1. In case $H_0$ is true, the distribution of the test statistic among many samples is known
+    2. From this distribution we can calculate the **p-value**
+    3. The **p-value tells the probability of rejecting a true $H_0$**, based on the test statistic calculated from our sample.
+4. **We decide by a pre-determined significance-level ($\alpha$) whether we can accept $H_0$ or not.**
+    1. With $\alpha$ we define a limit (the probability) we can reject a true $H_0$
+    2. The p-value gives us the probability of falsely rejecting $H_0$
+        1. If a p-value calculated by a test statistic is **less** than $\alpha$, then we assume $H_0$ to be false. (Since the probability of rejecting true $H_0$ is less than the maximum $\alpha$ value)
+        2. If a p-value calculated by a test statistic is **more** than $\alpha$, then we assume $H_0$ to be true. (Since the probability of rejecting a true $H_0$ is higher than the maximum $\alpha$ value)
+    
+Hypothesis testing for $R^2$: **Global F test**
+
+In our example the 4-step process above looks like this:
+
+1. We are pessimists, we think that our model does not explain anything beyond our sample, so $R^2$ = 0.
+    * This is a statement that contains equality, it can go straight into $H_0$ –> $H_0: R^2 = 0$ (Our model is not significant in the population)
+    * Let’s be optimistic a little! The explanatory power we measured from our sample will also be there when we look at new flats from the population $H_1: R^2 > 0$ (Our model is significant in the population)
+2. Let’s calculate the test statistic using the $R^2$ obtained from the sample, the sample size ($n$) and the $\beta$ parameters used in the equation ($p$ which is the number of parameters used)!
+    * In our case: $R^2=0.7391438, n=1405, p=2$
+    * The formula of the test statistic: $\frac{R^2/(p-1)}{(1-R^2)/(n-p)}=\frac{0.7391438/(2-1)}{(1-0.7391438)/(1406-2)}\approx3978$
+3. **If $H_0$ is true, this test statistic** has a so called **F-distribution**
+    * The graph of the distribution is controlled by two degrees of freedom (df): <center>
+![](Fdist.png){width=50%}
+</center>
+    * The two degrees of freedom can be obtained from the sample size and the number of explanatory variables.
+        * $df_1=p-1=2-1=1$ and $df_2=n-p=1406-2=1404$
+    * $H_0$ is true (with 100% probability) if $R^2$ is already 0 in the sample.
+    * Hence we measure the “distance” of the this state using the p-value from the distribution assuming that $H_0$ is true.
+    * So the p-value is the area under the test statistic in the corresponding F-distribution. Hence when the value of the test statistic is 0 we get p = 100%, which means that rejecting the $H_0$ hypothesis is surely a mistake. The test statistic will increase simultaneously with $R^2$, so at higher test statistic values the are under the curve will be smaller. This means that the probability of falsely rejecting $H_0$ is low.
+    * In case of an F-distribution we get the desired probability as follows: `1-pf(3978, df1=1, df2=1404)` = 0.
+4. This p-value is very low, it’s literally 0 so I can confidently reject $H_0$ even at 99% significance level.
+    * Thus I can safely reject $H_0$, because the probability of a mistake is 0%.
+
+**!!!WARNING!!!** –> *When using sufficiently large samples we can often obtain a result which would imply that rejecting $H_0$ would be a mistake even with an $R^2$ as low as let’s say 3.4%! This means that the 3.4% can be generally true for the world outside of our observed sample. Obviously this is nowhere near as great of a result as a 74% $R^2$, but it might be significant nevertheless.*
+
+*Note*: We can formulate $H_0$ in the case of a Global F-test as follows: $\beta_1=0$. $H_0$ would simply be the following: the slope is not 0: $\beta_1\neq0$.
+
+### 4.4. The `lm` Function
+
+Luckily we don’t have to always manually calculate everything when we are faced with an OLS regression problem.
+
+We can find the most important things that are relevant and OLS regression in R’s `lm` function. It is better to save the output of the `lm` function in an object, and use the `summary` function on this object. This will show us the most important characteristics of an OLS regression. Note that the variables do not have to be referred to using the `$` sign, we only have to set the data frame we want to use as a parameter of the `lm` function.
+
+```{r}
+model<- lm(Price_MillionHUF ~ Area_m2, data = BP_Flats) # Notice, that the dependent variables is separated by a ~ sign
+summary(model)
+```
+
+Here is everything we need to know:
+
+- In the `Coefficients` table’s `Estimate` column we can see the betas, so we can write down the predicted equation of the model: $PredPrice=-4.312 + 0.400\times Area$
+- We see, that $R^2=73.9\%$
+- The test statistic of the Global F-test is equal to 3978
+- The degrees of freedom of the F-test: $p=1$ and $n-p=1404$
+- The p-value of the F-test < $2.2 \times 10^{-16}$, hence the value we obtained was 0.
+
+The `lm` function gives us one extra thing that might be interesting: the **standard residual error of the model** = $10.04=\sqrt{\frac{SSE}{n-p}}$. This value tells how much the prediction of the regression model $\hat{y}$ is expected to differ from the actual value of $y$.
+So in our case the predicted values of the regression will differ by $\pm 10.04$ million HUF from the actual values.
+
+The other parts of the `lm` function’s `Coefficients` table is irrelevant for us right now, we will deal with that later.
+
+### 4.5. Interpretation of the Coefficients and their Confidence Intervals
+
+The $\beta$ coefficients of our regression are the following and they should be interpreted as follows:
+
+- $\beta_0=-4.312$ –> This is the intercept of the $y$ axis, this tells us the prediction’s value at $x = 0$.
+- $\beta_1=+0.400$ –> $\hat{y}$ This is the slope of the regression line, this tells us the change in $\hat{y}$ that a +1 unit step in $x$ will cause.
+
+In our case this means that a flat’s predicted price with 0 $m^2$ area is -4.312 MHUF. Obviously this interpretation makes no sense, because there is no flat with an area of 0. :)
+Looking at the slope we can say that +1 $m^2$ to a flat’s area would mean that the flat’s **expected value** (we are talking about $\hat{y}$) would increase by 0.400 MHUF. We could say that the *utility* of +1 $m^2$ is 400.000 HUF :)
+
+We have to take extra care when we try to interpret $\beta_1$. **The interpretation depends heavily on the unit of measure!** So a +1 change in $x$ is always understood to be a change in $x$’s unit of measure, which is $m^2$ in our case. The change given by $\beta_1$ is obviously understood to be in $y$’s unit of measure, which is MHUF in our example.
+
+We can calculate a confidence interval for the coefficients of a regression for every significance level using the `confint` function. For example, a 97% confidence interval for $\beta_1$ gives us the interval that the real value is located with 97% probability.
+
+Let’s see this calculation in R:
+
+```{r}
+confint(model) # 95% confidence level is the default
+confint(model, level = 0.99) # But we can change that of course
+```
+
+For example the first result tells us that the $\beta$ of `Area` would fall between 0.384 and 0.417 with 97% probability in the population (for flats NOT observed in our sample with 1406 observations)
+If I wanted to calculate $\hat{y}$ with this confidence-interval, we would simply draw two lines and we would obtain the confidence strip that `ggplot` plots.
