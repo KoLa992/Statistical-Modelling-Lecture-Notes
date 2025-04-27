@@ -1,7 +1,7 @@
 ---
 title: "Testing of Bivariate Relationships"
 author: "László Kovács"
-date: "26/04/2025"
+date: "27/04/2025"
 output:
   html_document:
     toc: true
@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1. The Basic Concepts of Bivariate Statistical Relationships
 
-A <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/CSOK.xlsx" target="_blank">CSOK.xlsx</a> fájl egy olyan adattábla, ami 15796 db véletlenszerűen kiválasztott eladó magyar ingatlanról (lakásról és kertes házról) 5 változó (oszlop) adatát tárolja:
+The <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/CSOK.xlsx" target="\_blank">CSOK.xlsx</a> file is a data table that stores the data of 15796 randomly selected Hungarian properties (flats and houses with gardens) across 5 variables (columns):
 
 - **price**: price in million HUF
 - **area**: land area in squared meters
@@ -29,9 +29,9 @@ A <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/m
 - **CSOK3children**: is it possible to apply for the 10+15 million HUF support for families with three children? (1=yes, 0=no)
 - **type**: type of real estate (flat, house)
 
-Az adatok forrása az [ingatlan.com](https://ingatlan.com/), a változók letöltését 2021 január-februárjában végeztük webscraping segítségével.
+The source of the data is [ingatlan.com](https://ingatlan.com/), and the variables were downloaded through web scraping during January-February 2021.
 
-Olvassuk be az adattáblát egy R `data frame`-be a `readxl` csomag segítségével.
+Let's read the data table into an R `data frame` using the `readxl` package.
 
 ```{r}
 library(readxl)
@@ -39,7 +39,7 @@ CSOK <- read_excel("CSOK.xlsx")
 str(CSOK)
 ```
 
-Láthatjuk, hogy az adatokon van mit dolgozni: az árak és a terület tökéletes `numeric` adattípusban kezelve, de a településtípust és a lakás típusát állítsuk át `factor` adattípusra, míg a CSOK-ot jelző változót `logical` típusra. Mivel a `type` változó is technikailag csak 2 értékkel bír (flat vagy house), így ő is lehetne logical, de itt talán beszédesebb lenne megőrizni a *flat/house* címkéket a jobb értelmezhetőség érdekében, így maradunk a `factor` adattípusnál.
+We can see that some work is needed on the data: prices and areas are perfectly handled as `numeric` data types, but we should convert settlement type and housing type to `factor` data types, and the variable indicating CSOK eligibility to `logical` type. Since the `type` variable technically only has two values (flat or house), it could also be logical, but it might be more informative to retain the *flat/house* labels for better interpretability, so we will stick with the `factor` data type.
 
 ```{r}
 CSOK$settlement <- as.factor(CSOK$settlement)
@@ -48,19 +48,19 @@ CSOK$CSOK3children <- as.logical(CSOK$CSOK3children)
 str(CSOK)
 ```
 
-Ok, így már úgy néz ki rendben vagyunk adattípus-ügyileg.
+Ok, now it seems that we are fine regarding data types.
 
-Rá is állhatunk a fő feladatunkra: a **statisztikai kapcsolatvizsgálat**ok elemzésére! Ennél a feladattípusnál kilépünk az eddig vizsgált *egyváltozós elemzések* témaköréből, és azt vizsgáljuk, hogy **két változó milyen kapcsolatban áll egymással**. Ezt mindig **három nézőpontból vizsgáljuk**:
+Now we can move on to our main task: analyzing **statistical relationships**! With this type of task, we step outside the realm of *univariate analyses* we've discussed so far and investigate **how two variables are related to each other**. We always examine this from **three perspectives**:
 
-- Milyen a két változó közötti **kapcsolat jellege**?
-  * Erre általában egy megfelelő **grafikon** segítségével válaszolhatunk.
-- Milyen **erős/szoros** a két változó közti kapcsolat?
-  * Erre egy **0-1 közötti értékeket felvehhető statisztikai mutatószám** adja meg a választ.
-- A vizsgált kapcsolat **általánosítható-e** a megfigyelt adatokon kívül világra, azaz **a sokaságra**?
-  * Ezt pedig **hipotézisvizsgálat** segítségével tudjuk eldönteni.
+- What is the **nature of the relationship** between the two variables?
+    * Typically answered with an appropriate **graph or visualization**.
+- **How strong is the relationship** between the two variables?
+    * Answered by a **statistical measure that takes values between 0 and 1**.
+- Can the observed relationship be **generalized** beyond the observed data, that is, **to the population**?
+    * This is answered using **hypothesis testing**.
 
-A fenti három szempont szerinti **konkrét számításaink módját** és képleteit **az határozza meg**, hogy a kapcsolatban résztvevő változóink **minőségi (nominális+ordinális mérrési skála) vagy mennyiségi (intervallum+arány mérési skála) változók**nak tekinthetők-e.<br>
-A tanult statisztikai módszereket ennek a minőségi/mennyiségi beosztásnak megfelelően az alábbi táblázat foglalja össze:
+The **specific calculation methods** and formulas for the above three aspects are determined by whether our variables involved in the relationship are **considered categorical (nominal+ordinal measurement scales) or numerical (interval+ratio measurement scales)**.<br>
+The statistical methods we learned are summarized in the following table according to this categorical/numeric classification:
 
 ```{r, echo=FALSE}
 
@@ -76,11 +76,11 @@ knitr::kable(
 
 ## 2. ANOVA
 
-Vizsgáljuk meg azt, hogy milyen kapcsolatban áll a lakásár (*mennyiségi* változó) és az, hogy a házra lehet-e CSOK kedvezményt kapni 3 gyerek után (*minőségi* változó).
+Let us now investigate the relationship between the housing price (a *categorical* variable) and whether a property is eligible for CSOK benefits after having 3 children (a *numeric* variable).
 
-A kapcsolat jellegét legjobban egy **csoportosítottdoboz ábrával** lehet leírni: azaz nézzük meg egymást mellett a CSOK-ra jogosult és nem logosult házak/lakások árainak doboz ábráját.
+The nature of the relationship is best described with a **grouped boxplot**: that is, let's examine side-by-side the boxplots of the prices of properties eligible and not eligible for CSOK.
 
-Nézzük meg hogyan lehet itt egy `factor` vagy `logical` típusú változó szerinti csoportosítást megoldani a doboz ábrák szintjén `gpplot2`-ben. Kicsit cselesen, mert itt a kitöltési szín paraméterén (`fill`) keresztül kell jelezni a csoportosítási szándékunkat valamelyik változó szerint az első réteg `aes` függvényének paraméterein belül. Cserébe a gépállat megszínezi nekünk külön színekkel az egyes kerületek ár szerinti doboz ábráit. Ha az *x* tengelyre is beírjuk a minőslgi változónkat, akkor az *x* tengelyre is kiírja annak lehetséges értékeit:
+Let's see how to perform a grouping based on a `factor` or `logical` type variable at the boxplot level using `ggplot2`. It's a bit tricky, because here we must indicate our intention to group through the fill color parameter (`fill`) inside the first layer's `aes` function. In return, the plotting engine will color the boxplots of different groups separately. If we also specify our qualitative variable on the *x*-axis, its possible values will be displayed along the *x*-axis as well.
 
 ```{r}
 library(ggplot2)
@@ -88,225 +88,231 @@ ggplot(data = CSOK, aes(y = price, x=CSOK3children, fill = CSOK3children)) +
   geom_boxplot()
 ```
 
-Nagyon szép! Láthatjuk, hogy a CSOK-ra jogosult eladó ingatlanok esetében a medián ár gyakorlatilag annyi, mint a nem CSOK-os ingatlanok esetén az árak felső kvartilise! Plusz, a legangyobb, enyhén felfelé kilógó árak is a CSOK-ra jogosult ingatlanok körébe tartoznak.<br>
-Ez talán nem meglepő: a rendes 3 gyerekkel tervező nagycsalásoknak kell a tér és a jól felszerelt, drága lakás!
+Very nice! We can see that among the properties eligible for CSOK, the median price is practically the same as the upper quartile of the prices of non-CSOK properties! Plus, the highest, slightly outlier prices are also concentrated among the CSOK-eligible properties.<br>
+This is perhaps not surprising: larger families planning for 3 children need space and well-equipped, expensive homes!
 
-Tehát a kapcsolat jellege tekintetében elmondhatjuk, hogy a CSOK-os lakások középső 50% tekintetében is egy magasabb árszínvonalat képviselnek és ide koncentrálódnak a felfelé kilógó értékek is.
+Thus, regarding the nature of the relationship, we can state that among CSOK-eligible properties, even the middle 50% represent a higher price level, and the outlier high prices are concentrated here as well.
 
-De kérdés, hogy mennyire erős ez a kapcsolat? **Hány százalékban magyarázza mégis a CSOK kedvezmény a lakásárak ingadozását?** Erre a kérdésre adja meg a választ a **variancia-hányados** becenevű statisztikai mutató.
+But the question remains: how strong is this relationship? To **what extent does the CSOK eligibility explain the fluctuations in housing prices?** This question is answered by a statistical measure nicknamed the **variance ratio**.
 
-### 2.1. A variancia-hányados
+### 2.1. The Variance Ratio ($\eta^2$)
 
-A variancia-hányados számolásához szükséges dolgokat az R `aov` függvénye adja meg. Egyszerűen rá kell ereszteni a függvényt a mennyiségi és minőségi változóra **hullámjelekkel elválasztva**: *mennyiségi változó ~ minőségi változó* --> a sorrend számít! Elöl van mindig a mennyiségi változó neve hátul a minőségi változó neve! Itt nem muszáj a változók nevére `$` jellel hivatkozni a `data frame`-n keresztül. A vizsgált két változót tartalmazó `data frame` objektum nevét meg lehet adni a függvény `data` paraméterében:
+The R function `aov` provides what is needed to calculate the variance ratio. You simply need to apply the function to the **numerical and categorical variables separated by tildes**: `numerical variable ~ categorical variable` → the order matters! The name of the numerical variable is always first, and the name of the categorical variable comes second! It is not necessary here to reference the variable names with a `$` sign through the `data frame`. You can specify the name of the `data frame` object containing the two variables in the function's data parameter.
 
 ```{r}
 aov(price ~ CSOK3children, data = CSOK)
 ```
 
-Az eredmények két fontos **négyzetösszeg** (in inglis *Sum of Squares*) mutatót adnak meg:
+The results provide two important **Sum of Squares** indicators:
 
-- **Sum of Squares Between = $SSB$**: A **minőségi változó csoportátlagainak** összes négyzetes **eltérése a mennyiségi változó főátlagától**.
- * Esetünkben most $SSB=1956779$
-- **Sum of Squares Residuals = $SSR$**: Az egyes **megfigyelések** mennyiségi változó szerinti összes négyzetes **eltérése saját minőségi változó csoportjuk átlagtól**. Ez egyébként ugyan az, mint a **Sum of Squares Within = SSW** volt az arányosan rétegzett minták esetében.
- * Esetünkben most $SSR=13970044$
-- A két érték összege a **Sum of Squares Total = $SST=SSB+SSR$**: Ez nem más, mint a mennyiségi változó varianciájának "*teteje*", az egyes **megfigyelések** összes négyzetes **eltérése a mennyiségi változó főátlagától**.
-  * Esetünkben most $SST=1956779+13970044=15926823$
+- **Sum of Squares Between** = $SSB$: The total squared **deviation of the group means of the numerical variable from the overall mean of the numerical variable**.
+    * In our case now, $SSB=1956779$
+- **Sum of Squares Residuals** = $SSR$: The total squared **deviation of each observation from its group's mean in terms of the numerical variable**. This is actually the same as **Sum of Squares Within = SSW** used in **proportionally stratified samples**.
+    * In our case now, $SSR=13970044$
+- The sum of the two values is the **Sum of Squares Total** = $SST=SSB+SSR$: This is essentially the "*top part*" of the variance of the numerical variable, the total squared **deviation of each observation from the overall mean**.
+    * In our case now, $SST=1956779+13970044=15926823$
 
-Az összefüggést a mennyiségi változó varianciájával (szórásnégyzetével) könnyen ellenőrizni tudjuk:
+We can easily verify this relationship using the variance (square of standard deviation) of the numerical variable.
 
 ```{r}
 sd(CSOK$price)^2 * (nrow(CSOK)-1)
 ```
 
-Vizuálisan gondolva erre a jelenségre azt mondhatjuk, hogy az egyes $SS$ mutatók az alábbi **távolságok** négyzetes összegét jelentik. A négyzetre emelésre a távolságok *eltérő előjelének kiküszöbölése* miatt van szükség (mint a szórásképlet kapcsán néztük):
+Thinking visually about this phenomenon, we can say that each $SS$ indicator represents the sum of squares of **distances**. Squaring is necessary to *eliminate the sign differences* of the distances (as we saw in the standard deviation formula).
 
 <center>
 ![](ANOVA_1.png){width=75%}
 </center>
 
-Tehát vizuálisan a következőképp érdemes gondolni a különböző $SS$-ekre:
+Thus, visually, we should think about the different $SS$-s as follows:
+- $SSR=SSW$: Distance of observations from their group mean
+- $SSB$: Distance of group means from the overall mean
+- $SST$: Distance of observations from the overall mean
 
-- $SSR=SSW$: Megfigyelések távolsága saját csoportjuk átlagától
-- $SSB$: Csoportátlag távolsága a főátlagtól
-- $SST$: Megfigyelések távolsága a főátlagától
-
-Ezek alapján nekünk az a jó a csoportosítás, azaz a minőségi magyarázóváltozó magyarázóereje szempontjából, ha **fix** $SST$ mellett $SSB$ **nagy** és $SSR=SSW$ **kicsi**. Mert ekkor a **csoportátlagok messze vannak** a főátlagtól és így implicite **egymástól** is, míg a csoportátlagtól az egyes **megfigyelések nagyon kis mértékben térnek csak el saját csoportátlaguktól**:
+Based on these, for grouping quality — that is, for the explanatory power of the categorical explanatory variable — it is desirable if with a fixed $SST$, $SSB$ is **large** and $SSR=SSW$ is **small**. Because then, **group means are far from** the overall mean and thus implicitly far from **each other**, while **individual observations deviate very little from their own group mean**.
 
 <center>
 ![](ANOVA_2.png){width=35%}
 </center>
 
-Ebben az esetben, ahogy az ábráról is látszik a csoportosításunk, azaz a minőségi változónk magyarázóereje nagy! Tehát az kell nekünk, hogy az $SST$ minél nagyobb részét tegye ki $SSB$, azaz, hogy **az $\frac{SSB}{SST}$ hányados nagy legyen**! Ez a mutató pedig a **variancia-hányados**, és a most elvégzett módszer neve a **variancia-analízis, azaz ANOVA = ANalysis Of VAriances**.
+In this case, as also seen on the diagram, our grouping — that is, the explanatory power of our categorical variable — is strong! Thus, we want as much of the $SST$ as possible to be taken up by $SSB$, meaning that **the fraction $\frac{SSB}{SST}$ should be large**! This indicator is the **variance ratio** $\eta^2$, and the method we've just performed is called **Analysis of Variance, or ANOVA**.
 
-Mivel $SST=SSB+SSR$, így a $\frac{SSB}{SST}$ variancia-hányados biztos, hogy $0-1$ közötti, és **százalékosan** is értelmezhető, hiszen $SSB$ része $SST$-nek. Ez alapján nekünk most:
+Since $SST=SSB+SSR$, the variance ratio $\frac{SSB}{SST}$ is guaranteed to be between $0-1$, and it can also be interpreted as a **percentage**, because $SSB$ is a part of $SST$. Thus, now we have: $$\eta^2=\frac{SSB}{SST} = \frac{1956779}{1956779+13970044}=0.1228606=12.3\%$$
 
-$\frac{SSB}{SST} = \frac{1956779}{1956779+13970044}=0.1228606=12.3\%$ --> **A CSOK jogosultság az ingatlanárak alakulásának (varianciájának) 12.3%-át magyarázza a megfigyelt mintában!** Ez egy **enyhén közepes magyarázóerő**, mivel a variancia-hányadost a következőképpen "*korszakoljuk*":
+So, **CSOK eligibility explains 12.3% of the variation (variance) of property prices in the observed sample**! This represents a slightly **moderate explanatory power**, as the variance ratio is typically **categorized as follows**:
 
-- **variancia-hányados < 10% --> gyenge kapcsolat**
-- **10% <= variancia-hányados <= 50% --> közepes kapcsolat**
-- **variancia-hányados > 50% --> erős/szoros kapcsolat**
+- **variance ratio < 10% → weak relationship**
+- **10% <= variance ratio <= 50% → moderate relationship**
+- **variance ratio > 50% → strong relationship**
 
-Szokás értelmezni a vegyes kapcsolat erősségét a variancia-hányados **gyökével**, a **szórás-hányadossal** is. Ez szintén $0-1$ közti mutató, de már **százalékosan NEM értelmezhető**. Mivel a gyökvonás után nem lesz az igaz, hogy $\sqrt{SSB}$ része $\sqrt{SST}$-nek, hiszen tagonként nem lehet gyököt vonni, azaz $\sqrt{SSB+SSR}\neq\sqrt{SSB}+\sqrt{SSR}$<br>
-Emiatt a "*korszakolási  határok*" is gyök alá kerülnek: $\sqrt{0.5}\approx0.7$ és $\sqrt{0.1}\approx0.3$. azért nem vesszük a gyökvonást pontosabban, hogy szórás-hányadosra is "*szép*" számokat kapjunk határoknak:
+It is customary to also interpret the strength of the relationship using the **square root** of the variance ratio, called the **coefficient of variation**, $\eta$. This also falls between $0-1$, but it is **not interpretable as a percentage**. After taking the square root, it is no longer true that $\sqrt{SSB}$ is a part of $\sqrt{SST}$ because square root operations don't distribute over addition: $$\sqrt{SSB+SSR}\neq\sqrt{SSB}+\sqrt{SSR}$$
 
-- **szórás-hányados < 0.3 --> gyenge kapcsolat**
-- **0.3 <= szórás-hányados <= 0.7 --> közepes kapcsolat**
-- **szórás-hányados > 0.7 --> erős/szoros kapcsolat**
+Thus, the "*classification thresholds*" also go under square roots: $\sqrt{0.5}\approx0.7$ and $\sqrt{0.1}\approx0.3$.
+We do not compute these roots more precisely to get "*nice*" numbers for the thresholds:
 
-Láthatjuk, hogy $\sqrt{0.123}=0.3507$, tehát a *CSOK - Ár* kapcsolat továbbra is küzepes erősségű marad.
+- **coefficient of variation < 0.3 → weak relationship**
+- **0.3 <= coefficient of variation <= 0.7 → moderate relationship**
+- **coefficient of variation > 0.7 → strong/close relationship**
 
-### 3.2. Az F-próba vegyes kapcsolatra
+We see that: $\sqrt{0.123}=0.3507$, so  the *CSOK - Price* relationship remains of moderate strength.
 
-A **variancia- és szórás-hányadosok a kapcsolat erejét csupán a megfigyelt mintán belül írják le!** Kell egy **hipotézisvizsgálat annak eldöntésére, hogy a megfigyelt kapcsolat általánosítható-e az ingatlanok sokaságára**, azaz a megfigyelt mintán kívüli világra. Ez a hipotézisvizsgálat az **ANOVA** vagy **F-próba**.
+### 3.2. The F-test for ANOVA
 
-A próba hipotézisei a következők:
+**Variance ratio and coefficient of variation only describe the strength of the relationship within the observed sample!** A **hypothesis test is needed to determine whether the observed relationship can be generalized to the entire population** of properties — that is, to the world beyond the sample. This hypothesis test is the F-test as the p-value is calculated based on a <a href="https://en.wikipedia.org/wiki/F-distribution" target="_blank">F-distribution</a>.
 
-- $H_0:$ A kapcsolat a sokaságban **nem szignifikáns**, azaz **variancia-hányados = 0 a sokaságban**
-- $H_1:$ A kapcsolat a sokaságban **szignifikáns**, azaz **variancia-hányados > 0 a sokaságban**
+The hypotheses of the test are:
 
-Tehát, ebben az esetben $H_1$-nek szurkolunk, mert az állítja azt, hogy a variancia-hányados, azaz a kapcsolat magyarázóereje nem csupán a mintavételi hiba miatt nem nulla az összes magyar ingatlan sokaságában.
+- $H_0$: The relationship in the population is **not significant**, that is, variance ratio = 0 in the population
+- $H_1$: The relationship in the population is **significant**, that is, variance ratio > 0 in the population
+
+Thus, in this case, we root for $H_1$, because it claims that the explanatory power of the variance ratio is not merely due to sampling error, but exists in the entire Hungarian property population.
 
 This $H_0$ can be formulated alternatively as that the between sum of squares ($SSB$) is zero. Meaning that all group means in the population (all the $\mu_j$s for every $j$ groups) are equal to the global mean ($\mu$). The denial of this statement (which is our $H_1$) is that there is at least one $j$ group where the mean in the population is NOT equal to the global population mean, so we have $SSB>0$ significantly. By introducing $M$ as the number of groups defined by the categorical variable (), we have the following alternative $H_0$ and $H_1$ pair for our F-test
 
 - $H_0:\mu_1=\mu_2=...=\mu_M=\mu$
 - $H_1: \exists j \rightarrow \mu_j \neq \mu$
 
-A próbának az úgynevezett **Welch-korrekciózott verzió**ját használjuk, aminek így egyetlen **előfeltétele**, hogy a megfigyelt **mintánk elemszáma a nominális változó minden csoportjában nagy** legyen (legalább 100-as elemszám kell minden csoportoban a legtöbb szimulációs kutatás alapján):
+We use the so-called **Welch-corrected version** of the test, whose only **assumption** is that the **sample size is large in every group of the nominal variable** (at least 100 observations in each group, according to most simulation studies).
 
 ```{r}
 table(CSOK$CSOK3children)
 ```
 
-Láthatjuk, hogy a feltétellel most rendben vagyunk, mivel a kisebb gyakoriságú, CSOK-ra nem jogosult ingatlanok csoportjában is a megfigyelések száma $4784$ db.
+We can see that we are fine with this condition now, as even in the smaller group (properties not eligible for CSOK), we have $4784$ observations.
 
-Ha *valamelyik csoportban* a mintánk *elemszáma kicsi* (kisebb, mint 100), akkor a teszt erősen *felteszi a vegyes kapcsolat numerikus változójának normális eloszlását*, ami a letöbb gyakorlati esetben bajosan teljesül. Pl. a lakásárak eloszlása is jobbra elnyúló mindkét csoportban, ahogy a doboz ábrán is láttuk.
+If in **any group the sample size is small** (less than 100), then the test heavily **assumes normality of the numerical variable** within each group, which is rarely met in practice. For example, the distribution of apartment prices is right-skewed in both groups, as we have seen on the boxplots.
 
-Mivel a nominális változó mindkét csoportjában áll a nagy minta feltétel, így továbbmegyünk az **F-próva p-értékének kiszámításához**.
+Since the large sample condition holds in both groups, we can move on to **calculating the p-value of the F-test**.
 
-A titok nyitja az F-próba p-értékéhez, hogy a korábban használt `oneway.test` függvényt kell használni úgy, mint az `aov` függvényt használtuk korábban: *mennyiségi változó ~ minőségi változó* --> a sorrend számít! Illetve, itt is a vizsgált két változót tartalmazó `data frame` objektum nevét meg kell adni a függvény `data` paraméterében.<br>
-Továbbá, szabályozni kell egy `var.equal = FALSE` paramétert is a függvényben. Ez utóbbi beállítás "kapcsolja be" az F-próba *Welch-korrekció*ját, ami a próbafüggvény számításban eszközöl pár módosítást. Ha ez a korrekció nem lenne, akkor a teszt feltételezné azt, hogy a nominális változó csoportjaiban a numerikus változó szórásai a nem megfigyelt sokaságban azonosak! De ha figyelünk erre a paraméterre, és bekapcsoljuk a *Welch-korrekció*t, akkor ettől a feltételtől megszabadulhatunk.:)
+The key for the p-value of the F-test is to use the `oneway.test` function, similarly to how we used `aov`: `numerical variable ~ categorical variable` → the order matters! Also, the `data frame` containing the two examined variables must again be specified via the `data` parameter.<br>
+Additionally, we must set a `var.equal = FALSE` parameter. This "switches on" the *Welch correction* in the test function, modifying the calculation appropriately. Without this correction, the test would assume equal variances across groups in the population, which we avoid by enabling *Welch correction*. :)
 
 ```{r}
 oneway.test(price ~ CSOK3children, data = CSOK, var.equal = FALSE)
 ```
 
-Az eredmény alapján a **p-érték kisebb, mint $2\times10^{-16}$**. Ez kisebb még a legkisebb szokásos szignifikancia-szintnél, az $\alpha=1\%$-nál is, így egyértelműen és stabilan elfogadható a $H_1$, ami szerint a CSOK jogosultság magyarázóereje az árakra nézve szignifikánsan több a sokaságban is, mint 0.<br>
-Azaz a **a magyarázóerő NEM a mintavételi hiba műve**.
+Based on the result, the **p-value is smaller than $2\times10^{-16}$**. This is smaller even than the smallest typical significance level, $\alpha=1%$, so we can safely and confidently accept $H_1$, meaning that CSOK eligibility significantly explains variation in property prices in the population, not just in the sample.<br>
+Thus, the **explanatory power is NOT an artifact of sampling error**.
 
-**Figyelem!** Ilyen 0 közeli p-érték simán kijöhet $10\%$ alatti variancia-hányados esetén is! Ez azt jelenti, hogy az a **gyenge magyarázóerő, amit a mintában értünk általánosítható a mintán kívüli világra is**. Tehát a kapcsolat a sokaságban is megvan. Szóval, **csak a kis p-érték alapján NE mondjuk soha, hogy a kapcsolat erős, mert a p-érték NEM ezt méri!!!** Hanem azt mutatja meg, hogy a **mintában megfigyelt kapcsolat, aminek erősségét a variancia-hányados mutatja ki, általánosítható-e a mintán kívüli világra, vagy sem!!!**
+**Attention!** Such near-zero p-values can occur even with a variance ratio below 10%! This means that **even a weak explanatory power observed in the sample can generalize to the real world**. Thus, do **NOT judge strength based on p-value alone, because the p-value does NOT measure relationship strength!!!** It only tells us whether the **relationship observed in the sample (whose strength is shown by the variance ratio) is generalizable beyond the observed sample**.
 
-Mindenesetre, végkövetkeztetésül azt mondhatjuk el, hogy **a magyar inngatlanpiacon van egy közepes erősségű és az ingatlanok sokaságában is szignifikáns, $12.3\%$-os, közepes magyarázóerejű áremelő hatása annak, ha egy lakás CSOK kedvezményre jogosult**.
+In conclusion, we can say that **there is a moderately strong, significant (in the population) 12.3% price-raising effect for properties eligible for CSOK** on the Hungarian property market.
 
 ## 3. Association
 
-Vizsgáljuk meg azt, hogy milyen kapcsolatban áll a lakás településének típusa, a `Settlement` (*minőségi* változó) és az, hogy a házra lehet-e CSOK kedvezményt kapni 3 gyerek után (*minőségi* változó).
+Let us examine the relationship between the type of settlement where the apartment is located, `Settlement` (*categorical* variable), and whether the house is eligible for the CSOK benefit for 3 children (*categorical* variable).
 
-A kapcsolat jellegét legjobban egy **halmozott oszlop** diagrammal lehet leírni. Ez megmutatja, hogy az egyik minőségi változó kategóriáin (értékein) belül hogyan oszlanak meg a másik minőségi változó kategóriái (értékei).
+The nature of the relationship is best described by a **stacked column chart**. This shows how the categories (values) of one categorical variable are distributed within the categories (values) of the other categorical variable.
 
 ```{r}
 ggplot(data = CSOK, aes(x = settlement, fill = CSOK3children)) +
   geom_bar()
 ```
 
-Az ábráról láthatjuk, hogy a legtöbb ingatlant kisvárosokban (*Town*) kínálják eladásra, míg a legkevesebbet a fővárosban, Budapesten. Érzésre azt mondanánk, hogy a CSOK-ra jogosult ingatlanok legnagyobb arányban a kisvárosokban (*Town*) fordulnak elő és Budapesten a legkevésbé, de ezen arányok összehasonlítását így szemmelveréssel nehézzé teszi, hogy az egyes településítpusok oszlopai eltérő méretűek. Hiszen pl. a *Town* kategóriában *azért is van darabra olyan sok CSOK-ra jogosult ingatlan, mert eleve ott van a legtöbb ingatlan*.
+From the chart, we can see that most properties are offered for sale in small towns (*Town*), while the fewest are in the capital, Budapest. At first glance, we might say that properties eligible for CSOK are most commonly found in small towns (*Town*) and least commonly in Budapest, but comparing these proportions visually is difficult because the columns for the different types of settlements are of different sizes. For example, in the *Town* category, *there are so many CSOK-eligible properties partly because there are the most properties overall*.
 
-Szóval valahogy jó lenne **100%-ig halmozott oszlop** diagrammá alakítani a fenti ábrát, hogy lássuk egyes településtípsok szerint a CSOK-ra jogosult ingatlanok **arányát**. Ezt az átalakítást a `geom_bar` függvény `position` paraméterének `"fill"`-ra állításával érhetjük el:
+Thus, it would be good to convert the above chart into a **100%-stacked column chart** to better see the **proportion** of CSOK-eligible properties by settlement type. This transformation can be achieved by setting the `position` parameter of the `geom_bar` function to `"fill"`:
 
 ```{r}
 ggplot(data = CSOK, aes(x = settlement, fill = CSOK3children)) +
   geom_bar(position = "fill")
 ```
 
-Így már látszik is, hogy az előbbi ábrán a szemmel megérzett dolgok tényleg bejöttek. De itt már egyértelműbben látszik, hogy a **legkisebb arányban Budapesten vannak CSOK-ra jogosult ingatlanok és a legnagyobb arányban a kisvárosokban (Town)**. Ez tehát a két változó közti **kapcsolat jellege**.
+Now it becomes visible that the impressions from the previous chart were indeed correct. Here, it becomes even clearer that **Budapest has the lowest proportion of CSOK-eligible properties, while small towns (Town) have the highest proportion**. This, therefore, characterizes the **nature of the relationship** between the two variables.
 
-Megnézhetjük a diagram mögötti **kétváltozós gyakorisági táblázat** (leánykori nevén *kereszttábla* vagy *kontingencia tábla*) tényleges gyakoriság adatait is. Ehhez egy ismerős függvényt, a `table`-t kell alkalmazni a két vizsgált nominális változóra:
+We can also look at the actual frequency data of the **two-variable frequency table** (known also as a **cross table** or **contingency table**) behind the chart. To do this, we use a familiar function, `table` applied to the two nominal variables under examination:
 
 ```{r}
 table(CSOK[,c("settlement", "CSOK3children")])
 ```
 
-A táblából látszik, hogy *1685* darab budapesti és CSOK-ra jogosultingatlan található a táblában.
+From the table, we see that there are *1685* CSOK-eligible properties in Budapest listed in the table.
 
-A `prop.table` bevetésével az arányok is ismét lekérdezhetők:
+By using `prop.table`, we can also query the proportions:
 
 ```{r}
 round(prop.table(table(CSOK[,c("settlement", "CSOK3children")]))*100, 1)
 ```
 
-A kisvárosokban (*Town*) lévő CSOK-ra jogosult lakások aránya a tábla teljes elemszámhoz képest 22.3%.
+The proportion of CSOK-eligible apartments located in small towns (*Town*) relative to the total number of observations in the table is 22.3%.
 
-De itt már lekérhetjük az úgynevezett **peremeloszlásokat** is! Pl. ha külön szeretnénk megnézni a budapesti ingatlanokon **belül** a CSOK-ra jogosultak arányát:
+But we can also query so-called **marginal distributions**! For example, if we want to look specifically at the proportion of CSOK-eligible properties **within** Budapest:
 
 ```{r}
 round(prop.table(table(CSOK[,c("settlement", "CSOK3children")]), 1)*100, 1)
 ```
 
-Budapesten a CSOK-ra jogosult ingatlanok aránya 64.2%, míg kisvárosokban (*Town*) már 10 %-ponttal magasabb, 74.2%.
+In Budapest, the proportion of CSOK-eligible properties is 64.2%, while in small towns (*Town*) it is already 10 percentage points higher, at 74.2%.
 
-A `prop.table` függvény **második paraméter**ében lévő $1$ adta meg, hogy az **arányosítást** a sorrendben először átadott változó, azaz a **Settlement részösszegei szerint** nézzük.
+The value of `1` as the **second parameter** of the `prop.table` function specifies that the **proportions are calculated relative to the subtotals of Settlement** that is the *first* variable selected from the CSOK data frame.
 
-### 3.1. A Khi-négyzet próba
+### 3.1. The Chi-Squared Test of Independence
 
-A kérdés az, hogy az előbbi 100%-ig halmozott oszlopdiagramon megfigyelt kapcsolat (legkisebb arányban Budapesten vannak CSOK-ra jogosult ingatlanok és a legnagyobb arányban a kisvárosokban) csak a mintavételi hiba műve-e vagy az ingatlanok nem megfigyelt sokaságában is megmarad-e?
+The question is whether the relationship observed in the 100%-stacked column chart (that CSOK-eligible properties are least common in Budapest and most common in small towns) is just a result of sampling error, or whether it persists in the unseen population of all properties.
 
-Egy **hipotézisvizsgálat kell annak eldöntésére, hogy a megfigyelt kapcsolat általánosítható-e az ingatlanok sokaságára**, azaz a megfigyelt mintán kívüli világra. Ez a hipotézisvizsgálat a $\chi^2$-féle függetlenségvizsgálat. A $\chi$ a "*Khi*" görög betű szimbóluma.
+We need a **hypothesis test to decide whether the observed relationship can be generalized to the population of properties**, that is, to the world beyond the observed sample. This hypothesis test is the $\chi^2$-test of independence. The $\chi$ symbol is the Greek letter "*Chi*".
 
-A próba hipotézisei a következők:
+The hypotheses of the test are as follows:
 
-- $H_0:$ A kapcsolat a sokaságban **nem szignifikáns**
-- $H_1:$ A kapcsolat a sokaságban **szignifikáns**
+- $H_0:$ There is **no significant relationship** in the population
+- $H_1:$ There is a **significant relationship** in the population
 
-Tehát, ebben az esetben $H_1$-nek szurkolunk, mert az állítja azt, hogy a kapcsolat magyarázóereje nem csupán a mintavételi hiba miatt nem nulla az összes magyar ingatlan sokaságában.
+Thus, in this case, we are rooting for $H_1$, because it claims that the explanatory power of the relationship is not merely due to sampling error but exists in the entire population of Hungarian properties.
 
-A számolás alapötlete, hogy a fentebb, a `table` függvénnyel létrehozott kétváltozós gyakorisági táblából legyártunk egy olyan verziót, ahogy az a *kapcsolat teljes hiánya, azaz függetlenség* esetén ez *kinézne*. Tehát pl. kiszámoljuk azt, hogy hány budapesti CSOK-ra jogosult lakás lenne, ha a két változó 0%-ban magyarázná egymást.
+The basic idea of the calculation is to generate a version of the two-variable **frequency table** (created earlier with the `table` function) as it **would look if there were a complete lack of relationship**, i.e., independence. For example, we calculate how many CSOK-eligible apartments there would be in Budapest if the two variables explained each other at 0%.
 
-Leírni $f_{ij}$-vel és $f^*_{ij}$-vel.
+Our test statistic is the following: $$\sum_{i=1}^{r}\sum_{j=1}^{c}\frac{(f_{ij}-f^*_{ij})^2}{f^*_{ij}}\sim\chi^2((r-1)(c-1))$$
 
-```{r}
-table(CSOK[,c("settlement", "CSOK3children")])
-```
+Under $H_0$, the distribution of this test statistic — based on many samples — follows the $\chi^2((r-1)(c-1))$ distribution, where $r$ is the number of rows, and $c$ is the number of columns in the contingency table (which is the two-variable frequency table calculated before with `table`).<br>
+Here, $f^*_{ij}$ is the expected frequency — it tells us how many observations of Settlement Type $i$ we’d expect in CSOK eligbility group $j$ if the two variables were completely independent.
 
-A hipotézisvizsgálathoz p-értéket a `chisq.test` függvénnyel kapunk, amit a kétdimenziós gyakorisági táblára kell ráengedni.
+Thus, the expected frequencies can be computed using the multiplication rule for independent probabilities, which states in case of independent $i$ and $j$ the probabaility of the $ij$ pair occurring together is the multiplication of the probabilities that $i$ and $j$ occurs separately: $$f^*_{ij}=\frac{f_{i.}f_{.j}}{n}$$
+
+Where $f_{i.}$ and $f_{.j}$ are the total counts of the values $i$ and $j$ in the sample respectively — also known as the **marginal frequencies**.
+
+To perform the hypothesis test and obtain a p-value, we use the `chisq.test` function, which must be applied to the two-dimensional frequency table.
 
 ```{r}
 test_of_indep <- chisq.test(table(CSOK[,c("settlement", "CSOK3children")]))
 test_of_indep
 ```
 
-Az eredmény alapján a **p-érték kisebb, mint $2\times10^{-16}$**. Ez kisebb még a legkisebb szokásos szignifikancia-szintnél, az $\alpha=1\%$-nál is, így egyértelműen és stabilan elfogadható a $H_1$, ami szerint a településtípus (*Settlement*) magyarázóereje a CSOK jogosultság nézve szignifikánsan több a sokaságban is, mint 0.<br>
-Azaz a **a magyarázóerő NEM a mintavételi hiba műve**.
+Based on the result, the **p-value is smaller than $2\times10^{-16}$**. This is even smaller than the smallest commonly used significance level, $\alpha=1%$, so we can clearly and confidently accept $H_1$, which states that the explanatory power of the settlement type regarding CSOK eligibility is significantly greater than 0 in the population as well.<br>
+Thus, the **explanatory power is NOT due to sampling error**.
 
-Testing the large sample size assumptions of the $\chi^2$-test that $f^*_{ij}\geq5, \forall i,j$.
+Testing the large sample size assumptions of the $\chi^2$-test means checking that $f^*_{ij}\geq5, \forall i,j$. The $f^*_{ij}$ values are accessed through the `expected` element of the list obtained as the result of the `chisq.test` function.
 
 ```{r}
 test_of_indep$expected
 ```
 
-Még ez a legrosszabb esetünk is nagyobb, mint 795, rendben vagyunk.
+Even our worst-case scenario is larger than 795, so we are fine.
 
-**Figyelem!** Attól, hogy a magyarázóerő szignifikáns hatással bír a sokaságban, attól az még lehet egy **gyenge magyarázóerő**. Ezt a megfigyelt adatok alapján meg kell mérni egy külön statisztikai mutatóval, egy normalizált (pl. 0-tól 1-ig) terjedő skálán. Ez a mutató lesz asszociáció esetén a Cramer-együttható.
+**Attention!** Just because the explanatory power has a significant effect in the population **does not mean that it is a strong explanatory power**. This must be measured separately, based on the observed data, using a specific statistical measure that operates on a normalized scale (e.g., ranging from 0 to 1). In the case of association, this measure is the Cramér's V coefficient.
 
 ### 3.2. Cramer's V
 
-A mutatószám képlete: $$V=\sqrt{\frac{\chi^2}{n \times \min(r-1,c-1)}}$$
+The formula for Cramér's V coefficient is as follows: $$V=\sqrt{\frac{\chi^2}{n \times \min(r-1,c-1)}}$$
 
-Maga a mutató tehát $0-1$ közötti, de **NEM értelmezzük százalékban**, mivel a műveletei között van egy *gyökvonás*, így a **szórás-hányadossal összemérhető mutató**.
+In the formula, the minimum function means that we select the smaller value between the number of rows ($r$) minus 1 and the number of columns ($c$) minus 1 in the contingency table.
 
-Ennek megfelelően a **Cramer-együttható értelmezési határai az alábbiak**:
+Thus, the indicator itself falls between $0$ and $1$, but it should **NOT be interpreted as a percentage**, because one of its operations involves a *square root*, making it a **measure comparable to the coefficient of variation**.
 
-- **Cramer < 0.3 --> gyenge kapcsolat**
-- **0.3 <= Cramer <= 0.7 --> közepes kapcsolat**
-- **Cramer > 0.7 --> erős/szoros kapcsolat**
+Accordingly, the **interpretation thresholds for the Cramér's V** coefficient are as follows:
 
-A mutatót számolni R-ben a képlet közvetlen alkalmazásával lehet.
+- **Cramer < 0.3 --> weak relationship**
+- **0.3 <= Cramer <= 0.7 --> moderate relationship**
+- **Cramer > 0.7 --> strong/close relationship**
+
+In R, the coefficient can be calculated by directly applying the formula. Since our contingency table is 2x2, the minimum part of the formula will definitely substitute $2-1$.
 
 ```{r}
 sqrt(test_of_indep$statistic/(nrow(CSOK)*(2-1)))
 ```
 
-Az eredményül kapott $0.0786$-ra kerekítható érték **gyenge erősségű** kapcsolatot mutat a két minőségi változónkra a *fentebb megadott értékhatárok szerint*. Tehát annyira nem erős összefüggés a megfigyelt ingatlanok között az, amit kimutattunk a halmozott oszlopdiagrammal, hogy jellemzően a kisvárosokban (*Town*) vannak a CSOK-ra jogosult ingatlanok.
+The resulting value, which can be rounded to $0.0786$, indicates a **weak association** between our two categorical variables, *according to the thresholds given above*. Thus, the association we detected with the stacked column chart (namely, that CSOK-eligible properties are typically found in small towns) is not very strong among the observed properties.
 
-Tehát, a $\chi^2$-próba eredményével összefésülve a Cramér's V eredményét azt mondhatjuk, hogy azt **a gyenge erősségű kapcsolatot lehet kiálítalánosítani a lakások sokaságára is a mintából, ami szerint a CSOK-ra jogosult lakások leginkább a kisvárosokra** (*Town*) és **legkevésbé Budapestre jellemzők**.
+Thus, combining the result of the $\chi^2$-test with the result of Cramér's V, we can conclude that this **weak association can be generalized to the population of apartments based on the sample, suggesting that CSOK-eligible apartments are most characteristic of small towns** and **least characteristic of Budapest**.
 
 ## 4. Correlation and Simple Linear Regression
 
@@ -325,7 +331,7 @@ The <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob
 
 Read the data table from Excel into an R `data frame` the usual way!
 
-```{r echo=FALSE}
+```{r}
 BP_Flats <- read_excel("BP_Flats.xlsx")
 str(BP_Flats)
 ```
