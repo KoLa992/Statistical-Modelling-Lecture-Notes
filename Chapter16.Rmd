@@ -1,0 +1,374 @@
+---
+title: "Model Selection"
+author: "László Kovács"
+date: "02/05/2025"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Industry Accounting Data
+
+The file called <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/industry.csv" target="_blank">industry.csv</a> which contains data of 479 industries (e.g. mining, wood processing, information technology services, etc.) of the Hungarian economy in 17 variables (columns) for a given accounting year.
+
+- Earnings: earnings (billion HUF)
+- NrComps: number of companies in the industry (number of)
+- Prof: number of companies in the industry that are profitable (number of)
+- Unprof: number of unprofitable companies in the industry (number of)
+- Workers: number of workers in the industry (number of)
+- FAssets: value of fixed assets (billion HUF)
+- CAssets: value of current assets (billion HUF)
+- FCAssets: value of fixed current assets (billion HUF)
+- Assets: value of assets (billion HUF)
+- Equity: value of equity (billion HUF)
+- Liab: value of liabilities (billion HUF)
+- LTLiab: value of long-term liabilities (billion HUF)
+- STLiab: value of short-term liabilities (billion HUF)
+- SUBLiab: value of liabilities subordinated (billion HUF)
+- MatExp: value of material expenses (billion HUF)
+- PersExp: value of personnel expenses (billion HUF)
+- Dep: value of depreciation (billion HUF)
+
+Let's set the `working directory` appropriately and import the file! Luckily it's a well behaving *.csv* so we can use `read.csv`: 
+
+
+```{r}
+ind <- read.csv("industry.csv")
+str(ind)
+```
+
+
+Everything looks fine in the `data frame`. Also, each variable is numeric data, so we don't have to change anything here either.
+
+Let's run an OLS regression where earnings are explained by 12 variables:
+
+```{r}
+model_1 <- lm(Earnings ~ Prof + Unprof + Workers + FAssets + CAssets +
+                Equity + LTLiab + STLiab + SUBLiab + MatExp +
+                PersExp + Dep, data = ind)
+summary(model_1)
+```
+
+The model looks very good, with an explanatory power of $87.35\%$, the model is significant on all usual $\alpha$ significance levels (global F-test). **Note**: range of usual significance levels: $1\% \leq \alpha \leq 10\%$
+
+Partial t-tests indicate that the non-significant explanatory variables at $\alpha=5\%$ are **Prof**, **Unprof**, **FAssets**, **Equity**, **SUBLiab** and **PersExp**. If these variables are not related to the earinings of the industries, they should be dropped from the model:
+
+```{r}
+model_2 <- lm(Earnings ~ Workers + CAssets + LTLiab + 
+                STLiab + MatExp + Dep, data = ind)
+summary(model_2)
+```
+
+OHHH! The explanatory power of our model has degraded to $85.83\%$! But the variables we dropped didn't look significant! The lowest t-test p-value is $8.58\%$ (**FAssets**)! Why is $R^2$ decreasing?
+
+## 2. Adjusted $R^2$ and Information Criteria
+
+Unfortunately, the good old $R^2$ will never improve if we drop an explanatory variable from the model. No matter how useless.
+
+Why is that? First, $R^2=1-\frac{SSE}{SST}$ and so by minimizing $SSE$ we get the coefficients $\beta_j$. We choose their values in such a way that the OBSERVED values of $y$ we have choose fit the regression estimate $\hat{y}$ as well as possible!
+
+And this fit is certainly NOT worsened by the inclusion of an additional explanatory variable, no matter how irrelevant to $y$. After all, there is one more $\beta_j$ to minimize the model error ($SSE$). But if we step out into the world beyond our observations (universe/population), the $\hat{y}$ estimates are already spoiled by these irrelevant explanatory variables in the model. This is the phenomenon of **overfitting**!
+
+Let's take a look in the below picture:
+
+<center>
+![](Tultan1.jpg){width=100%}
+</center>
+
+Behind the fitted curves there are the following equations:
+
+- Linear = $5.13x-0.46$
+- Cubic = $2.48x^3+3.17x^2−1.06x +1.08$
+- Seventh degree (septic) = $−7426x^7+28047x^6−42886x^5+33991x^4−14814x^3+3457x^2−380x+14$
+
+From the figure we can see that the most realistic fit is the *cubic* curve using 3 explanatory variables ($x^3, x^2, x$). But $R^2$ still prefers the seventh degree option using the most explanatory variables because of **overfitting**!
+
+To avoid this we introduce the adjusted $R^2$ indicator:
+
+<center>
+![](AdjR2.jpg){width=50%}
+</center>
+
+The point of the correction formula is that this indicator can also decrease if irrelevant (highly non-significant) explanatory variables are included in the model. Therefore, the formula includes the number of explanatory variables $k$ in addition to the number of observations $n$.
+
+As we can see, in our previous example $\bar{R}^2$ already prefers the third-degree model, quite correctly!
+
+<center>
+![](Tultan2.jpg){width=100%}
+</center>
+
+If we save the result of the `summary` functions of R in a separate object, we can collect the $\bar{R}^2$ of our two models under each other. By default, you can read them from the `summary` function's result table, but there's a lot more in there, so it's easy to get lost in the details. [Simplicity](https://hvg.hu/itthon/20111226_errol_szolt_2011) is better. :)
+
+```{r}
+model_1_sum <- summary(model_1)
+model_1_sum$adj.r.squared
+
+model_2_sum <- summary(model_2)
+model_2_sum$adj.r.squared
+```
+
+Oof! Even $\bar{R}^2$ indicates that **model_1** is superior! :(
+
+We have two options.
+
+1. We resign ourselves to our unlucky fate and accept that it was really not a good idea to leave out all of the non-significant variables at 5% significance level from **model_1**.
+2. We dig further, and find that many statisticians think **that $\bar{R}^2$ doesn't penalize unnecessary explanatory variables hard enough**!
+
+Let's move on with the second train of thought. Since $\bar{R}^2$ does not penalize unnecessary explanatory variables strictly enough, 3 metrics for measuring the explanatory power of models have been invented that do so. These are the so-called **information criteria**.
+
+- Akaike Information Criterion: $AIC=\frac{SSE}{n}e^{2p/n}$
+- Hannan-Quinn Information Criterion: $HQC=\frac{SSE}{n}(\ln{n})^{2p/n}$
+- Bayes-Schwarz Information Criterion: $BIC=\frac{SSE}{n}n^{p/n}$
+
+There are 4 things to know regarding these formulas.
+
+1. $p$ here means not only the number of explanatory variables in the model, but also the $\beta_0$, the intercept term! So, there is **$p$ = number of estimated parameters ($\beta$-s)**!
+2. $IC$s by themselves do not show anything useful. They cannot be understood as a % explanatory power like $\bar{R}^2$!
+3. Since they come from $SSE$ (i.e. the total *error* of the model) and then stack some $k$-dependent penalty on top of it, they are good for the fact that if you calculate them for 2 models, you can consider the model with the smaller $IC$ to be better!
+4. The strictness of the penalizing effect of unnecessary variables gives us the following hierarchical order: $AIC<HQC<BIC$. So, an extra explanatory variable in the model is best tolerated by $AIC$. The least tolerant is $BIC$ for the inclusion of an extra explanatory variable.
+
+Let's calculate for example $AIC$ for **model_1**:
+
+```{r}
+# most important data for model_1
+n <- nrow(ind)
+p <- length(coef(model_1)) # this way intercept will be included
+SSE <- deviance(model_1) # SSE with built-in function
+
+AIC_1 <- SSE/n*exp(2*p/n) # exp is the function for e to the power of something
+AIC_1
+```
+
+This is very cute, but in practice we prefer to use the built-in functions of R!<br>
+Before we get into this, an **important** piece of information! There are several versions of each $IC$. E.g. you don't necessarily have to divide them by $n$, and you can take the logarithm of them. Then, for example, $AIC=\ln{SSE}+2k$ and $BIC=\ln{SSE}+k\ln{n}$. **So don't be upset if some built-in function in R computes $IC$ differently than the formula given in the formula collection!** The point is to **keep the indicators consistent with each other** so that the relation $AIC<HQC<BIC$ holds! The functions in the lecture note behave like this, so they'll be good for us! :)
+
+```{r}
+AIC(model_1,model_2)
+BIC(model_1,model_2)
+```
+We can see that for both $IC$ **model_1** is preferred. Even by the strictest $BIC$ it was stupid to omit non-significant variables from **model_1**.
+
+Maybe we can look at $HQC$, but he will say the same thing, as the two extreme $IC$ give the same result.<br>
+Plus, $HQC$ is not in R by default, nor is there a convenient package for it that would compute it to be computationally compatible with the base R `AIC` and `BIC` functions. But if someone finds something for it, don't hesitate to let me know! :)
+
+## 3. The Wald-test
+
+Well, based on the adjusted $R^2$ and the $IC$, we can clearly say that **model_1** using more variables has better explanatory power in the out-of-sample world than the variable-selected **model_2**.
+
+But if we want to find out about the explanatory power of the models out of sample, i.e. measured in a population, it would be more legitimate to do so using a hypothesis test!<br>
+This is our idea. Okay-okay, **if I leave out explanatory variables from the model, then the regular $R^2$ decrease is inevitable, but the question is, is this decrease significant?** Is it due to sampling error? If so, then the variables can be dropped. If not, then we should keep them. Well, **that's what the Wald test is for**!
+
+So let's see the steps of hypothesis testing!
+
+1. **Hypotheses**
+- In the **null hypothesis** of the Wald test, we assume that the beta of **an arbitrary number of variable (say $m$ number of variables) in our regression model in the out-of-sample world is 0**.
+- We want to test whether $m$ of the explanatory variables can be omitted from the model collectively because each of them has an effect of 0 on the outcome variable. Here $1 ≤ m ≤ k$, where $k$ is the number of explanatory variables in the model.
+  - Thus $H_0:\beta_{q+1}=\beta_{q+2}=...=\beta_{q+m}=0$
+* Where $q$ is the number of variables whose beta is not assumed to be 0 (which we do not want to leave out of the model) --> so: $q+m=k$
+- **An alternative hypothesis**, analogous to the ANOVA (global F-test) test, is that **there is at least one beta of the $m$ variables to be discarded that is not 0**.
+2. **Test Statistic**
+- The principle is to re-estimate the model without the $m$ explanatory variables to be removed, and see how much $R^2$ has decreased.
+  - The formula for the Test Statistic is $\frac{(R^2_U-R^2_R)/m}{(1-R^2_U)/(n-q-m-1)}$
+    * $R^2_R$ is the $R^2$ of the restricted model with only $q$ explanatory variables
+    * $R^2_U$: the $R^2$ value of the unrestricted model with all $q+m=k$ explanatory variables
+3. **The p-value**
+  - For a true $H_0$, the distribution of our sample function from many samples will be an **F-distribution** with $m$ and $n-q-m-1 = n-k-1$ degrees of freedom.
+- The key thing is that you can calculate a p-value from it just like from the F-distribution of the global F-sample:
+  <center>
+![](pval_F.jpg){width=50%}
+</center>
+ - Decide, knowing the p-value, the same way - using significance levels - as before!
+  
+#### SPECIAL CASES
+
+It is important to see that the Wald test includes all of our regression hypothesis tests so far (t-test for each variable and global F-test)!
+
+1. Because if in the Wald test $q=0$ and $m=k$, then we are testing $H_0$, meaning all $\beta$ in the model are $0$.
+  - This is the $H_0$ of the global F-test (ANOVA)!
+  - It is also worth taking a look at the Test Statistic!
+    * For the Wald test we have $\frac{(R^2_U-R^2_R)/m}{(1-R^2_U)/(n-q-m-1)}$.
+* If in this $R^2_R$ is the *all betas = 0* model, then $R^2_R=0$ and $m=k$.
+    * This makes the formula for the Test Statistic exactly the Test Statistic for the global F-test: $$frac{R^2/k}{(1-R^2)/(n-k-1)}$
+2. And the case $m=1$ is exactly the $\beta_m=0$ case of $H_0$, which is the partial t-test for the $m$-th variable!
+  - Then the Wald Test Statistic for $H_0$ has a distribution $F(1, n-k-1)$.
+  - Which is exactly equal to the square of the distribution $t(n-k-1)$!
+- In other words, the SQUARE of the Test Statistic of the t-test has a distribution $F(1, n-k-1)$ for a true $H_0$.
+  - Details [on this link](https://en.wikipedia.org/wiki/Relationships_among_probability_distributions#/media/File:Relationships_among_some_of_univariate_probability_distributions.jpg)
+
+### 3.1. Wald test in R
+
+Let's first do a Wald test manually in R between **model_1** and **model_2**!
+
+```{r}
+m <- length(coef(model_1))-length(coef(model_2)) # # of dropped variables
+q <- length(coef(model_2)) # # of variables left in the model +1 because of the constant
+n <- nrow(ind)
+
+Rsq_1 <- model_1_sum$r.squared #Unrestricted
+
+Rsq_2 <- model_2_sum$r.squared #Restricted
+
+TestFunction <- ((Rsq_1-Rsq_2)/m)/((1-Rsq_1)/(n-q-m))
+
+# p-value
+1-pf(TestFunction,m,n-q-m)
+```
+
+Based on this, we reject $H_0$ for all the common $\alpha$ --> There is at least one explanatory variable which it did not make sense to omit from the model!
+
+We are not completely masochistic though, we can perform this test with a built-in R function:
+
+```{r}
+anova(model_1, model_2)
+```
+
+Unfortunately, we have the exact same p-value, so we still adopt $H_1$ as the realistic hypothesis for all common $\alpha$. :(
+
+
+## 4. The LM-test
+
+The same $H_0$ that is tested in the Wald test can also be tested in the so-called LM test.
+
+- So, $H_0$ is still that **the beta of any arbitrary number of variables (say $m$ of them) in the out-of-sample world is 0**.
+- And $H_1$, on the other hand, is that **there is at least one beta of the $m$ variables to be discarded that is not 0**.
+
+But the Test Statistic here takes a different form: $(n-q-m-1)\frac{R^2_U-R^2_R}{1-R^2_R}$
+
+This Test Statistic for true $H_0$ has a distribution $\chi^2(m)$ for many many samples.
+
+The p-value is computed in a right-sided way (i.e. as a probability of falling towards the Test Statistic, similarly to the Wald test) from the distribution valid for $H_0$, as in the best case the $R^2$ of the two models are not different, from which only positive deviations are possible (because of the basic behaviour of $R^2$, it is always $R^2_U \geq R^2_R$).
+
+We can calculate all this in R in like this:
+
+```{r}
+m <- length(coef(model_1))-length(coef(model_2)) # # of dropped variables
+q <- length(coef(model_2)) # # of variables left in the model +1 because of the constant
+n <- nrow(ind)
+
+Rsq_1 <- model_1_sum$r.squared #Unrestricted
+
+Rsq_2 <- model_2_sum$r.squared #Restricted
+
+TestFunction <- (n-q-m)*(Rsq_1-Rsq_2)/(1-Rsq_2)
+
+# p-value
+1-pchisq(TestFunction,m)
+```
+
+Here again, for all the common $\alpha$ levels, we will reject $H_0$. :( It still doesn't seem to be a good idea to omit non-significant variables from **model_1**!
+
+For the LM test, we don't look at a built-in R function (I don't think there is one), since by default this test is not very useful, because it typically pulls towards accepting $H_0$. So, it generally prefers the restricted model.
+
+That being said, even this test doesn't say that **model_2** is better than **model_1**, so let's dismiss this **model_2** and try to narrow the number of explanatory variables in **model_1** in a different way!
+
+## 5. A Model Selection "Trick"
+
+We have already seen that **model_2** will not be better than **model_1** from any point of view.
+
+But let's take a closer look at **model_1**'s regression output and use our brains!
+
+```{r}
+model_1 <- lm(Earnings ~ Prof + Unprof + Workers + FAssets + CAssets +
+                Equity + LTLiab + STLiab + SUBLiab + MatExp +
+                PersExp + Dep, data = ind)
+summary(model_1)
+```
+
+We can logically combine some of the explanatory variables that are not significant in any standard $\alpha$ with other variables in the data table.
+
+- $Prof+Unprof=NrComps$
+- $LTLiab+STLiab+SUBLiab=Liab$
+
+Let's create **model_3** using the above ideas:
+
+```{r}
+model_3 <- lm(Earnings ~ NrComps + Workers + FAssets + CAssets +
+                Equity + Liab + MatExp + PersExp + Dep, data = ind)
+summary(model_3)
+```
+
+Let's see if this model is better than **model_1** based on the $IC$s:
+
+```{r}
+AIC(model_1, model_3)
+BIC(model_1, model_3)
+```
+
+$BIC$ prefers the more restricted **model_3**. That's more promising! Though $AIC$ still likes **model_1** more (although just barely). So does $\bar{R}^2$, which penalizes the number of explanatory variables in the model even less than $AIC$.<br>
+So, we're not that convinced, therefore let's look at the Wald test!
+
+In our case, the $H_0$ of the **Wald-test** basically means that $3+2$ of $\beta$-s are assumed to be equal, so that the explanatory variables behind them are broadcasting the same effect on the outcome variable:
+
+- $\beta_{Prof}=\beta_{Unprof}$
+- $\beta_{LTLiab}=\beta_{STLiab}=\beta_{SUBLiab}$
+
+This $H_0$ specification will mean that the more restrictive (*Restricted*) model is $3+2-2=3$ variables less than the less restrictive (*Unrestricted*) model. That's $m=3$ in the degrees of freedom of the F-distribution and in the Test Statistic!
+
+```{r}
+anova(model_1, model_3)
+```
+
+It seems that our p-value is $9.581\%$. It is borderline, because we would still be in favor of $H_1$ at $\alpha=10\%$. But, we accept $H_0$ at all other common $\alpha$ and will go for the narrower **model_3**.
+In the result table, notice that in the `Df` column you see $-3$! This is consistent with what we reasoned earlier that in this particular test $m=3$.
+
+So, on the *"majority rules"* principle, we accept that $BIC$ and the Wald test view **model_3** to be a better model than **model_1**. But, if we look at the `summary` table of **model_3**, we can see that there are explanatory variables that are not significant at any common $\alpha$.
+
+```{r}
+summary(model_3)
+```
+
+Let's remove these explanatory variables (**FAssets**, **PersExp**) from the model and see if we get a better model than **model_3**. Since we're so crazy creative, let's call this new model **model_4**. :)
+
+```{r}
+model_4 <- lm(Earnings ~ NrComps + Workers + CAssets +
+                Equity + Liab + MatExp + Dep, data = ind)
+summary(model_4)
+```
+
+The model is nice in the sense that all variables have a p-value < 1%, so all variables are significant in the model at all the common $\alpha$ levels!
+
+But let's see if this model is better than **model_3** according to the $IC$-s and the Wald-test:
+
+```{r}
+AIC(model_3, model_4)
+BIC(model_3, model_4)
+anova(model_3, model_4)
+```
+
+Awesome: $AIC$, $BIC$ and the Wald test at all the usual $\alpha$ consider **model_4** the winner! :)
+
+We can also take a look at the $\bar{R}^2$-s:
+
+```{r}
+model_3_sum <- summary(model_3)
+model_3_sum$adj.r.squared
+
+model_4_sum <- summary(model_4)
+model_4_sum$adj.r.squared
+```
+
+Based on the corrected R-squared **model_3** is still preferred, but we will ignore this now, since we know that $\bar{R}^2$ penalizes too weakly for redundant explanatory variables in the model.
+
+But if we're really nervous we can look at $IC$s and see which of the original **model_1** and the newly created **model_4** is better, and can examine he question according to the Wald-test as well:
+
+```{r}
+AIC(model_1, model_4)
+BIC(model_1, model_4)
+anova(model_1, model_4)
+```
+
+**model_4** is the unanimous winner based on $IC$s. That's good! The Wald test is a bit trickier with a p-value of $8.8\%$, but then again, we can say that we prefer to accept $H_0$ at most of the usual significance levels, so we would rather use **model_4** based on the hypothesis testing.
+
+All is great :)

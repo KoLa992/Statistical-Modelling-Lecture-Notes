@@ -1,0 +1,674 @@
+---
+title: "Non-Linear Model Specifications"
+author: "László Kovács"
+date: "02/05/2025"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Interactions
+
+Load the data table <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/Household.xlsx" target="_blank">Household.xlsx</a>, which contains 10 variables for 8314 Hungarian households:
+
+- NrMems: number of members of household 
+- NrRstrMeals: number of meals/year in restaurant
+- NrSmokers: number of smokers in the household 
+- NrCoffee: number of coffee drinkers in the household 
+- Gender: sex of head of household: Male = 1, Female = 0
+- HhEd: education level of head of household: 1, 2, ..., 13 (PhD)
+- IncTFt: total annual net income of the household (thousand HUF = TFt)
+- ExpPle: annual expenditure on pleasure items (thousand HUF = TFt)
+- ExpTot: total annual expenditure of the household (thousand HUF = TFt)
+- Muni: type of municipality of the household (Budapest, City, Other cities, Municipality), where City means large cities, Other cities refers to smaller cities
+
+Let's build a regression model for household expenditure with household income and the type of municipality as explanatory variables (the reference category should be Municipality):
+
+```{r}
+library(readxl)
+household <- read_excel("Household.xlsx")
+
+# convert nominal variable Muni to factor
+household$Muni <- as.factor(household$Muni)
+
+# set municipality as reference category 
+household$Muni <- relevel(household$Muni, ref = "Municipality")
+
+# let's run the OLS regression
+base_model <- lm(ExpTot ~ IncTFt + Muni, data = household)
+summary(base_model)
+```
+
+Using the `sjPlot` package, let's also examine the marginal effect of income on total expenditure taking into consideration the type of municipality in our model:
+
+```{r warning=FALSE}
+library(sjPlot)
+
+plot_model(base_model, type = "pred", terms = c("IncTFt", 
+                                                "Muni"))
+
+```
+
+What we see here is that, all other variables held unchanged (i.e., unchanged municipality type), if the household has 1 TFt more income, then the expenditure in *all* **Muni** categories is expected to be 0.628 TFt higher ($\beta_{IncTFt}=0.628$). To put it more simply: the average household spends 628 HUF out of 1000 HUF immediately **regardless of municipality type**. Only the "*basic expenditure level*" will be different between municipality types, the income effect will not change for different **Muni** categories! So, for example, if a household is **urban** (i.e. City), then with all other explanatory variables unchanged, it is expected to have an expenditure $\beta_{City}=184.2$ TFt higher *than a household in a municipality*. Regardless of the household's income.
+
+We can see that in the above explanation that **one standard OLS assumption** came very true. That **the true effect of the explanatory variables on the outcome variable is linear**.<br>
+But is this really the right assumption? Is it really true that for all types of municipalities, that ceterus paribus +1 TFt of income changes the expenditures in the same way and that **City** households spend the same amount more than **Municipality**-s at all income levels?
+
+Let's explore it with a colored scatter plot! Go `ggplot2`!
+
+```{r}
+library(ggplot2)
+
+ggplot(data = household, aes(x = IncTFt, y = ExpTot, color =Muni)) +
+  geom_point() +
+  stat_smooth(method=lm)
+```
+
+Well, the coloured scatter plot, with a separate linear trend line by municipality type, tells us that the situation is a bit more complicated!<br>
+For **City**, we see that + 1 TFt of income increases expenditure spectacularly more than for other types of municipalities! Not only the basic expenditure level differs between types of municipalities, but also the effect of +1 unit of income on expenditure! So, in technical terms, **income-expenditure relationships not only differ in their axial cross-section by settlement type, but also in their slope! This phenomenon is called *interaction*!**
+
+How can this be taken into account in our OLS model? Well, by adding a new variable to the model, which is simply the (cross)product of **income and the dummy variables municipality type**! With this so-called interaction term, we have changed the linear specification of the model, because we no longer think that +1 TFt of income has a linear effect on expenditure, i.e. the same for all municipality types!
+
+So let's see how we solve this in R!
+
+```{r}
+int_model <- lm(ExpTot ~ IncTFt + Muni +
+                  Muni*IncTFt, data = household)
+summary(int_model)
+```
+
+Okay, we see that for each dummy variable there is also $\beta$ in the model that is the product a dummy for a type of municipality and of income. We also see that, in fact, the interaction $City\times IncTFt$ is significant at all the usual $\alpha$. This is not surprising: looking at the scatter plot it was really only in the big cities that the effect of +1 TFt income on expenditure was different.
+
+If we're really paranoid, we can just test with a Wald test whether the interaction model is really better in out-of-sample households:
+
+```{r}
+anova(int_model, base_model)
+```
+
+The p-value is nice and low, for all the usual $\alpha$ we can say that we can reject $H_0$ that all interaction $\beta$ in the universe are zero!
+
+Having put our minds at ease, let's see what the coefficients in our interaction model mean. We should note that *all dummy 0 cases are the municipalities*:
+
+- $\beta_{IncTFt}=0.598$: +1000 HUF income in a household in a MUNICIPALITY (this is what the ceteris paribus assumption means) is expected to increase expenditure by +0.598 TFt (598 HUF).
+- $\beta_{Budapest}=226.41$: In Budapest, with income level 0 (this is an axis section for Budapest only), the average household expenditure is 226.41 TFt higher than in the MUNICIPALITY--> meaningless data, since there are no households with income 0 (this is an axis section...)
+- $\beta_{City}=-31.91$: In large cities, at income level 0 (this is an axis measure for City only), household expenditure is on average 31.91 TFt lower than in MUNICIPALITIES --> meaningless data, since there are no households with income 0 (this is an axis section...)
+- $\beta_{Other cities}=-16.14$: In the other cities, with income level 0 (this is an axis section for OtherCity only), the average household expenditure is 16.143 TFt lower than in the MUNICIPALITIES --> meaningless data, since there are no households with income 0 (this is an axis section...)
+- $\beta_{IncTFt \times Budapest}=-0.01$: all other explanatory variables unchanged, in Budapest, an income of +1000 HUF is expected to increase household expenditure by 0.01 TFt less than in the MUNICIPALITIES.
+- $\beta_{IncTFt \times City}=0.12$: All other variables unchanged, in the big cities, an income of +1000 HUF is expected to increase household expenditure by 0.12 TFt more than in the MUNICIPALITIES.
+- $\beta_{IncTFt \times Other cities}=0.04$: All other variables unchanged, in other cities, an income of +1000 HUF is expected to increase household expenditure by 0.04 TFt more than in the MUNICIPALITIES.
+
+We can now see from the figures in the `sjPlot' package that the mental world of our model is such that the effect of income on estimated expenditure has different slopes in different types of settlements:
+
+```{r}
+plot_model(int_model, type = "pred", terms = c("IncTFt", "Muni"))
+```
+
+
+If we are interested in such things, we can give the bivariate regression equations $Estimated ExpTot=\beta_1IncTFt+\beta_0$ for each settlement type based on the interaction model coefficients. These are plotted with 95% confidence intervals in the figure above. E.g. the regression equation for **Municipality** marked in *red*:
+
+$Estimated ExpTot=0.598\times IncTFt+317.4$
+
+For **Budapest** marked in *blue*, the regression equation looks like this:
+
+$Estimated ExpTot=(0.598-0.01)\times IncTFt+(317.4+226.4)$
+
+And obviously the same game that we played for **Budapest** can be played for **City** and **Other cities**.
+
+Now, that's all well and good, but what about the marginal effects? What I would like to know is how ceteris paribus +1 TFt of income increases expenditure! Can't we already answer that in this interaction model? :(
+
+Oh yes, we can, it's just not that simple! :)
+
+### 1.1. Marginal Effects for Interactions
+
+In order to understand what the marginal effect of income is in an interaction model, it is first **necessary to understand why $\beta_{IncTFt}$ is the marginal effect of income in a simple linear regression**.
+
+This is what the basic linear model looks like based on the R output:
+
+```{r}
+summary(base_model)
+```
+
+$$\hat{y}=267.1+0.628 \times IncTFt + 193.1 \times Budapest + 184.2 \times City + 5.08 \times Other cities$$
+
+In this model, if we want to find out how only (i.e. ceteris paribus) +1 unit **IncTFt** affects the estimated expenditure $\hat{y}$, we have to partially derive $\hat{y}$ by **IncTFt**! Since in **IncTFt** $\hat{y}$ is only present in a linear term $0.628$, this partial derivative will in all cases be $\frac{\partial \hat{y}}{\partial IncTFt}=0+0.628 \times 1 +0$.
+
+This can be easily checked in R with the `dydx` function implementing partial derivation on each element of the **household** data table. To do this, you must first install the `margins` package:
+```{r eval=FALSE}
+install.packages("margins")
+library(margins) # don't mind the warnings :)
+```
+```{r echo=FALSE}
+library(margins)
+```
+```{r}
+# head is needed so R won't try to print too many values
+head(dydx(household, base_model, "IncTFt"))
+```
+
+Not surprisingly, the results are the same in all households. :)
+
+Now let's see what happens in the interaction model during the partial derivation by income:
+
+```{r}
+summary(int_model)
+```
+
+$\hat{y}=317.42+0.598 \times IncTFt + 226.41 \times Budapest - 31.91 \times City$<br>
+
+$-16.14 \times Other cities - 0.01 \times IncTFt \times Budapest$<br>
+
+$+0.12 \times IncTFt \times City + 0.04 \times IncTFt \times Other cities$
+
+Now, **IncTFt** is in the function more than once, so if we partially derive, the result will have more than one term:
+
+$\frac{\partial \hat{y}}{\partial IncTFt}=0+0.598 \times 1 +0 - 0.01 \times 1 \times Budapest$<br>
+
+$+0.12\times 1 \times City + 0.04 \times 1 \times Other cities$
+
+Unsurprisingly, the marginal effect of income already depends on the settlement type. That's exactly the situation we wanted.
+
+Let's have a look at the **marginal effect of income in large cities** using the `dydx` function of R:
+
+```{r}
+# head is needed so R won't try to print too many values
+head(dydx(household[household$Muni=="City",], int_model, "IncTFt" ))
+```
+
+The value is calculated from the partial derivative as $0.598+0+0.12 \times 1 +0=0.718$ (rounded here, of course).
+
+So actually, with this derivational cleverness, we are back where we started with the `sjPlot` plot! If we need the bivariate regression equation of the form $Estimated ExpTot=\beta_1IncTFt+\beta_0$ in **City**, it can be produced from the coefficients of the interaction model:
+
+$Estimated ExpTot=(0.598+0.12)\times IncTFt+(317.4- 31.91)$
+
+But of course, this derivational hassle was not completely unnecessary either, because this approach helps to understand the interpretation of marginal effects in non-linear models that are more complex than interaction. We will see an example of this in the next chapter!
+
+## 2. Other Non-Linear Effects
+
+Of course, the **standard OLS assumption that the relationship between explanatory variables and outcome variables is linear** is not only violated in the context of dummies. Let's look at the relationship between income (**IncTFt**) and expenditure on pleasure items (**ExpPle**).
+
+```{r}
+ggplot(data = household, aes(x = IncTFt, y = ExpPle)) +
+  geom_point() +
+  stat_smooth(method=lm) +
+  stat_smooth(color="red") # with this last line of code a NON-linear trend curve is plotted which best fits the data
+```
+
+
+We can see that the linear fit is not able to describe the connection, because at a lower income level an extra unit of income (1000 HUF) will result in higher spending on pleasure items, as opposed to at a higher income level. Therefore the connection should be parabola shaped.<br>
+By the way, we wanted to deal with something like this when we were calculating *partial elasticities*, only now we include this phenomenon directly in the model!
+
+Not surprisingly, such a *parabola-like* relationship can be included in the model by including the square of the explanatory variable of interest (in this case, income) as an explanatory variable.<br>
+Let's not stop here! It's also a logical assumption that expenditure on pleasure goods varies differently with income +1 TFt if there are different numbers of smoking household members! So, we make a model for **ExpPle** that takes into account the interaction of income with the **NrSmokers** variable. Plus, it is also a valid idea that the effect of the **NrSmokers** variable on **ExpPle** depends on the number of **NrCoffee** in the household. Since coffee and tobacco are both pleasure goods, +1 TFt of income should be divided between the seekers of the two pleasures in the household! Let's see this model:
+
+```{r}
+quadratic_model <- lm(ExpPle ~ NrMems + NrRstrMeals + 
+                        NrSmokers + NrCoffee + Gender + HhEd +
+                        IncTFt + I(IncTFt^2) + NrSmokers*IncTFt +
+                        NrCoffee*NrSmokers, data = household)
+summary(quadratic_model)
+```
+
+You can see that the quadratic term and the interactions are significant for all the usual $\alpha$, so we probably didn't do anything stupid. Also, the good news is that the coefficient of the **square term is negative: so we really fitted an inverse parabola** on pleasure goods spending as a function of income: with a high initial income, + 1 TFt of income doesn't increase spending so drastically anymore: "*after a while everyone gets saturated*".
+
+Let's try to decipher here what the marginal effect of income is! Let's see in which members of $\hat{y}$ $IncTFt$ is included:
+
+<center>
+![](ElvezModell.jpg){width=100%}
+</center>
+
+<br>Based on this, the partial derivative (or marginal effect):
+
+<center>
+![](ElvezParc.jpg){width=100%}
+</center>
+
+So the marginal effect of income depends on whether
+
+- what the initial income level is,
+- the number of smokers in the household.
+
+Just as we wanted when we created this quadratic + interaction model specification!
+
+Then, let's look at the marginal effect of income level on expenditure on pleasure items in a household with *annual income of 2000 TFt* and *1 smoker* using the `dydx` function of R:
+
+```{r}
+# we create a data frame where IncTFt=2000 and NrSmokers=1
+# for other variables we will add random values
+
+new_obs <- data.frame("NrMems" = 3, "NrRstrMeals" = 3, "NrSmokers" = 1,
+                       "NrCoffee" = 1, "Gender" = 1, "HhEd"= 13, "IncTFt" = 2000,
+                       "Muni" = "City", "ExpTot" = 4000)
+dydx(new_obs, quadratic_model, "IncTFt")
+```
+
+The result of 0.02485832 can be obtained manually by substituting in in the **IncTFt** marginal effect formula derived above:
+
+<center>
+![](ElvezParcKonkret.jpg){width=50%}
+</center>
+
+<br>
+If we are very visual types, we can use the `sjPlots` package to see how our model thinks about the effect of income on expenditure on pleasure goods, taking into account the number of smokers:
+
+
+```{r}
+plot_model(quadratic_model, type = "pred", terms = c("IncTFt", "NrSmokers"))
+```
+
+It is worth observing that since **IncTFt** does NOT interact with **NrCoffee**, the growth rate of the income - pleasure expenditure parabolas do not differ in growth rate regardless of the number of people in the household who drink coffee. Only the intercept changes:
+
+```{r}
+plot_model(quadratic_model, type = "pred", terms = c("IncTFt", "NrCoffee"))
+```
+
+## 3. The RESET Test
+
+This is a so-called **model specification test**. This means that the **zero hypothesis of the test claims that our model is well specified** in the world beyond our observations. That means we don't need to put some non-linear transformed form of the explanatory variables (root, square, logarithm, etc.) or their interaction (cross-products) into the model.
+
+This is technically implemented with the following idea: If the $H_0$ of well-specifiedness is true, and we have not omitted any non-linear effects, then if we include **the **squares and cubes of the estimated outcome variable values** ($\hat{Y}$) of my original regression as two extra explanatory variables, then the coefficients of these two variables will be 0**--> the non-linear transformations on the linear estimator will not add any extra explanatory power to the well-specified model.
+
+Formally, it looks like this:
+
+<center>
+![](RESET.jpg){width=70%}
+</center>
+
+So, from now on, **this is a Wald test**! Because what we are testing in a regression is whether the coefficients of 2 variables are simultaneously 0 in the out-of-sample world!
+
+And the test statistic of the Wald test follows a distribution $F(2, n-k-1-2)$ for true $H_0$ --> p-value can be calculated!
+
+Remember:
+
+- $m=2$ -> we assume 2 variables have no effect on the outcome variable
+- $q=k+1$ -> in the original, i.e. Restricted model, there were $k$ explanatory variables +1 constant
+
+This makes the general Wald distribution $F(m, n-q-m)$ now $F(2, n-k-1-2)$.
+
+**PLEASE NOTE!** WE DO NOT KNOW from the RESET test result what I need to fix in the model if $H_0$ comes out false based on the p-value!<br>
+All I know is that it is worth extending the model with a non-linear transformation of *one* of the explanatory variables, or with interactions (cross-products) of certain variables<br>
+But which specific variables need to have a for example non-linear term included in the model, can only be found out from the **scatter plots** with the outcome variable!
+
+Let's see how it works in R! We need a new package called `lmtest`:
+
+```{r eval=FALSE}
+install.packages("lmtest")
+library(lmtest) # Don't mind the warning messages :)
+```
+```{r echo=FALSE}
+library(lmtest)
+```
+
+The RESET test can then be calculated with a simple function whose only input parameter is the object containing the regression. Let us test our two models built for the **ExpTot** outcome variable with this new test:
+
+```{r}
+resettest(base_model)
+resettest(int_model)
+```
+
+Both p-values are well below the smallest usual $\alpha=1\%$ level, so neither model can be considered well specified in the population.
+
+However, the RESET test is still useful to compare the p-values of the two models with the same outcome variable: **the one with the higher RESET p-value** (even if the p-value is below 1%) is the better specified of the two models, because it is closer to the $H_0$ of well specified in the RESET test.
+
+## 4. The Log-Log Model
+
+Load the data table <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/industry_filtered.xlsx" target="_blank">industry_filtered.xlsx</a> from Moodle, which is a filtered version of the *ind.csv* already used in <a href="Chapter16.html" target="_blank">Chapter 16</a>. This table contains 6 variables for 476 sectors of the Hungarian economy (e.g. mining, wood processing, information technology services, etc.) for a given accounting year.
+
+- NTurnover: Net turnover from sales (in billion HUF)
+- FAssets: Value of fixed assets (in billion HUF)
+- CAssets: Value of current assets (in billion HUF)
+- Liab: total value of liabilities (in billion HUF)
+- PersExp: Value of Personnel expenditure (in billion HUF)
+- Dep: Value of depreciation Description (in billion HUF)
+
+```{r}
+library(readxl)
+ind <- read_excel("industry_filtered.xlsx")
+str(ind)
+```
+
+Here we want to build a model where the variable **NTurnover** is explained by the remaining 5 explanatory variables.
+
+Before we get started, let's look at the distribution of our outcome variable and an arbitrary explanatory variable (for example, fixed assets) on a simple histogram:
+
+```{r}
+hist(ind$NTurnover) # outcome variable
+hist(ind$FAssets) # one explanatory variable
+```
+
+Both have a fairly long right tailed distribution. Not surprisingly, financial data are usually like this because they are limited at the bottom: they don't go below 0. (*negative assets are already represented in accounting as positive liabilities, while negative liabilities are represented in accounting logic as positive assets*)
+
+If we **logarithmize** such a lower bounded (value > 0), long right tailed variable, the distribution of logarithms will be already one degree more symmetric, and so it will be closer to the **normal distribution**:
+
+```{r}
+hist(log(ind$NTurnover)) # outcome variable
+hist(log(ind$FAssets)) # one explanatory variable
+```
+
+This may be good for us because **standard model assumption 1** says that our outcome variable in an OLS regression should be normally distributed. Although this condition is replaced if we have a large sample ($n>100$), it is definitely healthier if the distribution of the outcome variable is normal.
+
+However, the symmetry in the distribution achieved by this logarithm has a more important effect on the relationship between the two variables. Let's look at the scatter plot of the two variables and the trend line fitted onto it for the base and logarithmized values of the variables:
+
+```{r}
+# Basic values' relationship on scatter plot
+ggplot(ind, aes(x=FAssets, y=NTurnover)) +
+  geom_point() + geom_smooth(method = lm)
+
+# Lagarithmized values' relationship
+ggplot(ind, aes(x=log(FAssets), y=log(NTurnover))) +
+  geom_point() + geom_smooth(method = lm)
+```
+
+The point is quite clear: **the relationship of the basic variables cannot be described well by a line, but the relationship of the logarithmic variables can**!!
+
+Since everything here is measured in terms of money, this phenomenon will hold for the relationship of the outcome variable to all the explanatory variables, so we will estimate a so-called **log-log** model, in which we take the logarithm of the outcome variable and all the explanatory variables:
+
+```{r}
+loglog <- lm(log(NTurnover) ~ log(FAssets) + log(CAssets) + log(Liab) + log(PersExp) + log(Dep),
+             data = ind)
+summary(loglog) 
+```
+
+So this is what the equation for our OLS model looks like:
+
+$\ln(Estimated NTurnover)=1.69-0.29 \times \ln(FAssets)+0.65 \times \ln(CAssets)$<br>
+$+0.13 \times ln(Liab)+0.29 \times \ln(PersExp)+0.24 \times \ln(Dep)$
+
+All to the power of $e$:
+
+$Estimated NTurnover=e^{1.69} \times FAssets^{0.29} \times CAssets^{0.65}$<br>
+$\times Liab^{0.13} \times PersExp^{0.29} \times Dep^{0.24}$
+
+So, our model for estimating turnover in **parameters** is a non-linear model, because the coefficients (the $\beta$s) are already in the exponents and not linear. The models in Chapters 1-3 were only non-linear in **variables** because we were only throwing the squared or cross-products of the explanatory variables into a basically linear model.
+
+This specification of the model, to the power of $e$, can be understood as a [Cobb-Douglas production function](https://en.wikipedia.org/wiki/Cobb%E2%80%93Douglas_production_function): sectors produce revenue using their various resources (they use assets, depreciate them, buy new assets, therefore, incur liabilities, pay wages, etc.), and the relationship between these *production factors* and revenue as *product* is described by a non-linear function.
+
+### 4.1 Interpreting Coefficients in a Log-Log Model
+
+The log-log model is also called **constant elasticity model**! The $\beta$s are the elasticities themselves, they do not need to be calculated separately as in the linear case. So, for example, $\beta_{CAssets}=0.65$ means that if the value of current assets increases by 1% ceteris paribus, then our model expects revenue to increase by 0.65%. Note that here in the interpretation we did not need to add what the starting point was for the ceteris paribus +1% increase in current assets! This means that the elasticity in the model is constant!
+
+If we want to specify the marginal effect of an explanatory variable, it has to be calculated manually. We have to get the general definition of elasticity: $El= \frac{\partial \hat{y}/\hat{y}}{\partial x/x}$. Here, the division of the partial derivative by the initial value represents the percentage. Rearranging the formula, we get $El=\frac{\partial \hat{y}}{\partial x} \times \frac{x}{\hat{y}}$, from which we express the marginal effect (the $\frac{\partial \hat{y}}{\partial x}=El \times \frac{\hat{y}}{x}$ part):  So now the **marginal effect depends on the initial explanatory variable values in the log-log model!**
+
+Let us determine the marginal effect of current assets on turnover for, say, the first sector:
+
+```{r}
+# calulating estimated revenue (y hat) for the first row
+estimate <- predict(loglog, newdata = ind[1,])
+# to the power of e because of the logarithm
+estimate <- exp(estimate)
+
+# saving beta of current assets
+beta_cassets <- loglog$coefficients[3] # including the axis section it's the third coefficient
+
+# marginal effect:
+beta_cassets * estimate/ind$CAssets[1]
+
+# for the interpretation we need a starting level for CAsset
+ind$CAssets[1]
+```
+
+If in a sector where the value of current assets increases ceteris paribus by 1 billion Ft compared to **221.6 billion**, net turnover is expected to increase by 1.65 billion Ft.
+
+#### The Constant Return to Scale Hypothesis
+
+For such a Cobb-Douglas production function, it may be worthwhile to consider the so-called *constant return to scale* hypothesis. According to this hypothesis, if all factors of production in the production function are increased by 1%, then production is expected to increase by 1%.
+
+In our case, this means that if we increase all explanatory variables in the model by 1%, then expected revenues will also increase by 1%. It is easy to calculate this in the sample because it is simply the sum of the betas **without the intercept**:
+
+```{r}
+sum_beta <- sum(loglog$coefficients[2:6])
+sum_beta
+```
+
+At first glance, this constant-scaled return seems plausible: if all explanatory variables increase by 1%, then turnover is expected to increase by 1.03% for the **observed sectors**. But obviously we wonder whether this relation holds true for all unobserved sectors! This needs to be tested with a good old t-test! :)
+
+$H_0:\sum{\beta}=1$ and $H_1:\sum{\beta} \neq 1$
+
+The test statistic would be calculated in the "usual" *(measured value - theoretical value)/standard error* way. Here we know that *measured value = 1.032008* and *principle value = 1*. However, for standard error we need to calculate the variance-covariance matrix of the coefficients:
+
+```{r}
+VarCov <- vcov(loglog)
+VarCov
+```
+
+
+This is a 6x6 matrix with diagonals containing the SE squares of $\beta$-s (i.e., the variances of the estimates) and the other elements being the covariances between the errors of the estimates of $\beta$-s. So, for example, a negative value at the intersection of **FAssets** and **Liab** means that if the standard error of $\beta_{FAssets}$ increases, then the standard error of $\beta_{Liab}$ is expected to decrease.<br>
+Since our hypothesis is that we are dealing with the sum of several statistical indicators (6-1 $\beta$), and these indicators are calculated **from non-independent samples**, we have to take into account these interactions when determining the SE of the sum, **it is not enough to simply add the SEs of the $\beta$s squared and then taking the square root again to determine the SE of the sum**, as we would do in a two-independent-sample t-test.<br>
+Instead, all elements of the matrix (including covariances) have to be included in the sum below the root. Of course **except for the axis intercept (i.e. the first row and the first column)**:
+
+```{r}
+SE <- sqrt(sum(VarCov[-1,-1])) # -1 refers to the removal of values connected to the intercept
+TestStat <- (sum_beta - 1)/SE
+```
+
+Fortunately, the test statistic calculated above has $t(n-k-1)=t(n-p)$ for true $H_0$, so we can easily compute p-values. Note that we need a two-sided p-value, since $H_1$ has $\neq$! :)
+
+```{r}
+n <- nrow(ind)
+p <- length(loglog$coefficients) # parameters = number of betas
+deg_of_freedom <- n-p
+
+pt(-abs(TestStat), deg_of_freedom)*2
+```
+
+Borderline case: at $\alpha=1\%$ we would still accept $H_0$, but at $\alpha=5\%$ we can already say that the constant scale return in the sectors of the Hungarian economy is significantly larger than 1: i.e. a 1% increase in each factor of production is expected to increase net revenue by more than 1%.
+
+## 5. The Log-Lin Model
+
+Let's load a filtered version of the Hungarian households database we are already familiar with from Sections 1-3, which is in the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/Household_filtered.xlsx" target="_blank">Household_filtered.xlsx</a> file. This table now contains 5 variables for 7569 Hungarian households:
+
+- HousePrice: value of house (million HUD)
+- NrMems: number of people in the household
+- HhEd: educational level of head of household: 1, 2, ..., 13 (PhD)
+- Age: Age of head of household (years)
+- IncTFt: Total annual net income of the household (thousand HUF)
+
+
+```{r}
+hh_filtered <- read_excel("Household_filtered.xlsx")
+str(hh_filtered)
+```
+
+Let's construct an OLS regression in which the annual household income is explained by the number of household members, the education level and the age of the head of household. Before we get started, let's look at the distribution of the outcome variable and the education and age of the head of household on a histogram:
+
+```{r}
+hist(hh_filtered$HousePrice)
+hist(hh_filtered$HhEd)
+hist(hh_filtered$HhAge)
+```
+
+It looks like only the outcome variable **IncTFt** has a long right tail. Although the explanatory variables linked to the head of household are not the most normally distributed variables in the world (let alone education, which in some respects can be taken as nominal data), they are not long right tailed to the extent that a logarithm would help them in any way.
+
+Based on these results, we expect from the experience of the log-log model that the relationship between **IncTFt** and the two explanatory variable associated with the household heads will be linearly described if only the long right tailed coefficient is logarithmized. However, we do not logarithmize education and age as explanatory variables because their distributions are not so long right tailed.<br>
+Let's plot this:
+
+First, we analyze the connection of **HhEd** and **IncTFt**:
+
+```{r}
+#Connection of base variables on scatter plot
+ggplot(hh_filtered, aes(x=HhEd, y=IncTFt)) +
+  geom_point() + geom_smooth(method = lm)
+
+#Connection of base variables on scatter plot
+ggplot(hh_filtered, aes(x=HhEd, y=log(IncTFt))) +
+  geom_point() + geom_smooth(method = lm)
+```
+
+Here we have about what we expected: by logarithmizing the outcome variable, a linear trend line better describes the relationship.
+
+Let's then also consider the relationship between **HhAge** and **IncTFt** on a dot plot:
+
+```{r}
+#Connection of base variables on scatter plot
+ggplot(hh_filtered, aes(x=HhAge, y=IncTFt)) +
+  geom_point() + geom_smooth(method = lm)
+
+#Connection of base variables on scatter plot
+ggplot(hh_filtered, aes(x=HhAge, y=log(IncTFt))) +
+  geom_point() + geom_smooth(method = lm)
+```
+
+Here too, the logarithm of income has improved the situation! But we can improve the situation by including the square of age in the model. This idea comes from the fact that if we look at the dot plot **age** + **log(IncTFt)**, we can see that in the younger age groups, income increases with age, and then from about age 30 onwards, income tends to decrease with age. This effect can be treated by an inverse parabola in the model. That is, by including $HhAge^2$ as an explanatory variable in the model.
+
+Let's then see the **log-lin** OLS model we have constructed to estimate income:
+
+```{r}
+loglin <- lm(log(IncTFt) ~ NrMems + HhEd + HhAge + I(HhAge^2), data=hh_filtered)
+summary(loglin)
+```
+
+From to table of coefficients our equation looks like this:
+
+$\ln{IncTFt}=6.036+0.23 \times NrMems+0.074 \times HhEd+0.0106 \times HhAge-0.000123 \times HhAge^2$
+
+By raising this to the power of $e$, we also obtain the equation for the direct estimate of the income:
+
+$IncTFt=e^{6.036+0.23 \times NrMems+0.074 \times HhEd+0.0106 \times HhAge-0.000123 \times HhAge^2}$
+
+We can see that in this setup, $\beta$ must be interpreted by raising them to the power of $e$! Then the $e^{\beta}$'s become so-called growth factors. Let us examine the case of $\beta_{HhEd}$:
+
+```{r}
+# including the axis section the beta of HhEd is the 3rd coefficient
+exp(loglin$coefficients[3])
+```
+
+All else being unchanged, if the education level of the head of household increases by one year, his or her income is expected to change by a factor of 1.077, or 7.7%.
+
+The situation is a bit more complex for age, because there the marginal effect will also depend on the initial age due to the squared term. Let's see to what the marginal effect of **HhAge** on **IncTFt** comes out. First, we partially derive the logarithmic equation and then raise the result to the power of $e$:
+
+<center>
+![](KorMarginalis.jpg){width=100%}
+</center>
+
+If we take a 40 year old head of household for example, this is the value we get:
+
+```{r}
+# including the axis section HhAge and its square are 4th and 5th
+exp(loglin$coefficients[4]+loglin$coefficients[5]*2*40)
+```
+
+In other words, if the age of the head of household increases ceteris paribus by 1 year compared to 40, then income is expected to change by a factor of 1.0007, i.e. increase by 0.07%.
+
+### 5.1. Mixed model
+
+In this log-lin model, we could also include the value of the apartment (**HousePrice**). Logically, the household that lives in a more valuable apartment will presumably have a higher annual income.
+
+Let us also see how the values of the apartments are distributed:
+
+```{r}
+hist(hh_filtered$HousePrice)
+```
+
+Unsurprisingly, it has a long right tail. :) So the relationship of the variable with the annual income becomes linear if you logarithmize both:
+
+```{r}
+# connection with both variables logarithmized
+ggplot(hh_filtered, aes(x=log(HousePrice), y=log(IncTFt))) +
+  geom_point() + geom_smooth(method = lm)
+```
+
+So, if we include the variable **HousePrice** in the model, we have to do it in a log-log way. This will give us a **mixed model** because it has both log-lin and log-log parts:
+
+```{r}
+mixed <- lm(log(IncTFt) ~ NrMems + HhEd + HhAge + I(HhAge^2) + log(HousePrice), data=hh_filtered)
+summary(mixed)
+```
+
+So, for example, the coefficients of the model can be read like this:
+
+- $e^{\beta_{HhEd}}=1.054999$: If the education of the head of household increases by 1 year, ceteris paribus, then the household income is expected to increase by 5.5%.
+- $\beta_{\ln{HousePrice}}=0.17$: If the value of the home increases ceteris paribus by 1%, then the household income is expected to increase by 0.17%.
+
+## 6. Lin-Log model
+
+Let's load a completely new file, <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/BpFlats_New.xlsx" target="_blank">BpFlats_New.xlsx</a>. This spreadsheet is quite simple: it contains just 2 variables for 3000 households in Budapest:
+
+- price: selling price of apartment (million Ft)
+- area: area of apartment (m2)
+
+```{r}
+BP_Flats <- read_excel("BpFlats_New.xlsx")
+str(BP_Flats)
+```
+
+It is logical that here we will do a bivariate regression with $y=price$ and $x=area$, but let's look at the distribution of our two variables as usually with a histogram:
+
+```{r}
+hist(BP_Flats$price)
+hist(BP_Flats$area)
+```
+
+Now it is the house price, the outcome variable, that appears to be normally distributed, and the area that is more with a long right tail. Given these and our experience with log-log and log-lin models, we speculate that in this dataset the relationship between house price and area will be linear if area ($x$) is logarithmized but house price ($y$) is not. In other words, we are working with a **lin-log** model.
+
+Let's see the dot plot:
+
+```{r}
+# scatter plot with the logarithmized x variable
+ggplot(BP_Flats, aes(x=log(area), y=price)) +
+  geom_point() + geom_smooth(method = lm)
+```
+
+Our guess was correct, let's examine the coefficients:
+
+```{r}
+linlog <- lm(price ~ log(area), data=BP_Flats)
+summary(linlog)
+```
+
+In such a **lin-log model**, the slope of our explanatory variable should be interpreted as follows. $\beta_{area}=19.98$: i.e. +1% increase in area is expected to increase the price of the apartment by 0.1998 (19.98/100) million HUF.
+
+## 7. Reciprocal Model
+
+The last non-linear model specification we will look at is the reciprocal model. To do this, we will import the file <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/IMR.csv" target="_blank">IMR.csv</a>, which contains 2 variables for 144 countries on Earth:
+
+- IMR: Infant mortality rate (%)
+- GDP: GDP per capita (dollars per capita)
+
+```{r}
+IMRData <- read.csv("IMR.csv")
+str(IMRData)
+```
+
+Let's examine the relationship between the variables **IMR** and **GDP** on a scatter plot by plotting the **non-linear trend line** that best fits the points:
+
+```{r}
+ggplot(IMRData, aes(x=GDP, y=IMR)) +
+  geom_point() + geom_smooth()
+```
+
+The shape that emerges could even be considered a *hyperbola*, i.e. a $1/x$ function! Let's build our OLS model with this in mind:
+
+```{r}
+reciprocal <- lm(IMR ~ I(1/GDP), data=IMRData)
+summary(reciprocal)
+```
+
+So, according to the model equation, $Estimated IMR=12.36+\frac{61171.21}{GDP}$.
+
+What does $\beta_{1/GDP}=61171.21$ mean here? Well, practically nothing. :)
+
+Here, the marginal effect and the elasticity must always be calculated with a separate partial derivative and both will depend on the initial level or value of the explanatory variable and/or the outcome variables level or value.
+
+Let's see the **marginal effect** in the reciprocal model!
+
+$$\frac{\partial \hat{y}}{\partial x}=\frac{\partial\left(\beta_0+\frac{\beta_1}{x}\right)}{\partial x}=\beta_1 \times -x^{-2} = -\frac{\beta_1}{x^2}$$
+
+So in our particular case, the marginal effect is $-\frac{61171.21}{GDP^2}$. For example, in Hungary $GDP=16476$. So, here the marginal effect is $-\frac{61171.21}{16476^2}=-0.00023$.So in Hungary, if GDP per capita would increase by 1 dollar/capita compared to 16476 dollars/capita, the infant mortality rate would decrease by 0.00023 percentage points. That's not much, but it changes if we look at Yemen with its GDP of 645/person: $$-\frac{61171.21}{645^2}=-0.15$$
+
+And let's look at **elasticity**. As calculated earlier, the elasticity is the marginal effect multiplied by $\frac{x}{\hat{y}}$. Here, in the reciprocal model, this means:
+$$El=-\frac{\beta_1}{x^2} \times \frac{x}{\hat{y}} = -\frac{\beta_1}{x \times \hat{y}}$$
+
+Let's stick with the Yemen example: $\hat{y}=12.36+61171.21/645=107.2$. So the elasticity: $-\frac{61171.21}{645 \times 107.2}=-0.884$
+
+So, if Yemen's GDP per capita increases by 1% compared to **$645 per capita**, the infant mortality rate is expected to decrease by 0.88%.
