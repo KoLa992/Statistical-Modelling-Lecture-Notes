@@ -1,0 +1,323 @@
+---
+title: "Heteroskedasticity"
+author: "László Kovács"
+date: "11/05/2025"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Visualizing Heteroskedasticity
+
+Let's import the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/Household.xlsx" target="_blank">Household.xlsx</a> dataset used in <a href="Chapter17.html" target="_blank">Chapter 17</a>, which contains 10 variables for 8314 Hungarian households:
+
+- NrMems: number of members of household 
+- NrRstrMeals: number of meals/year in restaurant
+- NrSmokers: number of smokers in the household 
+- NrCoffee: number of coffee drinkers in the household 
+- Gender: sex of head of household: Male = 1, Female = 0
+- HhEd: education level of head of household: 1, 2, ..., 13 (PhD)
+- IncTFt: total annual net income of the household (thousand HUF = TFt)
+- ExpPle: annual expenditure on pleasure items (thousand HUF = TFt)
+- ExpTot: total annual expenditure of the household (thousand HUF = TFt)
+- Muni: type of municipality of the household (Budapest, City, Other cities, Municipality), where City means large cities, Other cities refers to smaller cities
+
+Let's build the regression model for household expenditures on pleasure goods (**ExpPle**), where the explanatory variables are **NrMems, NrRstrMeals, NrSmokers, NrCoffee, Gender, HhEd**, and **IncTFt**.
+
+```{r}
+library(readxl)
+household <- read_excel("Household.xlsx")
+
+base_model <- lm(ExpPle ~ NrMems + NrRstrMeals + NrSmokers + NrCoffee +
+                   Gender + HhEd + IncTFt, data = household)
+summary(base_model)
+```
+
+Save the squares of the regression residuals $\epsilon_i = y_i - \hat{y}_i$ (i.e., those we sum in the $SSE$ indicator for each $i$-th observation) into the **household** table.
+
+```{r}
+household$sq_errors <- base_model$residuals^2
+```
+
+The phenomenon of heteroscedasticity can be illustrated graphically with a scatter plot. On the **x-axis**, we place the actual dependent variable ($y_i$) values, while the **y-axis** will show the $\epsilon_i$ residuals.
+
+```{r}
+library(ggplot2)
+ggplot(household, aes(x=ExpPle, y=sq_errors)) + geom_point()
+```
+
+What we observe on this scatter plot is the phenomenon of **heteroscedasticity**: when the squares of the forecast errors, i.e., the residual squares $\epsilon_i^2 = (y_i - \hat{y}_i)^2$, are not random but depend on the actual values of the dependent variable ($y$)!! That is, the standard deviation of the residuals (in Greek: "skedasticity") is not homogeneous, but varies with the values of the dependent variable. Hence the lovely name *heteroscedasticity*. :)
+
+This phenomenon has two **consequences**:
+
+1. The estimated standard errors become biased and inconsistent (an estimator is *consistent* if its sampling error tends toward zero as sample size increases).
+2. Due to the "incorrectly" estimated standard errors, the test statistics will not follow t- or F-distributions under $H_0$!! → **partial tests and confidence intervals for the parameters lose their validity**
+
+Whether the model residuals are affected by heteroscedasticity can also be tested using various hypothesis tests. This is the subject of the next two sections.
+
+## 2. The White-test
+
+Our hypothesis test's $H_0$ states that there is **no** heteroscedasticity in the model = the **residuals are homoscedastic**. Technically, the test frames this as: the **squares of the residuals ($\epsilon_i$) are not well explained** by anything (neither the explanatory variables nor their squares).
+
+To test this $H_0$, we create a regression where the dependent variable is the square of the residuals from the original model, and the explanatory variables are the original model’s explanatory variables and their squares.
+
+First, save the residual and the original explanatory variables into a new `data frame`, and also add the squares of the explanatory variables.
+
+```{r}
+table_white_test <- household[,2:8] # originial predictors are in columns 2-8
+
+table_white_test$sq_errors <- household$sq_errors
+
+# adding squared predictors
+sq_predictors <- table_white_test[,1:7]^2
+colnames(sq_predictors) <- paste0("sq_",colnames(table_white_test)[1:7])
+table_white_test <- cbind(table_white_test, sq_predictors)
+
+str(table_white_test)
+```
+
+From this helper table named **table_white_test**, it is easy to run the White test auxiliary (or helper) regression.
+
+```{r}
+helper_reg <- lm(sq_errors ~ ., data = table_white_test)
+summary(helper_reg)
+```
+
+Note that there was no point in including the square of the **Gender** variable, as it is a *dummy*! A variable that only takes 0 or 1 values will still only take 0 or 1 after squaring. Now, all that’s left is to test whether the $R^2$ of the auxiliary regression could be zero in the world beyond the sample. The White test uses an LM-based $\chi^2$ test for this, where the test statistic is simply $\chi^2 = n \times R^2$.
+
+```{r}
+test_stat <- summary(helper_reg)$r.squared * nrow(table_white_test)
+test_stat
+```
+
+Under $H_0$, our test statistic follows a $\chi^2(k)$ distribution, and since $H_1: R^2 > 0$, we calculate the p-value as a right-tailed test. Note that the number of explanatory variables in the auxiliary regression for the residual squares is $k = 13$! That is, we have the 7 original explanatory variables + 6 squares (the household head’s gender is binary, 0 or 1, so squaring it made no sense).
+
+```{r}
+# p-value
+1-pchisq(test_stat,13)
+```
+
+Our p-value is exactly 0: under all common $\alpha$ levels, **$H_0$ is rejected**: consistent with the scatter plot’s result, we can conclude that **our model is heteroscedastic**.
+
+Fortunately, R has a built-in function for the White test too. You need to install and load the **skedastic** package.
+
+
+```{r eval=FALSE}
+install.packages("skedastic")
+library(skedastic) # Szokásos módon ne törődjünk az esetleges Warningokkal! :)
+```
+```{r echo=FALSE}
+library(skedastic)
+```
+
+Using the package's `white` function, you can get the test statistic and p-value for the White test.
+
+```{r}
+white_basic <- white(base_model, interactions = FALSE)
+# test statistic
+white_basic$statistic
+# p-value
+white_basic$p.value
+```
+
+Great! Everything matches what we previously computed! :)
+
+### 2.1. White-test with Interactions
+
+You may have noticed that we set a parameter named `interactions` to `FALSE` in the `white_lm` function. This is about an extended interpretation of the White test: when we say under $H_0$ that the **squares of the residuals ($\epsilon_i$) are not well explained**, we mean that **none of the following** explain them: the explanatory variables, their interactions, or their squares. So, the explanatory variables in the auxiliary (helper) regression include not just the original variables and their squares, but also **all possible interactions between the original explanatory variables**!
+
+But otherwise, everything is the same: the test statistic is $\chi^2 = n \times R^2$, which follows a $\chi^2(k)$ distribution under $H_0$. What’s worth thinking through now is: what will be the value of $k$? Here, $k$ is the number of explanatory variables in the auxiliary regression on the squared residuals. In our case, this consists of: 7 original explanatory variables + 6 squares (excluding the square of the binary gender variable) + all possible interactions, i.e., pairwise combinations: $7 \times 6 / 2$. All in all, that gives $k = 7 + 6 + \frac{7 \times 6}{2} = 34$.
+
+Let's see how the result looks using the `white` function.
+
+```{r}
+white_inter <- white(base_model, interactions = TRUE)
+# test statistic
+white_inter$statistic
+# p-value
+white_inter$p.value
+```
+
+This test also supports $H_1$ at all conventional $\alpha$ levels. That’s not surprising! Think about it: the simpler square-only White test regression has fewer explanatory variables → *higher chance that $R^2$ is zero* → more likely to lean toward $H_0$, compared to when interactions are also included in the auxiliary (helper) regression!
+
+In short, if the square-only White test rejects $H_0$, then the interaction-based White test will definitely reject it too!
+
+## 3. The Breusch-Pagan Test
+
+he Breusch-Pagan (BP) test is essentially the predecessor of the White test. In the null hypothesis $H_0$, we merely state—according to the *definition* of homoscedasticity—that the squares of the residuals ($\epsilon_i$) are not well explained by *any of the original explanatory variables*. That is, no squares or interaction terms are involved here. This is actually the *most $H_0$-friendly* formulation, as it includes the fewest explanatory variables in the auxiliary regression. This gives it the highest likelihood that the $R^2$ of the auxiliary regression will be zero in the out-of-sample world, meaning we accept the null hypothesis of homoscedasticity.
+
+This test is useful if we genuinely suspect which explanatory variables might be causing heteroscedasticity in our model. The test has two versions. The so-called **Koenker correction** version is essentially the White test if the auxiliary (helper) regression had square terms and/or interactions. Here, the test statistic remains $\chi^2 = n \times R^2$, which under $H_0$ follows a $\chi^2(k)$ distribution. This test (and thereby the White tests) is robust to whether the error terms $\epsilon_i$ are normally distributed.
+
+Let’s look at the auxiliary (helper) regression of the test.
+
+```{r}
+helper_reg_BP <- lm(sq_errors ~ NrMems + NrRstrMeals + NrSmokers + NrCoffee +
+                   Gender + HhEd + IncTFt, data = table_white_test)
+summary(helper_reg_BP)
+```
+
+Let’s now calculate the test statistic and p-value “manually” in R! This time the degrees of freedom are straightforward: since we have 7 explanatory variables in the auxiliary regression, $k=7$.
+
+```{r}
+test_stat_BP <- summary(helper_reg_BP)$r.squared * nrow(table_white_test)
+test_stat_BP
+
+# p-value
+1-pchisq(test_stat_BP, 7)
+```
+
+Even though we use fewer explanatory variables in the auxiliary regression, this test also clearly supports $H_1$ at all common $\alpha$ levels: the error term in our model is heteroscedastic.<br>
+Naturally, we also have a built-in function for this test, found in the `lmtest` package.
+
+```{r}
+library(lmtest)
+bptest(base_model, studentize = TRUE) # the parameter 'studentize' turns the Koenker correction on
+```
+Fortunately, both the test statistic and the p-value match the values we manually calculated! :)
+
+Additionally, the BP test has a basic version (without the Koenker correction), where the test statistic is calculated from the $SSR$ (Sum of Squares due to Regression): $\chi^2 = \frac{SSR}{2}$, which also follows a $\chi^2(k)$ distribution under $H_0$. This version of the BP test **strongly assumes normality of the error term**. However, if this condition holds, it gives a more reliable p-value than the Koenker-corrected version.<br>
+Like the corrected version, this can also be computed using the `bptest` function in the `lmtest` package.
+
+```{r}
+bptest(base_model, studentize = FALSE) # the parameter 'studentize' turns the Koenker correction off
+```
+
+Here too, the conclusion is $H_1$ for all common $\alpha$ levels: heteroscedasticity is present in the model. The degrees of freedom are still $k=7$, so the same auxiliary regression underlies the test, only the computation of the test statistic differs.
+
+Let’s now examine whether it made sense to use the basic version of the BP test! Let's investigate whether the error terms can be considered normally distributed! R offers many methods for this, and we already used a chi-squared test-based method in <a href="Chapter12.html" target="_blank">Chapter 12</a>. Now let’s look at a simpler tool: the [Kolmogorov-Smirnov](https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test) test. The null hypothesis $H_0$ of the test is that the variable follows a normal distribution. The interesting aspect is that the test statistic is based on the maximum difference between the empirical frequency distribution and the theoretical frequencies under the normality assumption.
+
+```{r}
+ks.test(base_model$residuals, "pnorm")
+```
+
+The p-value is less than all common $\alpha$ levels, so we clearly reject the null hypothesis of normality: it's better to use the Koenker-corrected version of the BP test. The Kolmogorov-Smirnov test can be used to check the fit to any theoretical distribution by replacing the `pnorm` value. A list of available theoretical distributions and corresponding R code can be found [here](https://www.stat.umn.edu/geyer/old/5101/rlook.html).
+
+In our specific case, we can also inspect the distribution of the residuals with a histogram.
+
+```{r}
+hist(base_model$residuals)
+```
+
+From a visual inspection (eyeball test), it is apparent that the distribution is more *peaked* than a normal distribution! Luckily, the Kolmogorov-Smirnov test did not consider it normal! :)
+
+## 4. Addressing Heteroskedasticity
+
+We now know many methods to detect whether the standard errors of our explanatory variables are unreliable due to heteroscedasticity. Now, let’s see 3 methods to address this!
+
+### 4.1. White's Heteroskedasticity-Consistent (HC) Standard Errors
+
+The idea is simple: if standard errors are distorted by heteroscedasticity, we should calculate them using formulas that still work under heteroscedasticity (in other words: they are *robust* to heteroscedasticity)! These are the so-called White-type or **HCCM-corrected standard errors**.
+
+These corrected standard errors, as well as the t-values and p-values derived from them, can be calculated in R using the `coeftest` function from the `lmtest` package, combined with the `hccm` function from the `car` package via the `vcov` parameter.
+
+```{r}
+library(car)
+
+coeftest(base_model) # these are the basic non-HC standard errors
+
+coeftest(base_model, vcov = hccm(base_model)) # p-values with HC standard errors
+```
+
+The result obtained using `vcov = hccm(base_model)` gives **standard errors that yield t-distributed test statistics under $H_0$ even with heteroscedastic residuals → the tests are “repaired”!**<br>
+Here we are lucky because the correction did not change major conclusions: all explanatory variables remained significant for all common $\alpha$ levels. But for example, the corrected standard error of the **HhEd** variable is about $0.01$ higher than its original value, so its p-value also increased. In other cases, such increases might affect whether a variable is considered significant! **Therefore, in heteroscedastic models, one should only make decisions based on coefficient p-values if they are calculated using corrected standard errors!!!**
+
+### 4.2. Estimating Coefficients with Generalized Least Squares (GLS)
+
+There is also an approach where we estimate the regression coefficients ($\beta$ values) in such a way that the calculated standard errors are inherently corrected for heteroscedasticity. This estimation method is called **Generalized Least Squares (GLS)**.
+
+Here’s how it works. In the OLS case, we look for $\beta$ values that minimize $SSE = \sum_i{(y_i - \hat{y}_i)^2} = \sum_i{(y_i - \sum_j{\beta_j x_j})^2}$. Using matrix notation: $SSE = ||y - X\beta||^2$, where the first column of matrix $X$ contains ones for the intercept, and the other columns contain the explanatory variables.
+
+The formula for the $\beta$ vector minimizing $SSE$ under OLS (see <a href="Chapter14.html" target="_blank">Section 2 of Chapter 14</a>): $$\beta = (X^TX)^{-1}X^Ty$$
+
+This is the official OLS estimate of the $\beta$ values.
+
+The GLS estimation is a version of OLS that yields $\beta$ values whose standard errors are consistent under heteroscedasticity without needing further correction. The formula for the GLS estimate of $\beta$: $$\beta = (X^T\Omega^{-1}X)^{-1}X^T\Omega^{-1}y$$
+
+Here $\Omega$ is a *diagonal* matrix with the squared residuals estimated from the White test's auxiliary regression on its main diagonal; all other elements are 0.
+
+This beautiful $\Omega$-based estimation can be easily implemented in R. The estimates from the White test's auxiliary regression should be placed in the `weights` parameter of the `lm` function.
+
+```{r}
+# Get the elements of the Omega matrix based on the helper regression for the White-test
+# We need to take the log of the target variable to avoid negative numbers for squares
+helper_reg_gls <- lm(log(sq_errors) ~ ., data = table_white_test) 
+elements_of_omega <- exp(fitted(helper_reg_gls)) # when predicting, we need to give the 'log' back with an 'exp'
+
+base_model_gls <- lm(ExpPle ~ NrMems + NrRstrMeals + NrSmokers + NrCoffee +
+                   Gender + HhEd + IncTFt, weights = 1/elements_of_omega, data = household)
+summary(base_model_gls)
+```
+
+It’s worth comparing the coefficients with the plain OLS estimates. The differences are clearly visible. For example, the plain OLS model estimates a significantly higher effect of the gender of the household head (**Gender**) on spending on luxury goods than the GLS model.
+
+```{r}
+summary(base_model)
+```
+
+The $\beta$ values of the GLS model have standard errors that are *inherently* robust to heteroscedasticity!
+
+### 4.3. Applying Non-Linear Model Specifications
+
+If we think back to the very first scatterplot we saw regarding heteroscedasticity, we can easily realize that heteroscedasticity is actually caused by the **long right tail distribution of the outcome variable**! Let’s take another look at the scatterplot alongside the distribution of the outcome variable (**ExpPle**).
+
+```{r}
+ggplot(household, aes(x=ExpPle, y=sq_errors)) + geom_point()
+
+ggplot(household, aes(x=ExpPle)) +geom_histogram()
+```
+
+What exactly is heteroscedasticity referring to here? It means that the OLS regression estimates the higher values of the outcome variable with larger errors than the others! But that’s entirely logical! Because **due to the long right tailed distribution, there are very few individuals with high values of the outcome variable. Naturally, the model makes larger errors in this value range, as it doesn’t have many training points here!** There are hardly any households in the sample spending more than 500,000 HUF per year on pleasure goods. It totally makes sense that the model error is higher here than at lower values of the outcome variable, where the OLS model has many training points!
+
+The long right tailed distribution of the outcome variable can be handled perfectly using a logarithmic transformation.
+
+```{r}
+ggplot(household, aes(x=log(ExpPle))) +geom_histogram()
+```
+
+So let’s see what happens if I include the log-transformed outcome variable in the base model! I will also log-transform income (**IncTFt**), as it is certainly another long right tailed variable. Before doing this, however, I have to *cheat a little*, because I need to remove the zero **IncTFt** and **ExpPle** values from the dataset to make the logarithm interpretable.
+
+```{r}
+hh_positive <- household[household$ExpPle > 0 & household$IncTFt > 0,]
+
+base_model_log <- lm(log(ExpPle) ~ NrMems + NrRstrMeals + NrSmokers + NrCoffee +
+                   Gender + HhEd + log(IncTFt), data = hh_positive)
+summary(base_model_log)
+```
+
+Let’s see how the squared residuals look plotted as a function of the outcome variable in a scatterplot.
+
+```{r}
+hh_positive$sq_errors_log <- base_model_log$residuals^2
+
+ggplot(hh_positive, aes(x=ExpPle, y=sq_errors_log)) + geom_point()
+```
+
+Not bad at all—though now it seems we've pushed things slightly in the other direction: now the errors (in absolute value) are larger in the lower range of the outcome variable compared to the rest. This happens because it’s not only income among the explanatory variables that has a long right tail, but many others too, and we haven’t log-transformed those yet. Unfortunately, we can’t easily do that here, because for example, there are many households in the sample with 0 visits to cafés. We don’t want to filter those out, because that would cause too much data loss.
+
+But let’s see what the interaction-based White test says about the logarithmic model from a heteroscedasticity perspective.
+
+```{r}
+white_inter_log <- white(base_model_log, interactions = TRUE)
+# test statistic
+white_inter_log$statistic
+# p-value
+white_inter_log$p.value
+```
+
+Here too, we side with $H_1$ at all common $\alpha$ levels. But it’s also clear that we’ve managed to improve things a bit compared to the initial state, because the p-value has increased relative to the basic model (i.e., we’ve gotten somewhat closer to $H_0$, which assumes homoscedasticity).
+
+```{r}
+white_inter$p.value
+```

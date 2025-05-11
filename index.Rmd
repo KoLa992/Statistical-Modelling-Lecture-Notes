@@ -7,7 +7,7 @@ title: |
   Data Science in Business BSc<br><br>
   </center> 
 output: html_document
-date: '02/05/2025'
+date: '11/05/2025'
 ---
 
 ```{r setup, include=FALSE}
@@ -48,3 +48,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Chapter 17 - <a href="Chapter17.html" target="_blank">Non-Linear Model Specifications</a>
 
+## Chapter 18 - <a href="Chapter18.html" target="_blank">Multicollinearity and Principal Component Analysis</a>
+
+## Chapter 19 - <a href="Chapter19.html" target="_blank">Heteroskedasticity</a>
+
+## Chapter 20 - Binomial Logistric Regression
+
+## Chapter 21 - Multinomial Logistric Regression
