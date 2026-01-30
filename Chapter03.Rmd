@@ -1,7 +1,7 @@
 ---
 title: "Probability Distributions"
 author: "László Kovács"
-date: "23/02/2025"
+date: "30/01/2026"
 output:
   html_document:
     toc: true
@@ -19,38 +19,108 @@ text-align: justify}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## 1. The European Social Survey (ESS) 2024 Data
 
+The <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/ess_hun_2024.xlsx" target="_blank">ess_hun_2024.xlsx</a> file contains a dataset with the responses of 2048 Hungarian participants to 29 questions (plus an id column) from the 2024 European Social Survey (ESS2024). The survey was taken at the first months (January-March) of 2024, so the rise of the TISZA party is not yet covered by this survey. The raw database is available on <a href="https://ess.sikt.no/en/series/321b06ad-1b98-4b7d-93ad-ca8a24e8788a" target="_blank">this link</a> after a free registration.
 
-## 1. Normal Distribution and its Density Function
+If an empty value is found in any column, it means that the respondent in that row did not answer the question. The respondents in the database can be considered a **random sample** drawn **from** the entire **Hungarian population** aged 18 and over. Description of the 29+1 variables in the dataset is as follows:
+
+- **idno**: Respondent's identification number
+- **Age**: Age of respondent at the time of the survey
+- **Sex**: Biological sex of the respondent
+- **PoliticalNews**: News about politics and current affairs, watching, reading or listening, in minutes
+- **DailyNetUse**: Internet use, how much time on typical day, in minutes
+- **TrustPeople**: Most people can be trusted (0: No, 10: Yes)
+- **InterestPolitics**: How interested in politics (1: Very interested, 4: Not at all interested)
+- **TrustHunParlament**: Trust in Hungary's parliament (0: No, 10: Yes)
+- **TrustEuParlament**: Trust in the European Parliament (0: No, 10: Yes)
+- **PartyVoted2022**: Party voted for in last national election (2022)
+- **PublicDemonstration**: Taken part in public demonstration last 12 months
+- **PartyPreference**: Which party feel closest to
+- **FreeHomosex**: Gays and lesbians free to live life as they wish
+- **AshamedHomosexInFamily**: Ashamed if close family member gay or lesbian
+- **ObedienceImportant**: Obedience and respect for authority most important virtues children should learn
+- **FeelHappy**: How happy are you (0: unhappy, 10: happy)
+- **ClimateChangeCause**: Climate change caused by natural processes, human activity
+- **ClimateChangeWorry**: How worried about climate change
+- **Huxit**: Would vote for Hungary to remain member of European Union or leave
+- **AlcoholWeekday**: Grams alcohol, last time drinking on a weekday
+- **AlcoholWeekend**: Grams alcohol, last time drinking on a weekend day
+- **Height**: Height of respondent (cm)
+- **Weight**: Weight of respondent (kg)
+- **EqualPayGoodEconomy**: Bad or good for economy in if women and men receive equal pay for doing the same work (0: bad, 6: good)
+- **EqualManagGoodBusiness**: Bad or good for economy in if equal numbers of women and men are in higher management positions (0: bad, 6: good)
+- **Education**: Highest level of education
+- **YearsOfEducation**: Years of full-time education completed
+- **WeeklyWorkHours**: Total hours normally worked per week
+- **Region**: Region the respondent is living in
+- **vacc19**: Respondent received at least one dose of a vaccine against coronavirus
+
+Let's read the Excel file into an R data frame with the `readxl` package! I don't include the `readxl` package in my R environment, as I only need one function from it and no more. So, I use the `read_excel` function with the `readxl::` prefic instead of `library(readxl)`.
+
+```{r}
+ess <- readxl::read_excel("ess_hun_2024.xlsx")
+str(ess)
+```
+Great, we have all the $n=2048$ observations and all the $p=30$ variables! :)
+
+This dataset of the ESS gives room to many interesting analyses, but first We'll examine the obesity of the Hungarian population. <a href="https://iris.who.int/bitstream/handle/10665/43190/9241593024_eng.pdf" target="_blank">According to the WHO</a>, a good variable to describe the obesity of a population is the Body Mass Index (BMI). BMI is defined as the body mass divided by the square of the body height, and is expressed in units of kg/m2. Major adult BMI classifications by WHO are underweight (under 18.5 kg/m2), normal weight (18.5 to 24.9), overweight (25 to 29.9), and obese (30 or more). BMIs under 20 and over 25 have been associated with higher all-cause mortality, with the risk increasing with distance from the 20–25 range.
+
+So, let's **calculate the BMI** for the 2048 Hungarian people observed in this ESS data. Be careful that the **Height** variable is given in cm, so we need to convert it into m before calculating BMI. **Weight** is given in kg, so we have no such issues in this variable.
+
+```{r}
+ess$BMI <- ess$Weight/(ess$Height/100)^2
+head(ess$BMI)
+```
+
+Great, looks like the first 6 BMIs that we got are valid BMI values! But let's check if we have any missing values in this new variable due to having people with missing height and/or weight data in the sample. We can use a combination of `is.na` and `sum` function for this. The  `is.na` function returns a `logical vector` indicating if an element is missing with `TRUE` value. If we provide a `logical vector` for the `sum` function, it converts it to `numeric` according to `TRUE = 1` and `FALSE = 0`, and sums up these numbers, so it returns the number of `TRUE = 1` values, which is the number of missing BMIs in our case.
+
+```{r}
+sum(is.na(ess$BMI))
+```
+Ok, so We have 39 missing BMI values. This is only $39/2048 = 0.019 = 1.9\%$ of all observations. These are not many, so let's omit these in a new, restricted data frame.
+
+```{r}
+ess_small <- ess[!is.na(ess$BMI),c("idno", "BMI")]
+str(ess_small)
+```
+Great, since $2048-39=2009$, it seems that the machine spirit did our bidding. :)
+
+We can see that this **BMI is** a comfy little statistical variable, as it is **on ratio scale**: all 4 mathematical operations are interpretable here. Let's analyse it's empirical and theoretical distribution!
+
+## 2. Normal Distribution and its Importance
  
-Let’s examine the data in the table titled <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/TSLA.xlsx\" target="_blank">TSLA.xlsx</a>, which shows the **daily closing price changes of TESLA stocks in dollars** ($) from May 2019 to May 2020.
+First, we need to introduce a new but already known concpet: the **empirical probability distribution**. This is basically the (relative) **frequency distribution for a numerical variable**. This is the **distribution that we observe** in our dataset.
 
-Excel tables, if the first value of our data table starts in the *A1* cell and we have only one worksheet, can easily be read into a data frame using the `readxl` package’s `read_excel` function. We did this with the *BP_Flats.xlsx* table in the previous chapter as well.
-
-```{r}
-library(readxl)
-
-Tesla <- read_excel("TSLA.xlsx")
-
-str(Tesla)
-```
-
-We can see that we have two columns: the date and the price change of the stock on the given day compared to the previous day’s closing price. So, on 07/05/2019, a Tesla stock was worth $8.3\$$ less by the end of the day than it was worth on 06/05/2019. However, on 13th May, it was worth $12.5\$$ less than the previous day of 12th May. Based on the results of the `str` function, we have $N=250$ days of such data, which roughly matches the number of trading days in a year.
-
-Now, based on the first five observed days, I wouldn’t want to be in Elon Musk’s place, as the stock is showing some pretty big losses. But let’s see what the distribution shown in the histogram tells us on how this miracle company performed over the full 1-year period under our review!<br>
-Let's **draw the histogram** of the Tesla price changes **such that relative frequencies are on the $y$ axis**! This is done by setting the `freq=FALSE` parameter in the `hist` function.
+We can see that the BMI variable is continuous as it can take lots of unique values, namely 889 different values.
 
 ```{r}
-hist(Tesla$TESLA, freq = FALSE)
+length(unique(ess_small$BMI))
 ```
 
-Ok, we can see that most days have a price change close to $0$ and the larger and smaller price changes are rarer and rarer...so the **histogram shows a symmetric, normal distribution, although a bit pointy** (kurtosis is positive).
+This suggests based on what we learned on Fundamentals of Statistics that the BMI's **empirical distribution is best shown by a histogram**. Let's create one with `ggplot`!
 
-Now, let's imagine what happens when we **connect the columns of the histogram with a continuous line**...We don't need much fantasy to see that connecting the columns **results in a function similar to the one just below**:
+```{r}
+library(ggplot2)
+ggplot(ess_small, aes(x=BMI)) + geom_histogram()
+```
+
+We can nicely observe that most people (roughly 200) in this survey have a BMI around 27, which is in the overweight category according to WHO, and around this mode of 27, we have smaller and larger BMIs with proportionally decreasing frequencies. Extremely small and large values have only a few observations. This is an almost perfectly symmetrical/normal distribution: most observations are concentrated in the middle of the value set and there are fewer and fewer observations in both edges or *tails* of the value set.
+
+For our purposes, it'll be beneficial to see our histograms with relative frequencies on the `y` axis. We can create a histogram like this with `ggplot` via the `aes(y = after_stat(density))` setting in the `geom_histogram` function.
+
+```{r}
+ggplot(ess_small, aes(x=BMI)) +
+  geom_histogram(aes(y = after_stat(density)))
+```
+
+Now, what we have received is exactly the same histogram as before, just the `y` axis is in the range of $(0,1)$. Actually what we see in the vertical axis is not precisely the relative frequency of the bins in the `x` axis but a value very close to it. We'll see the differences in just a bit. But **for illustrative purposes, we can treat these `y` values like relative frequencies**: e.g. most people (about $12\%$) in the sample have a BMI value of roughly 27.
+
+Now, looking at this histogram and seeing it's nice, bell-shaped form, we don't need much fantasy to see that connecting the columns of the histogram with a continuous line **results in a function similar to the one just below**:
 
 ```{r echo=FALSE}
-mu = mean(Tesla$TESLA)
-szigma = sd(Tesla$TESLA)
+mu = mean(ess_small$BMI)
+szigma = sd(ess_small$BMI)
 
 x <- seq(mu-3*szigma, mu+3*szigma)
 y <- dnorm(x, mean = mu, sd = szigma)
@@ -61,17 +131,18 @@ library(ggplot2)
 ggplot(DFRajz, aes(x=x, y=y)) + geom_line(linewidth=1)
 ```
 
-Now, this beauty right here is the **density function of the normal distribution**. Or, to be more precise this is the **density function of a normal distribution with a mean of $\mu=1.8\$$ and the standard deviation of $\sigma=27.19\$$ since this is the mean and standard deviation of the variable containing the Tesla price changes**, based on which we've drawn this density function:
+Now, this beauty right here is a **nice, $y=f(x)$ style function** that we can use to describe the shape of our histogram with a mathematical formula. A **function that can describe the shape of the relative frequency distribution shown on a histogram is called a density function**. When we want to use a density function to describe the shape of our histogram, then we want to **use a theoretical probability distribution to describe/model our statistical variable**.<br>
+In this case, **when we want use a bell-curved shape to describe the empirical distribution of our variable, then we want to use a normal distribution to model/describe our BMI variable**. And the bell-shaped density function we see is the **density function of the normal distribution**.
+
+To be more precise, the bell curve we've seen above is the **density function of a normal distribution with a mean of $\mu=26.27\$$ and a standard deviation of $\sigma=4.03\$$ since this is the mean and standard deviation of the variable containing the BMIs**, based on which we've drawn the bell-shaped density function above.
 
 ```{r}
-mu = mean(Tesla$TESLA)
-sigma = sd(Tesla$TESLA)
-
-mu
-sigma
+mu = mean(ess_small$BMI)
+sigma = sd(ess_small$BMI)
+c(mu, sigma)
 ```
 
-So, to what we can say is that we see the density function of a $N(1.8,27.19)$ distribution. Therefore, the **general notation** for normal distributions is $N(\mu, \sigma)$. And with the notation $Y_i \sim N(1.8,27.19)$ we say that our $Y_i$ observations (now the Tesla price changes) follow a $N(1.8,27.19)$ distribution.
+So, to what we can say is that we see the density function of a $N(26.27,4.03)$ distribution. Therefore, the **general notation** for normal distributions is $N(\mu, \sigma)$. And with the notation $y_i \sim N(26.27,4.03)$ we say that our $y_i$ observations (now the BMIs of the respondents) follow a $N(26.27,4.03)$ distribution.
 
 Why is that? because, the exact shape of the density function for the normal distribution depends on the mean and standard deviation of the data that we want to fit this density function on.
 
@@ -86,209 +157,368 @@ The $f(x)$ formula for the density function with a given $\mu$ and $\sigma$ is t
 
 Don't get PTSD from Calculus classes: we won't use this formula directly. It's just good to see one time what kind of formula can produce this beautiful bell shape of the density function! :)
 
-### 1.1. Using the Desnity Function
+### 2.1. Histogram vs Probability Density Function
 
-Ok, but "*What have the Romans ever done for us?*". So, we can rightly ask the question: what is this density function good for? First and foremost, if we substitute an $x$ number to the $f(x)$ formula of the density function, we get **the probability for a random number drawn from the variable $Y$ being equal with $x$.** With mathematical notations, this means $f(x)=P(Y_i=x)$.<br>
-Ok, technically I am not very accurate here, since the probability of the $Y_i=x$ event would be practically $0$. Since a variable with normal distribution can take so many unique values that the probability of taking just one of these values is really-really small. Hence, the density function actually shows the probability of a random $Y_i$ element being in the small area of $x$ with a radius of $\epsilon$. So, the correct formula would be $P(x \leq Y_i \leq x + \epsilon)$.<br>
-But, for **our purposes it's perfectly fine if we think of the $f(x)$ value as the probability of $x$'s occurrence in our $Y$ variable: $P(Y_i=x)$.**
+Ok, but "*What have the Romans ever done for us?*". So, we can rightly ask the question: what is this density function good for? First and foremost, if we substitute an $x$ number to the $f(x)$ formula of the density function, we get **the probability for a random number drawn from the variable $Y$ being equal with $x$.** With mathematical notations, this means $f(x)=P(y_i=x)$.<br>
+Ok, technically I am not very accurate here, since the probability of the $y_i=x$ event would be practically $0$. Since a variable with normal distribution can take so many unique values that the probability of taking just one of these values is really-really small. The bell curve of the normal density function limits to $0$ in $x=\pm \infty$, but it never actually reaches $0$, so we have an infinite amount of $x$ values to take with some positive probability. Hence, the density function actually shows the probability of a random $y_i$ element being in the small area of $x$ with a radius of $\epsilon$. So, the correct formula would be $P(x \leq Y_i \leq x + \epsilon)$.<br>
+But, for **our purposes it's perfectly fine if we think of the $f(x)$ value as the probability of $x$'s occurrence in our $Y$ variable: $P(y_i=x)$.**
 
-So, if we want to know the probability of a random Tesla price change being exactly $2.76\$$ (the price change in 23th May 2019), then we just need to substitute this $x=2.76$ value into the density function formula of the $N(1.8,27.19)$ distribution: $$P(Y_i=2.76)=f(2.76)=\frac{1}{27.19\sqrt{2\pi}}e^{-\frac{1}{2}\left(\frac{2.76-1.8}{27.19}\right)^2}$$
+So, if we want to know the probability of a random Hungarian person's BMI being exactly $20.6$ (the BMI of the 1st person in the data frame), then we just need to substitute this $x=20.6$ value into the density function formula of the $N(26.27,4.03)$ distribution: $$P(y_i=20.6)=f(20.6)=\frac{1}{4.03\sqrt{2\pi}}e^{-\frac{1}{2}\left(\frac{20.6-26.27}{4.03}\right)^2}$$
 
-Since based on the observed trading data the mean of price changes is $\mu=1.8\$$ and the standard deviation is $\sigma=27.19\$$.
+Since based on the observed trading data the mean of price changes is $\mu=26.27\$$ and the standard deviation is $\sigma=4.03\$$.
 
 We can apply the `dnorm` function in R to calculate this substitution into the $f(x)$ density function:
 
 ```{r}
-mu = mean(Tesla$TESLA)
-sigma = sd(Tesla$TESLA)
+mu = mean(ess_small$BMI)
+sigma = sd(ess_small$BMI)
 
-dnorm(2.76, mean = mu, sd = sigma)
+dnorm(20.6, mean = mu, sd = sigma)
 ```
 
-Perfect! So, the probability of a $2.76\$$ daily gain in Tesla stocks is $1.4\%$.
+Perfect! So, the probability of a person having a BMI of $20.6$ is $3.7\%$.
 
-At this point, let's **think back how the shape of the density function reacted to increasing he standard deviation: it got flat!** Now, this reaction is absolutely understandable since **if the standard deviation is increasing**, then the **probability of extremely high and low $Y_i$ values is also increasing**! And **if $f(x)=P(Y_i=x)$, then the function will "get fat" at the two ends of the $x$ axis**, so the **shape of the function gets to flatten**.
+At this point, let's **think back how the shape of the density function reacted to increasing he standard deviation: it got flat!** Now, this reaction is absolutely understandable since **if the standard deviation is increasing**, then the **probability of extremely high and low $y_i$ values is also increasing**! And **if $f(x)=P(y_i=x)$, then the function will "get fat" at the two ends of the $x$ axis**, so the **shape of the function gets to flatten**.
 
-### 1.2. Integral of the Density Function
+If we think about it, **we can get this probability empirically**, without using the density function, just **by looking at the histogram with relative frequencies**.
 
-We can see from the result in the previous section that the occurrence of specific values in a normal distribution is not very high, due to what we discussed before: the occurrence of a specific value in a variable with lots of unique values is very small.<br>
-Therefore, we usually ask from our distribution function that **what is the probability of a random $Y_i$ being smaller than $x$?** So, we usually look for the $P(Y_i < x)$ probabilities.<br>
+```{r}
+ggplot(ess_small, aes(x=BMI)) +
+  geom_histogram(aes(y = after_stat(density)))
+```
+
+Since we can see that the relative frequency of the histogram bin that includes $20.6$ is just around roughly $0.04=4\%$, just like the result of the $f(20.6)$ density function value. We can get the exact value by using the `binnedCounts` function from the `RcmdrMisc` package that produces the binned frequency table behind a histogram with a given number of bins with equal length. The number of bins is given in the `breaks` parameter of the function. Since `ggplot` works with 30 bins of equal length by default, let's set this here as well.
+
+```{r}
+RcmdrMisc::binnedCounts(ess_small$BMI, breaks = 30)
+```
+
+The exact empirical probability is $83/2009=0.0413=4.13\%$.
+
+So the **main philosophical difference** here is that **empirical distribution with histogram** gets the $P(Y=20.6)$ probability by just **concentrating on the observed data** (number of people with BMI around $20.6$ divided with total number of observed people), **while the theoretical distribution** gets the $P(Y=20.6)$ probability by **using a mathematical formula, the $f(20.6)$ density function**.
+
+### 2.2. Cumulative Relative Frequencies vs Cumulative Distribition Function
+
+We can see from the result in the previous 2.1. Section that the occurrence of specific values in a normal distribution is not very high, due to what we discussed before: the occurrence of a specific value in a variable with lots of unique values is very small, i.e. BMI is a **continuous variable**.<br>
+Therefore, we usually ask from our theoretical distribution that **what is the probability of a random $y_i$ being smaller than $x$?** So, we usually look for the $P(y_i < x)$ probabilities.<br>
 This is nothing more than the **area of the density function below $x$.** So, we can calculate this with the $F(x)=\int_{-\infty}^x{f(x)}dx$ improper integral. This is called as the **cumulative distribution function**: $F(x)$.
 
 If we didn't want to manually substitute $x$ into the formula of the $f(x)$ density function, it's sure as hell, we don't want to take the integral of it!<br>
-Luckily, the machine spirit of R has blessed us with the `pnorm` function that will calculate this integral and the $P(Y_i < x)$ probability for us!
+Luckily, the machine spirit of R has blessed us with the `pnorm` function that will calculate this integral and the $P(y_i < x)$ probability for us!
 
-Let's see what is the probability of getting a daily *loss* greater than $82\$$ with a Tesla stock. So, we actually look for the $P(Y_i<-82)$ probability.
-
-```{r}
-pnorm(-82, mean = mu, sd = sigma)
-```
-
-Thankfully, the probability of such great losses is just $0.1\%$, so we can breathe a bit easier. :)
-
-Of course, if we can calculate the probability of being smaller than $x$, then we can also calculate the probability of being greater than $x$, since **being above $x$ is the complementary event of being below $x$,** so we the following formula is valid: $P(Y_i>x)=1-P(Y_i<x)$. We simply calculate the **area of the density function that is above $x$.**
-
-So, let's see what's the probability of gaining more than $20\$$ with a Tesla stock on a random trading day! The whole thing can be handled by the `pnorm` function again:
+Let's see what is the probability of getting a BMI smaller than  $18.5$ (the threshold for being underweight) in the Hungarian population. So, we actually look for the $P(y_i<18.5)$ probability.
 
 ```{r}
-1 - pnorm(20, mean = mu, sd = sigma)
+pnorm(18.5, mean = mu, sd = sigma)
 ```
 
-Oh wow, these gains above $20\$$ have roughly $25\%$ of occurring. Not bad!
+Thankfully, the probability of being so slim that it is a health hazard is just $2.7\%$, so we can breathe a bit easier. :)
 
-If we want to know the probability of a randomly drawn $Y_i$ being between two numbers $x$ and $y$, then we simply need to **subtract the probability of being below the smaller value from the probability of being below the higher value**. So, if $x>y$, then $P(y<Y_i<x)=P(Y_i<x)-P(Y_i<y)$, but if $x<y$, then $P(x<Y_i<y)=P(Y_i<y)-P(Y_i<x)$ is the way to calculate. So, the `pnorm` function still solves our problems here. On the plot side, we take the **area between $x$ and $y$ under the density function**.
+Of course, if we can calculate the probability of being smaller than $x$, then we can also calculate the probability of being greater than $x$, since **being above $x$ is the complementary event of being below $x$,** so we the following formula is valid: $P(y_i>x)=1-P(y_i<x)$. We simply calculate the **area of the density function that is above $x$.**
 
-If I want to see the probability of a loss between $47\$$ and $82\$$ with a Tesla stock. So, we just take the probability of being smaller than $-82$ and we subtract it from the probability of being smaller than $-47$:
+So, let's see what's the probability of a random Hungarian being obese, i.e. having a BMI of more than 30! The whole thing can be handled by the `pnorm` function again:
 
 ```{r}
-pnorm(-47, mean = mu, sd = sigma) - pnorm(-82, mean = mu, sd = sigma)
+1 - pnorm(30, mean = mu, sd = sigma)
 ```
 
-Perfect, so the probability of a loss between $47\$$ and $82\$$ with a Tesla stock is $3.5\%$.
+Oh wow, these obese people have a probability of $17.7\%$ for occurring. It's a bit embarrassing!
 
-**To sum up**, we can calculate the following probabilities with the help of a $f(x)$ density function, where $Y_i$ is a random element of our currently examined $Y$ variable, plus $x$ and $y$ are given numbers:
+If we want to know the probability of a randomly drawn $y_i$ being between two numbers $a$ and $b$, then we simply need to **subtract the probability of being below the smaller value from the probability of being below the higher value**. So, if $a>b$, then $P(b<y_i<a)=P(y_i<a)-P(y_i<b)$, but if $a<b$, then $P(a<y_i<b)=P(y_i<b)-P(Y_i<a)$ is the way to calculate. So, the `pnorm` function still solves our problems here. On the plot side, we take the **area between $a$ and $b$ under the density function**.
 
-- being exactly $x$: $P(Y_i=x)=f(x)$
-- being below $x$: $P(Y_i<x)=\int_{-\infty}^x{f(x)}dx$
-- being above $x$: $P(Y_i>x)=1-P(Y_i<x)$
-- being between $x$ and $y$: $P(y<Y_i<x)=P(Y_i<x)-P(Y_i<y)$
+If I want to see the probability of a BMI in the "normal range", that is a BMI between $18.5$ and $24.9$ in the Hungarian population, we just take the probability of being smaller than $18.5$ and we subtract it from the probability of being smaller than $24.9$:
+
+```{r}
+pnorm(24.9, mean = mu, sd = sigma) - pnorm(18.5, mean = mu, sd = sigma)
+```
+
+Perfect, so the probability of a normal BMI in Hungary is $34\%$.
+
+**To sum up**, we can calculate the following probabilities with the help of a $f(x)$ density function, where $y_i$ is a random observation of our currently examined $Y$ variable, plus $x$ and $y$ are given numbers:
+
+- being exactly $x$: $P(y_i=x)=f(x)$
+- being below $x$: $P(y_i<x)=\int_{-\infty}^x{f(x)}dx$
+- being above $x$: $P(y_i>x)=1-P(y_i<x)$
+- being between $x$ and $y$: $P(y<y_i<x)=P(y_i<x)-P(y_i<y)$
 
 All of these calculations and their graphical representations can be reviewed in the interactive plot below.<br>
 A *small comment*: in the formulas for the probabilities of the *below, above and between* events I didn't apply the $=$ sign since due to the great number of unique values in the variable, the probability of a specific value appearing is essentially $0$, so if we examine the *probability of being in a given range, including and excluding a given point does not really matter*.
 
 <iframe src ="https://kola992.shinyapps.io/normalprobabilities/" height=600px width=800px data-external="1" />
 
-### 1.3. Probability vs Relative Frequency
+Of course, **these probabilities can again be obtained empirically as well, using the observed dataset alone**. Precisely, using **cumulative relative frequencies**.
 
-All right, now we can use the density function of the normal distribution. But **what's the point?** I mean, ok we calculate from the density function that the probability of a loss between $47\$$ and $82\$$ with Tesla is $3.5\%$.
+- the empirical probability of a BMI below $18.5$ is the number of observations being smaller than $18.5$ divided by the number of total observations, i.e. the **cumulative relative frequency for $18.5 \rightarrow CRF(18.5)$**
+- the empirical probability of a BMI above $30$ is just $1-CRF(30)$
+- the empirical probability of a BMI being between $18.5$ and $24.9$ is simply $CRF(24.9)-CRF(18.5)$
 
-```{r}
-pnorm(-47, mean = mu, sd = sigma) - pnorm(-82, mean = mu, sd = sigma)
-```
-
-But this is something that we can also know from **the relative frequency of these elements in the data frame, right?** If we calculate the frequency of the elements between $-47\$$ and $-82\$$, and divide the result with the total number of observations, which is $n=250$, then we get the proportion or relative frequency of the losses between $47\$$ and $82\$$:
-
-```{r warning=FALSE}
-Tesla_Filter <- Tesla[(Tesla$TESLA > -82) & (Tesla$TESLA < -47),]
-
-nrow(Tesla_Filter) / nrow(Tesla)
-```
-
-Oh, well this relative frequency is just $2.0\%$. But the normal distribution suggests that the probability of these losses is $3.5\%$. Now, who is in the right? What's the difference?
-
-Now, the difference comes from the fact that **with the relative frequency of $2.0\%$ we only consider the observed data only, so the result only comes from the observed statistical SAMPLE!!** The $2.0\%$ only means that **only 2% of our observed trading days had losses between 47-82 dollars!!**
-
-On the other hand, the $3.5\%$ is the *theoretical probability* calculated from the density function of the normal distribution, with mean and standard deviation fitted on the data. This a theoretical probability since **the $f(x)$ density function** (being a continuous function) **assigns positive occurrence probabilities to $x$ values that are not yet included in the observed sample!!** This means, that **when calculating probabilities the density function considers values that are OUTSIDE of the sample! In other words, it can "see" values that haven't occurred yet!** That is why we call the density function's $f(x)$ values *PROBABILITIES* and the proportions are just called relative frequencies.
-
-*Nota bene*: To rightfully call the density function's $f(x)$ values probabilities, it is required that the density function more or less fits to the observed histogram. As I've suggested at the start of this section, our Tesla stock price changes have a too pointy frequency distribution for the normal density function to fit completely.
-
-We can create a plot to see how well the theoretical normal distribution with the given $\mu$ mean and $\sigma$ standard deviation fits to the observed histogram.<br>
-We can create a simple histogram with `ggplot` that shows the relative frequencies instead of the absolute frequencies with the parameter `aes(y = after_stat(density))` setting in the `geom_histogram` function:
+All of these empirical probabilities can be calculated using the `mean` function. Since if I take the mean of a logical expression in R like `ess_small$BMI < 18.5`, it is evaluated as a `logical vector` with `TRUE` values where the logical condition is met. Just like the `sum` function, the `mean` function evaluates a `logical vector` with `TRUE = 1` and `FALSE = 0` numerical encoding. Hence, the result is the proportion of observations meeting our logical condition. Which is exactly the cumulative relative frequency we are looking for.
 
 ```{r}
-library(ggplot2)
-
-ggplot(Tesla, aes(x=TESLA)) +
-  geom_histogram(aes(y = after_stat(density)))
+mean(ess_small$BMI < 18.5)
+1 - mean(ess_small$BMI < 30)
+mean(ess_small$BMI < 24.9) - mean(ess_small$BMI < 18.5)
 ```
 
-Then, we can just add another layer on the plot with the `stat_function` function, where we specify in the parameter settings that we want to add a normal density function (`fun = dnorm`) with $\mu=1.8\$$ and $\sigma=27.19\$$ (`args = list(mean = 80, sd = 20)`). Plus we can also set the color of the function as red for example (`col = 'red'`):
+As we can see, we have received somewhat similar empirical probabilities we did with the theoretical normal distribution.
+
+### 2.3. Benefits of the Theoretical Distribution
+
+All right, now we can use the normal distribution to obtain probabilities of some events occurring in the BMI variable. But **what's the point?** I mean, we could just see that we can **obtain these probability calculated from the normal distribution using the observed data alone** (empirically), just using the elementary school formula of number of favorable observations divided with number of total observations. So, truly, **what is the benefit of using a normal distribution that fits our BMI data instead of just using the BMI data alone??**
+
+Let's examine a specific probability. Based on the relative frequencies (so just on our observed Hungarian people) we would say that the probability of encountering an obese Hungarian (BMI > 30) is $16.7\%$.
+
+```{r}
+1 - mean(ess_small$BMI < 30)
+```
+
+On the other hand, the normal distribution suggests that the probability of these high BMI values is 1 %.point higher,  $17.7\%$. Now, who is in the right? What's the difference?
+
+```{r}
+1 - pnorm(30, mean = mu, sd = sigma)
+```
+
+Now, the difference comes from the fact that **with the relative frequency of $16.7\%$ we only consider the observed data only, so the result only comes from the observed statistical SAMPLE!!** The $16.7\%$ only means that **only 16.7% of our observed Hungarians have a BMI higher than 30!!**
+
+On the other hand, the $17.7\%$ is the *theoretical probability* calculated from the density function of the normal distribution, with mean and standard deviation fitted on the data. This a theoretical probability since **the $f(x)$ density function** (being a continuous function) **assigns positive occurrence probabilities to $x$ values that are not yet included in the observed sample!!** This means, that **when calculating probabilities the density function considers values that are OUTSIDE of the sample! In other words, it can "see" values that haven't occurred yet!** That is why we call the density function's $f(x)$ values *PROBABILITIES* and the proportions, or *empirical* probabilities are usually just called relative frequencies.
+
+*Nota bene*: To rightfully call the density function's $f(x)$ values probabilities, it is required that the density function more or less fits to the observed histogram. We can check this quite easy visually. We can create a plot to see how well the theoretical normal distribution with the given $\mu$ mean and $\sigma$ standard deviation fits to the observed histogram.
+
+We can just add another layer on the histogram plot with the `stat_function` function, where we specify in the parameter settings that we want to add a normal density function (`fun = dnorm`) with $\mu=26.27$ and $\sigma=4.03$ (`args = list(mean = 26.27, sd = 4.03)`). Plus we can also set the color of the density function as red for example (`col = 'red'`), and make the line of the density function a bit more thick (`linewidth = 1`).
 
 ```{r warning=FALSE}
-mu = mean(Tesla$TESLA)
-sigma = sd(Tesla$TESLA)
+mu = mean(ess_small$BMI)
+sigma = sd(ess_small$BMI)
 
-ggplot(Tesla, aes(x=TESLA)) +
+ggplot(ess_small, aes(x=BMI)) +
   geom_histogram(aes(y = after_stat(density))) +
   stat_function(
                 fun = dnorm, 
                 args = list(mean = mu, sd = sigma),
-                col = 'red')
+                col = 'red',
+                linewidth = 1)
 ```
 
-All right, we can see that the observed histogram is a bit too pointy (has positive kurtosis) compared to the density function of the classic normal distribution.
+All right, we can see that the observed histogram is a bit too pointy (has positive kurtosis) compared to the density function of the classic normal distribution. So, we have more people in around the most frequent values of 26-27 (which is also where the mean is due to the symmetry of the distribution) than we would expect based on the fitted normal distribution. But otherwise, the density function fits on the observed histogram quite nicely.
 
-In the following chapters, we'll see a more exact method than staring at graphs or measures of shape to test whether a theoretical distribution fits to an observed histogram. :)
+During the course, we'll see a more exact method than staring at graphs to test whether a theoretical distribution fits to an observed histogram. :)
 
-### 1.4. Central Limit Theorem (CLT)
+*Nota bene*: I've mentioned in the beginning of this Section 2 that the `aes(y = after_stat(density))` setting in the `geom_histogram` function does not put the relative frequencies exactly on the `y` axis. It **rescales them such that the area under the rectangles of the histogram would sum up to $1$**. It does this because the are under a probability density function (like the normal distribution's bell curve) also sums up to $1$. So, this way we can better observe whether a theoretical distribution's density function fits on the observed histogram. That's why this setting is called `after_stat(density)` in `ggplot`.
 
-As we **discussed in the Fundamentals of Statistics course**, it is no surprise that these price changes of financial instruments tend to follow something close to the normal distribution. There is a theory lurking behind the shadows, the **Central Limit Theorem (CLT)**. But we **revise this theorem here**, since it's that important. :)
-
-This theorem states that **if the $Y_i$ elements of a variable are created as a sum of random effects, than the $Y$ variable itself is normally distributed**.<br>
-If we think about it, **this is probably the case for the daily price changes**: the **exact price change of a day, the $Y_i$ element, is a sum of the random economic events for that trading day**. Like at the start of the day, Tesla announces that it couldn't open a new factory in China due to not complying with some special regulation there, so the stock prices go down (*not stonks*). But around midday Elon Musk tweets that this fact won't influence meeting their car production plans, so the price of Tesla stocks go up (*stonks*). But at the end of day, Musk tweets that he's pulling some capital out of Tesla to cover some legal costs, so stock prices go down again (*not stonks*), and finally **Tesla stocks have a price change of like $Y_i=-8.28$ dollars as a sum of these random effects that happened during the day**. Since it is reasonable to assume that every trading day looks like something similar (random economic events have some effect to Tesla stock prices and at the end of the they, they sum up), **all the $Y_i$s can be considered as a sum of random effects**. Therefore, **according to the CLT, the $Y$ variable needs to have a normal or symmetric distribution**.
-
-We can see on the histograms at the end of Section 1.3. that **the CLT works to some extent on the price changes of these investment funds, but not perfectly due to the excess kurtosis**. De **több egyéb esetben elég szépen érvényesül**: Pl. egy termelőgép által a nap végén gyártott selejtes termékek száma esetén. Az adott napi selejtszám értéke (ha nincs szabotőr a gyárban) az adott napi véletlen hatások összegződése állítja elő. Így, ha több nap nap végi selejtszámait vizsgáljuk, akkor azok hisztogramja csudiszép normális eloszlást kell, hogy kirajzoljon.
-
-### 1.5. Quantile Function
-
-We can also *ask backwards* from our dear density function. So, they are not only capable of calculating probabilities of given events (like losses greater than 80 dollars with Tesla), but they also can tell us values for given probabilities via their **inverse values**. So I can ask *what is the amount where we have only a $5\%$ probability to experience greater losses?*<br>
-So, our task here is to find $x$ such that $P(Y_i<x)=0.05$ and this $x$ is called the **5th quantile of the distribution**, which can be calculated as the **inverse value of the cumulative distribution function**: $F^{-1}(x)$.
-
-Of course, we have a built-in function in R for this purpose, called `qnorm` that can determine $x$ for us, if we give a $P(Y_i<x)$ probability to it in its $1$st parameter. The other two parameters are just the mean and standard deviation of the normal distribution, defining the exact shape of the density function just like before:
+Okay, now that we've established that visually it seems that the **normal distribution is a rather good fit for the observed BMI data, let's see the practical benefits of knowing this information**.<br>
+Let's say You work at the public health insurer of Hungary and You need to calculate the reserves of the public health insurance policies of Hungarian citizens. According to <a href="https://iris.who.int/bitstream/handle/10665/43190/9241593024_eng.pdf" target="_blank">WHO</a>, **Class III Obesity (BMI > 40) is a predictor of many health risks** (strokes, diabetes, several cancers and so on). So, for accurately assessing the expected risk of selling health insurances in Hungary, it would be good to know **the probability of insuring someone with a BMI greater than 40**. Furthermore, it is also an important information for developing **public health strategies** to see **how common Class III obesity is** in the Hungarian population. So, let's see the empirical and theoretical approaches for calculating this $P(y_i>40)$ probability.
 
 ```{r}
-mu = mean(Tesla$TESLA)
-sigma = sd(Tesla$TESLA)
+mean(ess_small$BMI > 40)
+1 - pnorm(40, mean = mu, sd = sigma)
+```
 
+Oh wow, according to the **empirical approach** we have **no one with BMI > 40 in Hungary**, while the **theoretical normal distribution** suggests a **$0.03\%$ probability for finding people with Class III Obesity** in Hungary.<br>
+So, even according to the normal distribution, this risk is low thankfully, but NOT 0 as the empirical way suggests!! This is because, as we have discussed, the **empirical calculation of probability can only consider events that we have observed, while the theoretical distribution can also see events that we have not observed**. So, **the point of using theoretical distributions to model our data is to calculate or consider probabilities for events that are NOT observed in our dataset**. So probability distributions are always about **describing the unobserved population** next to the observed sample.<br>
+We can see that without using the normal distribution we would seriously underestimate the risk of Type III Obesity in the Hungarian population. We wouldn't have even calculated with it occurring!
+
+The thing works in the other direction as well. Like, severe thinness (a BMI < 16) is also a high health risk as it means serious malnutrition. However, we have no one in our observed ESS sample with this condition, but based on the normal distribution we can see that they can appear in the whole Hungarian population a probability of $0.5\%$.
+
+```{r}
+mean(ess_small$BMI < 16)
+pnorm(16, mean = mu, sd = sigma)
+```
+
+These differences seem small, but yearly medical costs for someone with Class III Obesity were 8354 USD in 2017 (according to <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10394178/" target="_blank">a 2021 study in the Journal of Managed Care & Specialty Pharmacy</a>). So **taking the probability of Class III Obesity as 0 instead of 0.03% means** that in Hungary with a population of roughly $N=9.5$ million people, **we have ignored a yearly medical expenditure of 26.3 million USD**!$$8354 \times 0.0003280034 \times 9600000 = 26305348$$
+
+And this average cost of 8354 USD has probably increased since 2017...
+
+### 2.4. Empirical vs Theoretical Quantiles
+
+Hopefuly, we can remember from the Fundamentals of Statistics course that a value that divides a statistical variable (like BMI) into equal-sized portions is called a **quantile**. We calculate any quantile empirically (based on the observed data alone) with the `quantile` function of R. In the `probs` parameter, You need to specify in percentile format which quantiles You want for the numeric variable given in the 1st parameter. E.g. $0.25$ denotes the 25th percentile = 1st quartile. So, let's calculate all the quartiles of the observed BMI data this way.
+
+```{r}
+quantile(ess_small$BMI, probs = c(0.25, 0.5, 0.75))
+```
+
+So, we can say that 25% our observed Hungarians have a BMI lower than 23.4 and the "fattest" quarter has a BMI higher than 28.7 (it's quite close to the range of obesity: 30). The median suggests that half of the people in the sample have a BMI lower than 26.1, while the other half has a higher BMI. Note that this is quite close to the mean of 26.27, due to the fact that our observed histogram is more or less symmetric.
+
+However, **quantiles can be obtained based on the theoretical distribution as well**. In this context the quantile tells us what is the value $x$ such that the probability of randomly drawing a number smaller than $x$ from our distribution is exactly $p$. In a more formal way, we need to find $x$ such that $P(y_i<x)=p$ and this $x$ is called the **p-th quantile of the distribution**, which can be calculated as the **inverse value of the cumulative distribution function**: $F^{-1}(x)$.
+
+Of course, we have a built-in function in R for this purpose, called `qnorm` that can determine $x$ for us, if we give a $p=P(y_i<x)$ probability to it in its $1$st parameter. The other two parameters are just the mean and standard deviation of the normal distribution, defining the exact shape of the density function just like before. Let's calculate the 5th quantile of our normal distribution. That is, what is the BMI value below which we have only a 5% probability of finding Hungarian guy.
+
+```{r}
 qnorm(0.05, mean = mu, sd = sigma)
 ```
 
-All right, so $42.9\$$ is the amount, where the probability of a higher loss is just $5\%$. Or, in other words, there is only a $5\%$ probability for a price change lower than $-42.9\$$ on a random trading day. In Finance, we usually call this value as **Value at Risk (VaR)** at $5\%$ level. Usually, financial regulators compel investment banks to put these values into reserve after each of their investment portfolios.
+Now, that is $19.6$. So, we have only a 5% probability of finding a Hungarian with lower BMI than $19.6$.
 
-If we think about it, logically **this operation with the distribution quantile values looks the same as the calculation of percentiles from our data**. Since the **5th percentile** of the observed price changes gives the value below which only $5\%$ of the data is found. So, this can be considered as an analogy for the question "*What is the amount where we have only a $5\%$ probability to experience smaller price changes?*"
-
-Let's see the 5th percentile then! The `quantile` function can do the calculation for us from the data observed. The `probs` parameter is where we specify which percentile to calculate: the 5th percentile is the point below of which $0.05$ part of the data is smaller.
+Let's check the same value as the 5th percentile of our observed data.
 
 ```{r}
-quantile(Tesla$TESLA, probs = 0.05)
+quantile(ess_small$BMI, 0.05)
 ```
 
-Oh my good God in Heaven! That's just $-28.5\$$! So only $5\%$ of ur observed trading days had a greater loss than $28.5\$$! This is a **significantly lower loss level than the $-42.9\$$ from the density function!** And the **value from the density function** is more proper to use here since it **considered values** with some positive probabilities **that the observed datet haven't yet seen occurring**, since they are smaller than the minimum of the observed data for example.<br>
+Oh my good God in Heaven! That's just $20.2$! So only $5\%$ of our observed people had a smaller BMI than $20.2$! This is a **noticeably higher BMI level compared to the $19.6$ from the density function!** And the **value from the density function** is more proper to use here since it **considered BMI values** with some positive probabilities **that the observed dataset haven't seen occurring**, since they are smaller than the minimum of the observed data for example.<br>
 Again, **if we look for the given percentile from a distribution, then I can consider data points outside of our observations!** So, we can **generalize to our whole population**.
 
-As we can see from this example above that we can have a significant difference in *Value at Risk (VaR)* of a portfolio if we calculate it from a distribution or from the observed data of price history! Of course, the normal distribution is not necessarily the best fit, but we can find loads of exotic probability distributions on the menu, so we can choose! :)<br>
-Of course, to choose the best fitting distribution, some work must be done, so there is a great temptation to just calculate a percentile from observed past price data...some of the greatest investement banks before 2008 gave in to this tempatation because the regulators allowed them to do so. The result is the financial crysis of 2008. This is partly the topic of the book titled <a href="https://en.wikipedia.org/wiki/The_Black_Swan:_The_Impact_of_the_Highly_Improbable" target="_blank">The Black Swan: The Impact of the Highly Improbable</a>. I recommend it to everyone interested in the topic, it's quite easy to understand reading. :)<br>
-Since 2008, regulations (Basel III in Europe, Basel IV from 2023) compels banks to calculate *VaR* based on the best fitting probability distribution on their data.
-
-Of course, inverse values can answer "positive" questions as well: **What is the amount where we have only a $5\%$ probability to experience greater gains with Tesla on a random trading day?** So, what is the value below which price changes have $99\%$ probability to occur?
-
-Mathematically speaking, we need to find $x$ such that $P(Y_i>x)=0.01$. However, **the `qnorm` function can only handle $P(Y_i<x)$ probabilities**, we need to rephrase the question as **let's find $x$ such that $P(Y_i<x)=0.99$!** And now, the machine spirit will answer our prayers:
+Again, if we consider the case of the public health insurance fund, it would be a useful information for them to **find a reasonable maximum amount for the BMI in the Hungarian population**. E.g. the **BMI value above which we have only a very small chance of finding Hungarian people**, like $0.5\%$. Mathematically speaking, we need to find $x$ such that $P(y_i>x)=0.005$. However, **the `qnorm` function can only handle $P(y_i<x)$ probabilities**, so we need to rephrase the question as **let's find $x$ such that $P(y_i<x)=(1-0.005)=0.995$!** And now, the machine spirit will answer our prayers!
 
 ```{r}
-mu = mean(Tesla$TESLA)
-sigma = sd(Tesla$TESLA)
-
-qnorm(0.99, mean = mu, sd = sigma)
+quantile(ess_small$BMI, (1-0.005))
+qnorm((1-0.005), mean = mu, sd = sigma)
 ```
 
-So we have only $1\%$ probability to experience more gains than $65\$$ on a random trading day with Tesla.
+We can see that if we only work empirically, the BMI limit $36.6$, while the theoretical distribution suggests a threshold of $38.3$. So, again the theoretical distribution proposes a higher quantile value by $+1.7$ compared to the empirical solution. Again, this comes down to the fact that the theoretical distribution can consider BMI values that are larger than the observed maximum in the sample.<br>
+According to the <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10394178/" target="_blank">study referred earlier</a>), each additional BMI value increases yearly medical costs per people by roughly 150 USD. So again, there is a not negligible cost of $1.7 \times 150 = 255$ USD/person/year of using the empirical quantiles instead of utilizing the best fitting theoretical distribution of the data.
 
-### 1.6. Standard Normal Distribution
+**Theoretical quantiles** have an important role to play **in financial risk management** as well, specifically **in Value at Risk calculations**. Value at Risk (VaR) of an investment portfolio at level $p$ means that there is only a $p$ probability for a loss greater than this VaR value on a random trading day with the given investment portfolio. We can see that this VaR value is actually the p-th quantile of the loss history of that investment. However, the loss history is always just a sample (e.g. a loss history between 2020-2024), so it would be important to consider losses that are greater than observed in the historical data when calculating this VaR as a quantile. The best fitting theoretical distribution can help You in that here as well.<br>
+Of course, the normal distribution is not necessarily the best fit for financial loss data, but we can find loads of exotic probability distributions on the menu, so we can choose! :)<br>
+Naturally, choosing the best fitting distribution is intensive work, so there is a great temptation to just calculate VaR as a quantile from observed past loss data...some of the greatest investment banks before 2008 gave in to this temptation because the regulators allowed them to do so. The result is the **financial crisis of 2008**. This is partly the topic of the book titled <a href="https://en.wikipedia.org/wiki/The_Black_Swan:_The_Impact_of_the_Highly_Improbable" target="_blank">The Black Swan: The Impact of the Highly Improbable</a>. I recommend it to everyone interested in the topic, it's quite easy to understand reading. :)<br>
+Since 2008, regulations (Basel III in Europe, Basel IV from 2023) compels banks to calculate *VaR* based on the best fitting probability distribution on their data.
 
-We must still take a moment to deal with one last thing regarding normal distributions. The case of the normal distribution with $\mu=0$ mean and $\sigma=1$ standard deviation, called **standard normal distribution**, which has a special space in hell.
+#### Q-Q Plots
 
-Why it has a special place is the fact that every other $N(\mu,\sigma)$ distribution can be transformed to a $N(0,1)$ distribution. We just need to apply the following formula: $$z_i=\frac{Y_i-\mu}{\sigma}$$
+The ***relationship between empirical and theoretical quantiles can also be used to determine the goodness of fit for our theoretical distribution**. The idea is that **if our theoretical distribution fits our observed data well**, then the **empirical and theoretical quantiles** should be close to each other.<br>
+We can check this nicely on a scatter plot. Let's calculate a lot of quantiles in both ways (e.g. every quantile from 0.005, 0.010, 0.015 until 0.995). Then, create a **scatter plot where theoretical quantiles are on the `x` axis and empirical quantiles are on the `y` axis**. If the two kinds of quantiles are roughly close, then the points defined by these $(x,y)$ coordinates should form a straight line of 45 degrees. This is the principle of the **Quantile on Quantile Plots, or just Q-Q Plots** for short!
+
+We can easily create these Q-Q Plots and their corresponding 45-degree lines in `ggplot` with the `stat_qq` and `stat_qq_line` layers. It's important that inside the first layer's `aes` function, the examined variable should be put in a parameter named `sample` for these kinds of plots. In both the `stat_qq` and `stat_qq_line` layers, we need to give
+
+1. the appropriate theoretical quantile function in the `distribution` parameter (this is the `qnorm` for our case)
+2. the parameters that define the exact shape of our theoretical density function (these are $\mu, \sigma$ for our normal bell curve)
+
+And voilá, our QQ Plot is ready fuw to the goodwill of the machine spirit! :)
+
+```{r}
+ggplot(ess_small, aes(sample = BMI)) +
+  stat_qq(distribution = qnorm, dparams = c(mu, sigma)) +
+  stat_qq_line(distribution = qnorm, dparams = c(mu, sigma)) +
+  labs(x="Theoretical Quantiles", y="Empirical Quantiles")
+```
+
+We can observe that **theoretical and empirical quantiles match rather nicely in the middle** of the distribution, between BMI values of 20-30, but **on the tails** (tails = extremely low and high BMI values) **they are starting to differ**. This comes as **no surprise** as **on the tails**, we have **fewer and fewer empirical observations**, so the **empirical quantiles are not so reliable** as they are **calculated from a small number of observations here**. That is exactly why, we would want to use our theoretical normal distribution in these tail ranges! The point is that the **normal distribution is a good fit in the typical, middle values of our BMI data**.
+
+### 2.5. Empirical vs Theoretical Moments
+
+Another set of statistical measures that can describe a statistical variable next to quantiles are the moments. Usually we are familiar the **first non-centered and the second centered moments** ($M_1,M_2$), as they are the **mean and standard deviation** respectively. However, the **third and fourth moments** should be familiar from the formula for the $\alpha_3$ measure of **skewness** ($M_3$) and $\alpha_4$ measure of **kurtosis** ($M_4$).<br>
+So, overall these following moments are worth our attentions usually.
+
+- First non-centered moment: $M_1=\bar{y}=\frac{\sum_{i=1}^n{y_i}}{n}$
+- Second centered moment: $M_2=s^2=\frac{\sum_{i=1}^n{(y_i-\bar{y})^2}}{n-1}$
+- Third centered moment: $M_3=\frac{\sum_{i=1}^n{(y_i-\bar{y})^3}}{n-1}$
+- Fourth centered moment: $M_4=\frac{\sum_{i=1}^n{(y_i-\bar{y})^4}}{n-1}$
+
+Notice, that the term "centered" only means whether the mean ($\bar{y}$) is subtracted in the sum from the $y_i$ observations. So, we can easily see that the **first centered moment** doesn't make much sense as it **is automatically $0$** since $(\sum_{i=1}^n{y_i-\bar{y}})/n=0$.<br>
+Also notice that for the 2nd, 3rd and 4th moments, we are taking number of observations minus 1 ($n-1$) in the denominator. This is because R calculates them this way instead of dividing with simply $n$. Reasons for this will be discussed in detail in <a href="Chapter05.html" target="_blank">Chapter 5</a>. But **for a high $n$,** like in our case we have $n=2009$, **this difference does not really matter in the end result**.
+
+As I referred to it earlier, the natural habitat of $M_3$ and $M_4$ are the $\alpha_3$ measure of **skewness** ($M_3$) and $\alpha_4$ measure of **kurtosis** ($M_4$). These measures of shape are defined as follows with  the help of these two moments.
+
+- $\alpha_3=\frac{M_3}{\sigma^3}$
+- $\alpha_4=\frac{M_4}{\sigma^4}-3$
+
+$\alpha_3$ **measures how well a histogram follows the symmetric normal distribution by its sign** according to the categories as seen in <a href="Chapter02.html" target="_blank">Section 2.2 of Chapter 2</a>.
+
+- If $\alpha_3= \approx0 \rightarrow$ the distribution is **symmetric**
+- If $\alpha_3=>0\rightarrow$ the distribution has a **long right tail**, or positive skew
+- If $\alpha_3=<0\rightarrow$ the distribution has a **long left tail**, or negative skew
+
+On the other hand, a **histogram can also differ in "peakedness" or in other words kurtosis to the classic normal distribution** it can be **"too pointy"**, which is called **positive kurtosis (leptokurtosis)** or it can be **"too flat"**, which is called **negative kurtosis (platykurtosis)** as seen in the figure below.
+
+<center>
+![](csucsos.PNG){width=40%}
+</center>
+
+We can see from the histograms for the **BMI data that it probably has a mild case of leptokurtosis**. This means in practice that the **unique values of the variable BMI do not really differ from the maximum of the frequency curve**, which is the **mode**. But to exactly measure this, we have the $\alpha_4$ indicator. The $-3$ in its formula is coming from the fact that for normal distribution $M_4/\sigma^4=3$, so we need to subtract $3$ to have an interpretation for $\alpha_4$ like we have for $\alpha_3$.
+
+So, due to the $-3$ in its formula, we can **interpret the Kurtosis ($\alpha_4$) measure again by looking at its sign**:
+
+- If $\alpha_4= \approx0 \rightarrow$ the distribution is **normal**
+- If $\alpha_4=>0\rightarrow$ the distribution has **leptokurtosis**, or positive kurtosis
+- If $\alpha_4=<0\rightarrow$ the distribution has **platykurtosis**, or negative kurtosis
+
+We can see that **in both cases the sign of the measure** (both $\alpha_3$ and $\alpha_4$) **is determined by the moment in the numerator**. As $\sigma>0$, we are always having a positive number in denominator.
+
+We can most easily calculate the $\alpha_3$ and $\alpha_4$ measures by the `describe` function from the `psych` package. Remember, we installed this package in <a href="Chapter02.html" target="_blank">Section 2.2 of Chapter 2</a>.
+
+```{r paged.print=FALSE}
+library(psych)
+describe(ess_small$BMI)
+```
+
+As we can see, this `describe` function calculates **loads of descriptive statistical measures that we already know**, but it **also** shows us **some new ones**:
+
+- **n**: Number of observations for the variable. It does not count the possible `NA`s.
+- **mean**: The mean of course :)
+- **sd**: The standard deviation (also calculates the version with $n-1$ in the denominator)
+- **median**: The median, what a surprise :)
+- **trimmed**: Trimmed mean. A mean where we do not consider the top/bottom $10\%$ of the variable for the calculation. This is a method to handle the mean's sensitivity to outliers.
+- **mad**: Median Absolute Deviation $\rightarrow$ a kind of standard deviation *around the median* with absolute values instead of the squares.
+- **min**, **max** and **range**: Minimum and maximum values for the variable and their differences as the full range of the variable: *range = max - min*
+- **skew**: This is the $\alpha_3$ measure
+- **kurtosis**: Az $\alpha_4$ measure
+- **se**: Standard error of the mean $\rightarrow$ unimportant for know. We'll cover this measure in the lecture notes for Class 4.
+
+Right know, **skew** and **kurtosis** values are what's interesting. Based on the $\alpha_3=0.41$ value, there is a mild right tail for the BMI histogram. The $\alpha_4=0.17$ result tells us that that the observed histogram is a bit more pointy compared to the normal distribution (leptokurtosis: remember the jump around the mode of the BMI values: 26-27). However both values are relatively close to $0$ as well, so these tendencies are not very strong. A normal distribution ($0$ skewness and kurtosis) is an acceptable approximation of the observed histogram.
+
+These findigs can be confirmed by looking at the empirical histogram again. We discussed the leptokurtosis You to the jump around the BMI values of 26-27. But if we look at it more closely, we can also see that there are a bit more observations below the mode of the histogram than above it, creating a very mild right tail for the distribution.. But again, this tendency is not strong at all, so the symmetry of the histogram is acceptable.
+
+```{r}
+ggplot(ess_small, aes(x=BMI)) +
+  geom_histogram(aes(y = after_stat(density)))
+```
+
+Then of course, we **calculate the theoretical value of these moments based on the theoretical probability distribution** we want to fit on the observed data. In probability theory we simply substitute the mean calculation part of the empirical moment formulas with taking expected values. The expected value for a continuous random variable $Y$ is as follows where $f(x)$ is the density function determining the probability of each $x$ value occurring in our theoretical distribution: $$E(Y)=\int_{-\infty}^{+\infty}{f(x)x dx}$$
+
+With this definition the **formula for the theoretical moments** are:
+
+- Theoretical first non-centered moment: $M_1=E(Y)$
+- Theoretical second centered moment: $M_2=\sigma^2=E((Y-E(Y))^2)$
+- Theoretical third centered moment: $M_3=E((Y-E(Y))^3)$
+- Theoretical fourth centered moment: $M_4=E((Y-E(Y))^4)$
+
+For **every theoretical distribution, the value of these 4 moments can be expressed as a function of the parameters that define the exact shape of its density function**. For a $N(\mu, \sigma)$ normal distribution these are 4 moments always take the following values:
+
+- $M_1=\mu$
+- $M_2=\sigma^2$
+- $M_3=0$
+- $M_4=3\sigma^4$
+
+We can see that the values for the first two moments are <a href="https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2Fgd2ntlt6mu131.jpg" target="_blank">trivial</a>, since in the beginning of this Section 2, we could see that we have defined the exact shape of our normal bell curve by the distribution's expected value = mean ($\mu$) and standard deviation ($\sigma$), so basically by its first two moments.
+
+Since the normal distribution's bell curve is symmetric, its $\alpha_3$ measure of skewness must be $0$. It follows from the $\alpha_3=M_3/\sigma^3$ formula that $M_3$ must be $0$ as well.
+
+As the normal distribution's $\alpha_4$ kurtosis is set as $0$, from the $\alpha_4=M_4/\sigma^4-3$ formula, it follows that $M_4=3\sigma^4$.
+
+We'll see how these 4 moments are important in practice in <a href="Chapter06.html" target="_blank">Chapter 6</a>.
+
+### 2.6. The Central Limit Theorem (CLT)
+
+Actually, it is no surprise that the BMI values of these Hungarian people tend to follow something very close to the normal distribution. There is a theory lurking behind the shadows, the **Central Limit Theorem (CLT)**. I'm sure that the theorem was covered to some extent in your Bachelor studies, but we **revise this theorem here**, since it's that important. :)
+
+This theorem states that **if the $y_i$ elements of a variable are created as a sum of random effects, than the $Y$ variable itself is normally distributed**.<br>
+If we think about it, **this is probably the case for the BMI variable**: the **exact BMI of the i-th person, i.e. the $y_i$ element, is a sum of the random life events that influence that person's obesity status**. Let's think thois true for some random guy, let's say Joe. At the start of life, Joe was born with no genetic tendency to gain extra weight and was an active kid doing sports regularly (*BMI in the normal range*). However, university starts and due to the insane amount of stress caused by Statistics professors, Joe starts stress eating and gives up sports as he has no free time (*BMI in Class I obesity range*). But after university, Joe obtains a well-paid data science job with normal hours, so he can start doing sports again, but can't stop the stress eating (*BMI improves a bit*), and finally **Joe has a BMI of $y_i=27.8$ kg/m2** (in the overweight range) **as a sum of these random effects that happened during his life until his BMI has been recorded in the ESS**. Since it is reasonable to assume that every person's life looks like something similar to Joe's (random life events have some effect to their obesity situation and they sum up until the point in life when the BMI we see is measured), **all the $y_i$s can be considered as a sum of random effects**. Therefore, **according to the CLT, the $Y$ variable needs to have a normal or symmetric distribution**.
+
+We can see on the histograms in Section 2.3. that **the CLT works rather well for the BMI variable, but not perfectly due to that small excess kurtosis**. Furthermore, **CLT prevails in lots of other scenarios** as well: For example, in the case of the number of defective products by a manufacturing machine at the end of the day: the daily number of defects (assuming no saboteur is present in the factory) is generated by the accumulation of that day’s random effects in the factory. Thus, if we examine the end-of-day defect counts over multiple days, their histogram should ideally display a beautifully shaped normal distribution.
+
+### 2.7. The Standard Normal Distribution
+
+We must still take a moment to deal with one last thing regarding normal distributions. The case of the normal distribution with $\mu=0$ mean and $\sigma=1$ standard deviation, called **standard normal distribution**, which has a special place in hell.
+
+Why it has a special place is the fact that every other $N(\mu,\sigma)$ distribution can be transformed to a $N(0,1)$ distribution. We just need to apply the following formula for every $y_i$ observations: $$z_i=\frac{y_i-\mu}{\sigma}$$
 
 
-So, if we have a **normally distributed variable $Y$ and from its every $Y_i$ element, we subtract the mean and divide the result by the standard deviation, then the resulting $z$ variable with $z_i$ elements has a standard normal distribution**. This operation is called **normalization/standardization**.
+So, if we have a **normally distributed variable $Y$ and from its every $y_i$ element, we subtract the mean and divide the result by the standard deviation, then the resulting $z$ variable with $z_i$ elements has a standard normal distribution**. This operation is called **normalization/standardization**.
 
 In mathematics, we denote by $\sim$ if a variable follows some kind of distribution. So what I can say is that $Y \sim N(\mu,\sigma)$ and $z \sim N(0,1)$.
 
-Let's calculate this standardized $z$ variable for the price changes of the Tesla stock:
+Let's calculate this standardized $z$ variable for the BMI variable.
 
 ```{r}
-Tesla$z <- (Tesla$TESLA - mean(Tesla$TESLA))/sd(Tesla$TESLA)
-
-mean(Tesla$z)
-sd(Tesla$z)
+ess_small$z <- (ess_small$BMI - mean(ess_small$BMI))/sd(ess_small$BMI)
+c(mean(ess_small$z), sd(ess_small$z))
 ```
 
-Ok, We can see that this new $z$ variable has a mean of prectically $0$ ($9.5 \times 10^{-18}$) and a standards deviation of $1$.
+Ok, We can see that this new $z$ variable has a mean of practically $0$ ($6.4 \times 10^{-17}$) and a standards deviation of $1$.
 
 But we can see that the histogram is still the same, so it's symmetric:
 
 ```{r}
-hist(Tesla$z)
+ggplot(ess_small, aes(x=z)) + geom_histogram(aes(y=after_stat(density)))
 ```
 
 Why we "*love*" the standard normal distribution is that this distribution has
@@ -311,48 +541,38 @@ pnorm(2) - pnorm(-2)
 
 It's really $95.4\%$! :) **This property of the standard normal distribution will be exploited later, so remember this**!
 
-Because of this property, sometimes the standardized values are used to look for outliers. Like a $Y_i$ value in the variable is an outlier if its corresponding $z_i$ value is outside the $\pm2$ range since in this case, the $Y_i$ value is either in the top or bottom $2.5\%$ of the variable (we can see from the density function of the standard normal distribution that the $5\%$ outside of the $\pm 2$ range is symmetrically distributed on the lower and upper edges of the graph...but this symmetry is no surprise :)). 
+Because of this property, sometimes the standardized values are used to look for outliers. Like a $y_i$ value in the variable is an outlier if its corresponding $z_i$ value is outside the $\pm2$ range since in this case, the $y_i$ observation is either in the top or bottom $2.5\%$ of the variable (we can see from the density function of the standard normal distribution that the $5\%$ outside of the $\pm 2$ range is symmetrically distributed on the lower and upper edges of the graph...but this symmetry is no surprise :)). 
 
-We can try this method to locate trading days with outlier price changes in Tesla:
+We can try this method to locate people with outhlier BMIs in the ESS sample from the Hungarian population:
 
 ```{r}
-Tesla[Tesla$z < -2 | Tesla$z > 2,]
+ess_small[ess_small$z < -2 | ess_small$z > 2,]
 ```
 
-We have the days with extreme gains or losses.
+We have the people with extreme obesity or thinnes (maybe due to malnutrititon).
 
 But **be very careful with this method!** Looking for outliers based on standardized $z_i$ values **only works if the original (not standardized) variable is already normally distributed!** Since this is the only way the standardized data can follow the symmetric standard normal distribution and the only way for $P(-2<z_i<+2)=0.954$ formula to be correct!
 
-One last thought: standardized $z_i$ values show us by how many standard deviations is the original $Y_i$ value above or below the mean.<br>
-Like the first element of the filter above, the $59.82\$$ gain on 30th Jan 2020 is $2.13$ standard deviations above the mean of $1.8\$$. While the the loss of $152.36\$$ on 5th Feb 2020 is $5.67$ standard deviations below the same mean.
+One last thought: standardized $z_i$ values show us by how many standard deviations is the original $y_i$ value above or below the mean.<br>
+Like the first element of the filter above, the BMI of $34.5$ is $2.05$ standard deviations above the mean of $26.27$. While the BMI of $16.1$ for `idno = 54045` is $2.5$ standard deviations below the same mean.
 
-## 2. The Exponential Distribution
+## 3. The Exponential Distribution
 
-Now, let’s leave the Tesla stock price changes for a moment and examine another dataset that resides in the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/CancerSurvival.xlsx\" target="_blank">CancerSurvival.xlsx</a> file. This dataset contains data for 58 severe head and neck cancer patients, recording *how many months* they survived after chemotherapy. The data is real, from 1988, and the source is <a href="https://www.jstor.org/stable/2288857#metadata_info_tab_contents\" target="_blank">this study</a>.
-
-Let’s load the data into a data frame!
+Let’s take a look at the distribution of the alcohol consumption (in grams) of the observed Hungarian people on the weekends. But before that we remove any missing values from this variable just like we did with BMI at the start of Section 2. We now have a larger share of non-respondents (namely 55.86%), who probably did not dare to say in the survey how alcoholic they are, but now we are not trying to impute their data, just focusing on the distribution of those who admitted what they drink on a typical weekend.
 
 ```{r}
-Surv <- read_excel("CancerSurvival.xlsx")
-
-str(Surv)
+mean(is.na(ess$AlcoholWeekend))
+ess_small <- ess[!is.na(ess$AlcoholWeekend),c("idno", "AlcoholWeekend")]
+hist(ess_small$AlcoholWeekend)
 ```
 
-As we can see, this data frame also only contains two columns. The first column is the patient’s number, and the second column is the survival time in months after chemotherapy (**SurvMonth**).
+Well, here we can see that the distribution has a long right tail: the majority of alcohol consumption (roughly 600) are within 50 grams, but the remaining observations all exceed this value, and there are even some extreme alcoholics with weekend consumption above 200 grams, even 1 or 2 in the 600-700 grams range.
 
-Let’s take a look at the distribution of survival times with a histogram.
-
-```{r}
-hist(Surv$SurvMonth)
-```
-
-Well, here we can see that the distribution has a long right tail: the majority of the survival times (45 out of 58 specifically) are within 256 months, but the remaining 13 exceed this, and 3 patients survived for more than 1000 months after chemotherapy.
-
-Due to the long right tail, if we connect the bars of the histogram with a continuous line, we would get a graph similar to the one below.
+Due to this long right tail, if we connect the bars of the histogram with a continuous line, we would get a graph similar to the one below.
 
 ```{r echo=FALSE}
-x <- seq(min(Surv$SurvMonth), max(Surv$SurvMonth))
-y <- dexp(x, rate = 1/mean(Surv$SurvMonth))
+x <- seq(min(ess$AlcoholWeekend, na.rm = TRUE), max(ess$AlcoholWeekend, na.rm = TRUE))
+y <- dexp(x, rate = 1/mean(ess$AlcoholWeekend, na.rm = TRUE))
 
 DFRajz <- data.frame(x=x, y=y)
 
@@ -368,66 +588,102 @@ knitr::include_app("https://kola992.shinyapps.io/normaldensityplot/?distr=Exp",
 ```
 </center>
 
-Of course, $\lambda$ is related to the mean and standard deviation of the real data, specifically, both values are $\mu=\sigma=\frac{1}{\lambda}$. So, for the exponential distribution, we assume the same mean and standard deviation for the data, and the reciprocal of this common value (i.e., $\lambda$) determines how steeply the distribution’s probability density function skews to the right. Because of this, exponential distributions are often denoted as $Exp(\lambda)$.
+### 3.1. Fitting the Exponential Distribution on Observed Data
 
-Of course, in real data, it is practically never true that $\mu=\sigma$, but we can see from the `describe` function that in the survival data, the values of these two parameters are relatively close: $\mu=226.17 \approx \sigma=273.94$. 
+So, if we denote our alcohol consumption variable as $Y$, then we assume now that it follows an exponential distribution with a parameter $\lambda$. That is $Y \sim Exp(\lambda)$. From our Probability Theory studies hopefully we remember that the mean (expected value) and standard deviation of an exponential distribution are the same:
+
+- $M_1=E(Y)=\mu=\frac{1}{\lambda}$
+- $\sqrt{M_2}=D(Y)=\sigma=\frac{1}{\lambda}$
+
+So, for the exponential distribution, we assume the same mean and standard deviation for the data, and the reciprocal of this common value (i.e., $\lambda$) determines how steeply the distribution’s probability density function skews to the right.<br>
+Of course, in real data, it is practically never true that $\mu=\sigma$, but we can see that in the observed alcohol consumption data that the values of these two parameters are relatively close: $\mu=46.6 \approx \sigma=52.2$. 
+
+```{r paged.print=FALSE}
+c(mean(ess_small$AlcoholWeekend), sd(ess_small$AlcoholWeekend))
+```
+
+The point is, that we only use the first moment (expected value) to fit the distribution as we only have one parameter ($\lambda$) defining the density shape. So basically we need to solve this simple equation. $M_1=\hat{M_1}$. Or expanded: $$M_1=\mu=\frac{1}{\lambda}=\bar{y}$$
+
+Solving for $\lambda$ we have that **the estimation of $\lambda$ is the reciprocal of the empirical sample mean $\bar{y}$: $$\lambda=\frac{1}{\bar{y}}$$
 
 ```{r}
-library(psych)
-describe(Surv$SurvMonth)
+sample_mean <- mean(ess_small$AlcoholWeekend)
+lambda <- 1/sample_mean
+c(lambda, sample_mean)
 ```
+
+So, on average, Hungarian people in the ESS sample are drinking $46.6$ grams of alcohol on the weekends, which corresponds to $\lambda=0.021$. That is the fitted distribution for the alcohol consumption variable is the following. $$Y \sim Exp(0.021)$$
+
+### 3.2. Checking the Goodness of Fit
 
 In R, the functions `dnorm`, `pnorm`, and `qnorm` have analogous functions for the exponential distribution: `dexp`, `pexp`, and `qexp`. Their usage and meaning are exactly the same as the normal distribution functions. The only difference, of course, is that for the exponential distribution, only the uniform $\lambda$ needs to be provided, instead of separate $\mu$ and $\sigma$ values, as was the case with the normal distribution.<br>
-In R, $\lambda$ can be provided in the function’s `rate` parameter. Based on the previously seen relationships, we can calculate it using either the mean or the standard deviation as their reciprocals. Which of these two logics we should follow will be discussed in <a href="Chapter06.html" target="_blank">Chapter 6</a>. For now, let’s take $\lambda$ as the reciprocal of the mean.<br>
-Thus, for the survival times, $\lambda=\frac{1}{\bar{Y}}=\frac{1}{226.17}=0.00442$. Therefore, the individual survival times $Y_i$ follow an $Exp(0.00442)$ distribution: $Y_i \sim Exp(0.00442)$.
+In R, $\lambda$ can be provided in the function’s `rate` parameter.
 
-Let’s now calculate a few probabilities related to the survival times:
-
-1. What is the probability that after chemotherapy, a person will survive exactly one year, i.e., $12$ months?
+So, with the help of `dexp` we can calculate what is the theoretical probability that a Hungarian drinks a whole bottle of wine over the weekend which contains $98$ grams of alcohol.
 
 ```{r}
-dexp(12, rate = 1/mean(Surv$SurvMonth))
+dexp(98, rate = lambda)
 ```
 
-This is a fairly low probability, about $0.4\%$. We’re not surprised, because the likelihood of exactly one point occurring is low, given the large survival time range.
+This is a fairly low probability, about $0.26\%$. We’re not surprised, because the likelihood of exactly one point occurring is low, given that the alcohol consumption is a continuous variable with a large range of values to take.
 
-2. What is the probability that after chemotherapy, a person will survive more than five years, i.e., $60$ months?
+Using `dexp`, we can visually check how the exponential density function fits the weekend alcohol consumption histogram, just as we did for the normal distribution with a histogram-fitted `ggplot` line plot.
+
+```{r warning=FALSE}
+ggplot(ess_small, aes(x=AlcoholWeekend)) +
+  geom_histogram(aes(y = after_stat(density))) +
+  stat_function(fun = dexp, 
+                args = list(rate = lambda),
+                col = 'red',
+                linewidth = 1)
+```
+
+It looks quite nice here, with only one odd point: the first bin of 0-20 grams. Way less people fall into this bin than would be expected based on the $Exp(0.021)$ distribution. But this could easily be due to the large number of bins (we see that `ggplot` used 30 by default which is way more than the default of the `hist` function applied in the beginning). Based on what we learned in <a href="Chapter02.html" target="_blank">Chapter 2</a>, we could fix this if needed. :)
+
+Another way to check the fit of the exponential distribution is using the **Q-Q Plot** the same way as in Section 2.4. We only need to switch `qnorm` to `qexp` and in the `dparams` only $\lambda$ needs to be provided instead of $\mu,\sigma$ for the normal distribution.
 
 ```{r}
-1 - pexp(60, rate = 1/mean(Surv$SurvMonth))
+ggplot(ess_small, aes(sample = AlcoholWeekend)) +
+  stat_qq(distribution = qexp, dparams = lambda) +
+  stat_qq_line(distribution = qexp, dparams = lambda) +
+  labs(x="Theoretical Quantiles", y="Empirical Quantiles")
 ```
 
-The result is about $76.7\%$, which is quite a good outlook!
+We can see that the fit of the $Exp(0.021)$ distribution is quite ok even in the lower ranges around 0 grams, but it breaks down above 200 grams. Specifically, the quantiles calculated from the observed empirical data are higher than what the $Exp(0.021)$ distribution would say. On the one hand, it is quite understandable, as we have very few observations above 200 grams, so we might trust the theoretical exponential distribution here. On the other hand the deviations between empirical and theoretical quantiles are more substantial in this case than the ones we saw in Section 2.4. So, we might consider using another distribution for modelling the extremely large values above 200 grams. However, this is in the domain of <a href="https://en.wikipedia.org/wiki/Extreme_value_theory" target="_blank">extreme value theory (EVT)</a> and are out of scope for this course as it is covered in Actuarial Science MSc. So, we go with the exponential distribution as an acceptable fit for weekend alcohol consumption.
 
-What is the probability that, during the third year after chemotherapy, i.e., between $24$ and $36$ months, the person will pass away?
+### 3.3. Applications of the Fitted Exponential Distribution 
+
+Let’s now calculate a few probabilities related to the weekend alcohol consumption of the entire Hungarian population! Since we're **fitting this theoretical** exponential **distribution to account for the alcohol consumption habits of the unobserved Hungarians as well**.
+
+What is the probability that a Hungarian drinks more than a bottle of wine (98 grams) over a weekend?
 
 ```{r}
-pexp(36, rate = 1/mean(Surv$SurvMonth)) - pexp(24, rate = 1/mean(Surv$SurvMonth))
+1 - pexp(98, rate = lambda)
 ```
 
-The calculation here is also based on $f(x)=P(Y_i=x)$, meaning **the value of the probability density function at $x$ equals the probability of $x$ occurring** in a random draw from the dataset. The probability $P(Y_i<x)$ can also be calculated for the exponential distribution using the improper integral $\int_{-\infty}^x{f(x)}dx$, i.e., it corresponds to the area under the density function up to $x$.
+The result is about $12.2\%$, so every tenth Hungarian! Not a low result. :)
+
+What is the probability that over a weekend a Hungarian person drinks an amount between a bottle of wine and a bottle of whiskey, i.e., an alcohol amount between $98$ and $224$ grams?
+
+```{r}
+pexp(224, rate = lambda) - pexp(98, rate = lambda)
+```
+
+The result is $11.4\%$, so still it is more than $1/10$. That means that most of the heavy Hungarian drinkers limit themselves until a bottle gin over the weekend. Good to know. :)
+
+The calculation here is also based on $f(x)=P(y_i=x)$, meaning **the value of the probability density function at $x$ equals the probability of $x$ occurring** in a random draw from the dataset. The probability $P(y_i<x)$ can also be calculated for the exponential distribution using the improper integral $\int_{-\infty}^x{f(x)}dx$, i.e., it corresponds to the area under the density function up to $x$.
 
 These visual interpretations can be viewed and tried out in the interactive plot below, just like we did with the normal distribution.
 
 <iframe src ="https://kola992.shinyapps.io/normalprobabilities/?distr=Exp" height=550px width=800px data-external="1" />
 
-Of course, we can also calculate *quantile values* for the exponential distribution. For example, let’s see what the time is where there is only a $1%$ probability that a chemotherapy-treated head and neck cancer patient will survive.<br> For the calculation, we need to rephrase the question: what is the time at which there is only a $99%$ probability that a chemotherapy-treated head and neck cancer patient will **not** survive. This is because the `qexp` function, like `qnorm`, works with cumulative probabilities of **being below** the value we are looking for.
+Of course, we can also calculate *quantile values* for the exponential distribution as we've seen in the Q-Q Plot. For example, let’s see what is the alcohol amount that only the top $1%$ of Hungarian drinkers consume over a weekend.<br>
+For the calculation, we need to rephrase the question: what is the weekend alcohol amount below which $99%$ of Hungarian drinkers can be found. This is because the `qexp` function, like `qnorm`, works with cumulative probabilities of **being below** the value we are looking for.
 
 ```{r}
-qexp(0.99, rate = 1/mean(Surv$SurvMonth))
+qexp(0.99, rate = lambda)
 ```
 
-The answer is approximately $1042$ months, or $87$ years! But this large value is fundamentally due to the long right tail of the distribution, as long-right-tailed distributions tend to have outlier values that extend upward, so the long-right-tailed density functions must account for these outliers.
+The answer is approximately $215$ grams. That is roughly 15-16 pints of beer over one weekend! We should note that this might be an underestimation as the Q-Q Plot shows that quantiles above 200 grams are smaller in the exponential distribution than their equivalent version calculated from the observed sample data. However, due to the sample data is a bit unreliable due to the small number of observations in this 200+ range (long right tail), we can even accept this "*conservative estimate*" of 15-16 pints of beer as a minimum amount for the top 1% of Hungarian drinkers over a weekend!
 
-Finally, let’s check how well this exponential density function fits the survival time histogram, just as we did for the normal distribution with a histogram-fitted `ggplot` line plot.
-
-```{r warning=FALSE}
-ggplot(Surv, aes(x=SurvMonth)) +
-  geom_histogram(aes(y = after_stat(density))) +
-  stat_function(
-                fun = dexp, 
-                args = list(rate = 1/mean(Surv$SurvMonth)),
-                col = 'red')
-```
-
-It looks quite nice here, with only one odd point: the 150-200 month bin. Way more data points fall into this bin than would be expected based on the $Exp(0.00442)$ distribution. But this could easily be due to the large number of bins (we see that `ggplot` used 30 by default). Based on what we learned in Chapter 2, we could fix this if needed. :)"
+Consuming this much alcohol could result in symptoms such as slurred speech, unsteady walking, nausea, double vision, drowsiness, and mood changes. So, ambulances must be ready for these kinds of symptoms to appear in 1% of Hungarians over a weekend. :)

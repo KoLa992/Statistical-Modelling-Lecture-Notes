@@ -1,0 +1,198 @@
+---
+title: "Nominal Predictors in Multivariate Linear Regression"
+author: "László Kovács"
+date: "30/01/2026"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Used Car Dataset
+
+In this section, we work with the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/cars.xlsx" target="_blank">cars.xlsx</a> file. The dataset contains information on 100 used cars and includes the following eight variables:
+
+- **Price**: Purchase price (HUF)
+- **Age**: Age of the car in years
+- **Mileage**: Mileage in km
+- **Weight**: Vehicle weight in kilograms
+- **Cylinder**: Engine cylinder capacity in cubic centimeters (cc)
+- **Power**: Engine power in kW
+- **Type**: Text-based assessment of the vehicle’s condition
+- **Fuel**: Fuel type (petrol or diesel)
+
+The dataset is stored in Excel format (*.xlsx*), not as a CSV file. Excel files can be imported into R as a `data.frame` using the `readxl` package.
+
+First, load the package:
+```{r}
+library(readxl)
+```
+
+Next, we use the `read_excel()` function. If the file contains a single worksheet and the data start in cell *A1*, the function will correctly import the data without requiring any additional arguments:
+
+```{r}
+used_cars <- read_excel("cars.xlsx")
+str(used_cars)
+```
+
+Everything looks fine: all 100 observations and all 8 variables are present. Since **Type** and **Fuel** are categorical variables stored as text, we convert them to the `factor` type:
+
+```{r}
+used_cars$Type <- as.factor(used_cars$Type)
+used_cars$Fuel <- as.factor(used_cars$Fuel)
+
+str(used_cars)
+```
+
+Now the dataset is ready for analysis.
+
+Let us also check the possible categories of the **Type** variable:
+
+```{r}
+levels(used_cars$Type)
+```
+
+## 2. Dummy Variables in R
+
+When we include a nominal (categorical) variable as an explanatory variable in an OLS regression — such as **Type** or **Fuel** — R automatically applies *dummy coding*.
+
+The idea is the following: one category of the nominal variable is chosen as the **reference category** and is omitted from the model. For each of the remaining categories, R creates a separate binary (dummy) variable that takes the value 1 if the observation belongs to that category and 0 otherwise.
+
+<center>
+![](Dummy.jpg){width=50%}
+</center>
+
+In the table above, $D_A$ and $D_B$ represent the dummy variables included in the regression, while category $C$ is the reference category. The reference category must be omitted because if $D_A = 0$ and $D_B = 0$, then $D_C = 1$ automatically. Including all three would create perfect linear dependence among the regressors.
+
+This problem is known as **perfect multicollinearity**. In such cases, the matrix $(X^TX)$ cannot be inverted in the OLS estimator
+
+$$\hat{\beta} = (X^TX)^{-1}X^Ty,$$
+
+which makes estimation of $\beta$ impossible.
+
+With this in mind, let us estimate an OLS regression where the purchase price is explained by all other variables in the dataset, including the two categorical ones:
+
+```{r}
+cars_model <- lm(Price ~ ., data = used_cars)
+summary(cars_model)
+```
+
+We can see that for **Fuel**, the omitted reference category is *Diesel*, while for **Type**, the reference category is *Excellent*.
+
+All dummy coefficients must therefore be interpreted **relative to the reference category**:
+
+- $\beta_{Petrol} = +37{,}630$: holding all other variables constant, a petrol car is expected to be about 37,630 HUF more expensive than a diesel car.
+- $\beta_{Normal} = -119{,}200$: holding all other variables constant, a car in normal condition is expected to be about 119,200 HUF cheaper than a car in excellent condition.
+
+### 2.1 Changing the Reference Category
+
+In the previous model, using *Excellent* as the reference category may not be the most intuitive choice. A more natural baseline would be *Normal* condition. In R, the reference category of a factor can be changed using the `relevel()` function.
+
+By default, the reference category is the first level in alphabetical order:
+
+```{r}
+levels(used_cars$Type)
+```
+
+We override this by setting *Normal* as the reference category:
+
+```{r}
+used_cars$Type <- relevel(used_cars$Type, ref = "Normal")
+levels(used_cars$Type)
+```
+
+Now we re-estimate the regression model:
+
+```{r}
+cars_model <- lm(Price ~ ., data = used_cars)
+summary(cars_model)
+```
+
+The interpretation now becomes more intuitive: holding all other variables constant, a car in excellent condition is expected to cost $\beta_{Excellent} = +119{,}200$ HUF more than a car in normal condition.
+
+Note that the magnitude of the effect is exactly the same as before; only the sign has changed. This is because we simply changed the reference category.
+
+### 2.2 Visualizing the Interpretation of Dummy Variables
+
+To better understand how dummy variables work in an OLS regression, let us visualize the estimated relationships using the `sjPlot` package.
+
+```{r eval=FALSE}
+install.packages("sjPlot")
+library(sjPlot)
+```
+```{r echo=FALSE}
+library(sjPlot)
+```
+
+First, we plot the **predicted** purchase price ($\hat{y}$) as a function of the car’s age (**Age**):
+
+```{r}
+plot_model(cars_model, type = "pred", terms = c("Age"))
+```
+
+The model assumes a linear effect of age on price with slope $\beta_{Age} = -72{,}730$. The grey band represents the 95% confidence interval around the estimated relationship.
+
+Next, we include the **Type** variable in the plot:
+
+```{r}
+plot_model(cars_model, type = "pred", terms = c("Age", "Type"))
+```
+
+This clearly shows that **dummy variables shift the intercept of the regression line**. The slope with respect to age is the same for all condition categories: as the car gets one year older, its expected price decreases by about 72,730 HUF regardless of condition. What differs across categories is the baseline price level.
+
+The intercept $\beta_0$ corresponds to the predicted outcome for the **reference category**, since all dummy variables take the value zero at that point. (Of course, this also implicitly assumes that all other explanatory variables are zero.)
+
+## 3. Exporting R Output Tables to Excel
+
+For the group assignment, it is often useful to export R output tables to Excel so they can be easily formatted and inserted into a written report. This can be done conveniently using the `write_xlsx()` function from the `writexl` package.
+
+First, install and load the package:
+
+```{r eval=FALSE}
+install.packages("writexl")
+library(writexl)
+```
+```{r echo=FALSE}
+library(writexl)
+```
+
+The `write_xlsx()` function can export `data.frame` objects directly to Excel. For example, to export the coefficient table of a regression model, we first save it as a `data.frame`:
+
+```{r}
+Betas <- as.data.frame(summary(cars_model)$coefficients)
+```
+
+We can then write it to an Excel file. Note that the file will be saved in the current **working directory**:
+
+```{r}
+write_xlsx(Betas, "Betas_Car.xlsx")
+```
+
+You may notice that the variable names are missing from the Excel file. This happens because they are stored as row names rather than as a separate column. We can fix this by explicitly adding them:
+
+```{r}
+Betas$Variable <- row.names(Betas)
+write_xlsx(Betas, "Betas_Car.xlsx")
+```
+
+The same approach can be used for other output tables, such as descriptive statistics:
+
+```{r}
+library(psych)
+
+DescStat <- as.data.frame(describe(used_cars))
+DescStat$VariableName <- row.names(DescStat)
+
+write_xlsx(DescStat, "DescStat_Car.xlsx")
+```

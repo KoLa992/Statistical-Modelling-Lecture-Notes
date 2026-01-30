@@ -7,7 +7,7 @@ title: |
   Data Science in Business BSc<br><br>
   </center> 
 output: html_document
-date: '11/05/2025'
+date: '30/01/2026'
 ---
 
 ```{r setup, include=FALSE}
@@ -42,7 +42,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Chapter 14 - <a href="Chapter14.html" target="_blank">Multivariate Linear Regression</a>
 
-## Chapter 15 - Nominal Predictors in Multivariate Linear Regression
+## Chapter 15 - <a href="Chapter15.html" target="_blank">Nominal Predictors in Multivariate Linear Regression</a>
 
 ## Chapter 16 - <a href="Chapter16.html" target="_blank">Model Selection</a>
 
@@ -51,7 +51,3 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Chapter 18 - <a href="Chapter18.html" target="_blank">Multicollinearity and Principal Component Analysis</a>
 
 ## Chapter 19 - <a href="Chapter19.html" target="_blank">Heteroskedasticity</a>
-
-## Chapter 20 - Binomial Logistric Regression
-
-## Chapter 21 - Multinomial Logistric Regression
