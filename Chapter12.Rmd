@@ -23,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 We continue performing hypothesis tests.
 
-UP UNTIL NOW, we examined the case of so-called **parametric tests**. In those, we made statments — hypotheses — about possible population values of statistical indicators, i.e. statistical parameters (e.g., mean, standard deviation, proportion, etc.).
+UP UNTIL NOW, we examined the case of so-called **parametric tests**. In those, we made statements — hypotheses — about possible population values of statistical indicators, i.e. statistical parameters (e.g., mean, standard deviation, proportion, etc.).
 
 NOW, we begin exploring the case of so-called **non-parametric tests**. In this case, we **make statements — hypotheses about the population distribution of variables**. A variable’s distribution basically means specifying what proportion each possible value of the variable occurs with. So really, in these hypotheses, we are making statements about **many proportion values at once**.
 
@@ -271,10 +271,10 @@ chisq.test(crosstab)
 ```
 
 In our case, the p-value is $20.4\%$, which is higher than even the highest typical significance level of $10\%$.
-So **in the population** (i.e., outside of our sample), **the distrobution of job satisfaction levels can be considered IDENTICAL between Windows and non-Windows users**.<br>
+So **in the population** (i.e., outside of our sample), **the distribution of job satisfaction levels can be considered IDENTICAL between Windows and non-Windows users**.<br>
 In other words, the observed difference in satisfaction rates between operating systems in our sample is likely due to sampling error alone — not statistically significant.
 
-The `expected` element in the result list returned by `chisq.test` is the contingency table that would occur if $H_0$ were true (i.e., if the two groups were to have the same job satiosfaction distrobution). We can verify using `prop.table` that in this theoretical contingency table, the proportions within columns = OS groups are indeed equal — just as $H_0$ states.
+The `expected` element in the result list returned by `chisq.test` is the contingency table that would occur if $H_0$ were true (i.e., if the two groups were to have the same job satisfaction distribution). We can verify using `prop.table` that in this theoretical contingency table, the proportions within columns = OS groups are indeed equal — just as $H_0$ states.
 
 ```{r}
 homogenity_result <- chisq.test(crosstab)

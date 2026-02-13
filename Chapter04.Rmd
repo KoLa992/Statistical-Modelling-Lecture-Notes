@@ -33,7 +33,7 @@ this_is_so_random
 
 Running the above code, everyone will get a different result since we are generating a *random* number. :) The point is that our number is between $0$ and $1$!
 
-Node, **what does this random number generator do from a statistical point of view**? Well, in this case, they **randomly draw a $x$ value from a random variable $Y_i$, whose distribution is uniform between the $0$ and $1$ values**. The mathematical notation for this is: $Y_i \sim U(0,1)$. The $U$ comes from the fact that the *distribution is uniform*. :)
+Note, **what does this random number generator do from a statistical point of view**? Well, in this case, they **randomly draw a $x$ value from a random variable $Y_i$, whose distribution is uniform between the $0$ and $1$ values**. The mathematical notation for this is: $Y_i \sim U(0,1)$. The $U$ comes from the fact that the *distribution is uniform*. :)
 
 Now, let's draw $50$ random values from the $Y_i \sim U(0,1)$ data series, and store the results in a `vector` object! That is, **let's take a sample of size $n=50$ from the $U(0,1)$ distribution**.
 
@@ -586,7 +586,7 @@ We’re all set, these are **the population’s true statistical measures**:
 
 Based on this, the **following notation conventions apply to the population (i.e., the entire data set)**:
 
-- NUmber of Elements $N$
+- Number of Elements $N$
 - The joint notation for population-based statistical measures: $\theta$
   * So $\theta$ is a general notation for a population statistic.
   * It can represent mean ($\bar{Y}=\mu$), standard deviation ($\sigma$), proportion ($P$), but also median ($Me$), mode ($Mo$), etc.!

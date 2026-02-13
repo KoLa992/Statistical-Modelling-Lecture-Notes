@@ -56,7 +56,7 @@ If an empty value is found in any column, it means that the respondent in that r
 - **Region**: Region the respondent is living in
 - **vacc19**: Respondent received at least one dose of a vaccine against coronavirus
 
-Let's read the Excel file into an R data frame with the `readxl` package! I don't include the `readxl` package in my R environment, as I only need one function from it and no more. So, I use the `read_excel` function with the `readxl::` prefic instead of `library(readxl)`.
+Let's read the Excel file into an R data frame with the `readxl` package! I don't include the `readxl` package in my R environment, as I only need one function from it and no more. So, I use the `read_excel` function with the `readxl::` prefix instead of `library(readxl)`.
 
 ```{r}
 ess <- readxl::read_excel("ess_hun_2024.xlsx")
@@ -90,7 +90,7 @@ We can see that this **BMI is** a comfy little statistical variable, as it is **
 
 ## 2. Normal Distribution and its Importance
  
-First, we need to introduce a new but already known concpet: the **empirical probability distribution**. This is basically the (relative) **frequency distribution for a numerical variable**. This is the **distribution that we observe** in our dataset.
+First, we need to introduce a new but already known concept: the **empirical probability distribution**. This is basically the (relative) **frequency distribution for a numerical variable**. This is the **distribution that we observe** in our dataset.
 
 We can see that the BMI variable is continuous as it can take lots of unique values, namely 889 different values.
 
@@ -543,7 +543,7 @@ It's really $95.4\%$! :) **This property of the standard normal distribution wil
 
 Because of this property, sometimes the standardized values are used to look for outliers. Like a $y_i$ value in the variable is an outlier if its corresponding $z_i$ value is outside the $\pm2$ range since in this case, the $y_i$ observation is either in the top or bottom $2.5\%$ of the variable (we can see from the density function of the standard normal distribution that the $5\%$ outside of the $\pm 2$ range is symmetrically distributed on the lower and upper edges of the graph...but this symmetry is no surprise :)). 
 
-We can try this method to locate people with outhlier BMIs in the ESS sample from the Hungarian population:
+We can try this method to locate people with outlier BMIs in the ESS sample from the Hungarian population:
 
 ```{r}
 ess_small[ess_small$z < -2 | ess_small$z > 2,]

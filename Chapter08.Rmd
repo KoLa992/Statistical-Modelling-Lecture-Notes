@@ -82,7 +82,7 @@ Moreover, considering that the total Hungarian population was 9 772 756 as of Ja
 c(as.integer(0.174 * 9772756), as.integer(0.221 * 9772756))
 ```
 
-Thus, in Hungary, the number of Fidesz supporters is estimated to be between $170$ and $216$ thoudósand peopl with 99% confidence. Hooray! :)
+Thus, in Hungary, the number of Fidesz supporters is estimated to be between $170$ and $216$ thousand people with 99% confidence. Hooray! :)
 
 The examination of Fidesz support across the entire population can also be conducted on a **regional level**, now with a **95% confidence level**.
 

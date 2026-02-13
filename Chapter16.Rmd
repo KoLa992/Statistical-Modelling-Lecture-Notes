@@ -63,7 +63,7 @@ summary(model_1)
 
 The model looks very good, with an explanatory power of $87.35\%$, the model is significant on all usual $\alpha$ significance levels (global F-test). **Note**: range of usual significance levels: $1\% \leq \alpha \leq 10\%$
 
-Partial t-tests indicate that the non-significant explanatory variables at $\alpha=5\%$ are **Prof**, **Unprof**, **FAssets**, **Equity**, **SUBLiab** and **PersExp**. If these variables are not related to the earinings of the industries, they should be dropped from the model:
+Partial t-tests indicate that the non-significant explanatory variables at $\alpha=5\%$ are **Prof**, **Unprof**, **FAssets**, **Equity**, **SUBLiab** and **PersExp**. If these variables are not related to the earnings of the industries, they should be dropped from the model:
 
 ```{r}
 model_2 <- lm(Earnings ~ Workers + CAssets + LTLiab + 

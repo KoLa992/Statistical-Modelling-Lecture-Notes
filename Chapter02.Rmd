@@ -1,5 +1,5 @@
 ---
-title: "Descriptve Statistics and Data Visualization in R"
+title: "Descriptive Statistics and Data Visualization in R"
 author: "László Kovács"
 date: "08/02/2025"
 output:
@@ -30,7 +30,7 @@ The <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob
 - HalfRooms: number of half-rooms in the flat
 - Bathrooms: number of bathrooms in the flat
 - Floor: the number of floor the flat is on
-- IsSouth: is the flat looking at the South? (1 = yes; 0 = mo)
+- IsSouth: is the flat looking at the South? (1 = yes; 0 = no)
 - IsBuda: is the flat in Buda? (1 = yes; 0 = no)
 - District: district of Budapest the flat is in (1 - 22)
 
@@ -256,7 +256,7 @@ hist(BP_Flats$Price_MillionHUF) # histogram
 boxplot(BP_Flats$Price_MillionHUF) # box plot
 ```
 
-The histogram clearly shows the lomg right tail of the distribution, which we could also observe from the average-median relationship and the visibly positive value of the $\alpha_3$ indicator.
+The histogram clearly shows the long right tail of the distribution, which we could also observe from the average-median relationship and the visibly positive value of the $\alpha_3$ indicator.
 
 From the box plot, we can also read one of the important results of the `summary` function: the middle 50% of apartment prices fluctuate between approximately 14 and 32 million HUF.
 
@@ -498,7 +498,7 @@ Interpretation guide for the *absolute value* of the correlation ($r$):
 ```{r, echo=FALSE}
 
 x <- data.frame("Correlation Abs Value" = c("|r|<0.3", "0.3<=|r|<=0.7", "|r|>0.7"),
-                "Strenght of Relationship" = c("weak", "moderate", "strong"))
+                "Strength of Relationship" = c("weak", "moderate", "strong"))
 
 knitr::kable(
   x, align = "cc"

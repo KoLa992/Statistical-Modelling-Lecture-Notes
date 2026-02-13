@@ -314,7 +314,7 @@ groupwiseMean(Fidesz~1, data = ESS, na.rm = TRUE, digits = 4, conf = 0.99)</code
 <p>Moreover, considering that the total Hungarian population was 9 772 756 as of January 1, 2020, we can estimate the <strong>specific number of Fidesz supporters in Hungary</strong> with 99% confidence. We simply <strong>multiply the two boundaries of the confidence interval by the total population size</strong> of <span class="math inline">\(N=9772756\)</span>.</p>
 <pre class="r"><code>c(as.integer(0.174 * 9772756), as.integer(0.221 * 9772756))</code></pre>
 <pre><code>## [1] 1700459 2159779</code></pre>
-<p>Thus, in Hungary, the number of Fidesz supporters is estimated to be between <span class="math inline">\(170\)</span> and <span class="math inline">\(216\)</span> thoudósand peopl with 99% confidence. Hooray! :)</p>
+<p>Thus, in Hungary, the number of Fidesz supporters is estimated to be between <span class="math inline">\(170\)</span> and <span class="math inline">\(216\)</span> thousand people with 99% confidence. Hooray! :)</p>
 <p>The examination of Fidesz support across the entire population can also be conducted on a <strong>regional level</strong>, now with a <strong>95% confidence level</strong>.</p>
 <pre class="r"><code>groupwiseMean(Fidesz ~ Region, data = ESS, na.rm = TRUE, digits = 4, conf = 0.95)</code></pre>
 <div data-pagedtable="false">

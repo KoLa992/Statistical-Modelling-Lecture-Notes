@@ -160,7 +160,7 @@ elasticity <- Betas[3]*222 / (Betas[1]+Betas[2]*6.5+Betas[3]*222+Betas[4]*13.3)
 elasticity
 ```
 
-he result, $0.15$, is **already given in percentage terms**!! That is, the number means that if **the 222-unemployed rate in the Pécs district increases by 1%, while the number of nurses and the share of women over 65 remain unchanged on the levels of 6.5 and 13.3% respectively, then the COVID mortality rate in the district is expected to increase by 0.15%!!** Thus, elasticity can be interpreted as a *percentage beta*, but one must pay very close attention that **the +1% change in $X_j$ and the constancy of all other $X$ variables are relative to the given baseline** (Nurses=6.5; Unemp=222; WomenOlder65=13.3)!!
+The result, $0.15$, is **already given in percentage terms**!! That is, the number means that if **the 222-unemployed rate in the Pécs district increases by 1%, while the number of nurses and the share of women over 65 remain unchanged on the levels of 6.5 and 13.3% respectively, then the COVID mortality rate in the district is expected to increase by 0.15%!!** Thus, elasticity can be interpreted as a *percentage beta*, but one must pay very close attention that **the +1% change in $X_j$ and the constancy of all other $X$ variables are relative to the given baseline** (Nurses=6.5; Unemp=222; WomenOlder65=13.3)!!
 
 Why does this matter? Let’s compute the unemployment elasticity in the Siklós district, where *Nurses=6.7, Unemp=692, WomenOlder65=12.7*:
 
