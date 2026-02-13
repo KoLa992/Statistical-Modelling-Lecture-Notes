@@ -55,7 +55,7 @@ Now, let's see the method of moments in action for other probability distributio
 Read the data in the <a href="https://github.com/KoLa992/Statistical-Modelling-Lecture-Notes/blob/main/insurance_examples.xlsx" target="_blank">insurance_examples.xlsx</a> file.<br>
 On the worksheet titled *CarInsurance_IsClaim*, we can find an insurance company's $500$ insured cars and the fact whether they caused an accident (claim) in the past year (1=yes and 0=no) in the *IsClaim* column.<br>
 On the worksheet titled *CarInsurance_NumberOfClaims*, we can find another insurance company's $400$ insured cars and the number of accidents (claims) they caused in the past year in the *NumClaims* column.<br>
-Read both wotksheets into two separate data frames using the `sheet` parameter in the `read_excel` function of the `readxl` package.
+Read both worksheets into two separate data frames using the `sheet` parameter in the `read_excel` function of the `readxl` package.
 
 ```{r}
 library(readxl)
@@ -237,7 +237,7 @@ Ok, great: we now know what to do to get maximum likelihood (ML) estimators. Let
 
 ### 2.1. Numerically for the Exponential Distribution
 
-Use the Cancer survival data from <a href="Chapter03.html" target="_blank">Chapter 3</a> again for a sample where Exponenetial distribution is reasonable assumption.
+Use the Cancer survival data from <a href="Chapter03.html" target="_blank">Chapter 3</a> again for a sample where Exponential distribution is reasonable assumption.
 
 The parameter to estimate for the Exponential distribution is $\lambda$. So, in the exponential case: $\theta=\lambda$.
 
@@ -273,7 +273,7 @@ So, our result is $\hat{\lambda}_{ML}=0.00442$. Which is the **reciprocal of the
 
 Since the **maximum likelihood method ensures that what we got is the efficient estimator** (it has the lowest $MSE$), we can **conclude that we need to take the reciprocal of the mean and NOT the standard deviation when estimating $\lambda$ of an exponential distribution**.
 
-### 2.3. Analitically for the Exponential Distribution
+### 2.3. Analytically for the Exponential Distribution
 
 The result of *Section 2.2.* can also be derived analytically by **taking the derivative of the log-likelihood** according to $\theta$ and solve the equation of **this derivative being equal to $0$:** $$\frac{\partial l(\theta)}{\partial\theta}=0$$
 
@@ -372,7 +372,7 @@ sd(Surv$SurvMonth)
 
 This is **not a surprise** as we've seen in <a href="Chapter05.html" target="_blank">Section 6.1. of Chapter 5</a> that the uncorrected sample standard deviation has a lower $MSE$ than that of the corrected sample standard deviation. Now we know that this is **because the uncorrected sample standard deviation is a maximum likelihood estimation of the "true" standard deviation, so it must have a lower $MSE$ as the corrected version**, as the maximum likelihood method provides efficient estimates.
 
-### 2.6. Analitically for the Normal Distribution
+### 2.6. Analytically for the Normal Distribution
 
 We can derive the results for the two parameters of the Normal distribution we've seen in *Section 2.5.* analytically as well. Just like we did for the Exponential distribution in *Section 2.3.*<br>
 So, let's **take the derivative of the log-likelihood** according to **both $\theta$ parameters** and solve the equations of **these two derivatives being equal to $0$:** $$\frac{\partial l(\theta)}{\partial\theta_i}=0$$

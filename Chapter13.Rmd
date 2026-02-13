@@ -66,7 +66,7 @@ The statistical methods we learned are summarized in the following table accordi
 
 x <- data.frame("Type of Relationship" = c("Mixed", "Association", "Correlation"),
                 "Scales of Measurement" = c("categorical-numerical", "categorical-categorical", "numerical-numerical"),
-                "Visualization" = c("Groupped Box Plot", "Stacked Column Chart", "Scatter Plot"),
+                "Visualization" = c("Grouped Box Plot", "Stacked Column Chart", "Scatter Plot"),
                 "Statistical Tools" = c("ANalysis Of VAriances (ANOVA)", "Cramer's V and Chi-squared Test", "Correlation and Simple Linear Regression"))
 
 knitr::kable(
@@ -383,7 +383,7 @@ Let’s see how we can use this regression line for prediction, and take a look 
 In the previous section we introduced the basic notations, but as a reminder let’s recap:
 
 - $y$ := Price (**Target** variable, which we want to predict)
-- $x$ := Area (**Predcitor** variable, which we want to use to predict the target variable)
+- $x$ := Area (**Predictor** variable, which we want to use to predict the target variable)
 
 In high school we used the following equation to describe a line in the $x$, $y$ coordinate system:
 

@@ -402,7 +402,7 @@ round(mean_of_vars - PopVar, 1)</code></pre>
 <p>The <strong>phenomenon</strong> can be <strong>mathematically</strong> expressed as follows: <span class="math display">\[E\left({(s^*)}^2 \right) &lt; \sigma^2\]</span></p>
 <p>That is: <span class="math display">\[Bs\left({(s^*)}^2\right) &lt; 0\]</span></p>
 <div id="the-concept-of-asimptotically-unbiased-estimators" class="section level3">
-<h3>2.1. The Concept of Asimptotically Unbiased Estimators</h3>
+<h3>2.1. The Concept of Asymptotically Unbiased Estimators</h3>
 <p>What somewhat mitigates the situation is the fact that <strong>although the population variance is inherently biased when estimated using sample variances</strong>, the estimation is, however, <strong>asymptotically unbiased</strong>. This means that <strong>as the sample size increases, the magnitude of the bias (<span class="math inline">\(|Bs|\)</span>) decreases</strong> and specifically approaches <span class="math inline">\(0\)</span>. That is: <span class="math display">\[\lim_{n \rightarrow \infty}{Bs\left({(s^*)}^2\right)}=0\]</span></p>
 <p>Let’s <strong>illustrate this phenomenon!</strong> Using the <strong>column selection method presented at the end of Section 1</strong>, we calculate the bias <span class="math inline">\(Bs({(s^*)}^2)\)</span> of the sample variances for <span class="math inline">\(10000\)</span> samples of sizes <span class="math inline">\(n={10,20,30,...,90,100}\)</span> relative to the true population variance (<span class="math inline">\(\sigma^2\)</span>).<br> Technically, this can be accomplished using a <code>for</code> loop:</p>
 <ul>

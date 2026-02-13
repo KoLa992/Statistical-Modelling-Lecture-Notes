@@ -173,7 +173,7 @@ The **phenomenon** can be **mathematically** expressed as follows: $$E\left({(s^
 
 That is: $$Bs\left({(s^*)}^2\right) < 0$$
 
-### 2.1. The Concept of Asimptotically Unbiased Estimators
+### 2.1. The Concept of Asymptotically Unbiased Estimators
 
 What somewhat mitigates the situation is the fact that **although the population variance is inherently biased when estimated using sample variances**, the estimation is, however, **asymptotically unbiased**. This means that **as the sample size increases, the magnitude of the bias ($|Bs|$) decreases** and specifically approaches $0$. That is: $$\lim_{n \rightarrow \infty}{Bs\left({(s^*)}^2\right)}=0$$
 
@@ -452,13 +452,13 @@ To summarize, here are the **different types of standard deviations and variance
 
 The standard errors' formulas also imply that, the **sample mean and sample proportion** estimators are **consistent estimators for the true population mean and proportion**.
 
-In general, an **estimator $\hat{\theta}$ is consistent if its standard error ($SE$) approaches $0$ as the sample size ($n$) increases**:$$\lim_{n \rightarrow \infty}{SH(\hat{\theta})} = 0$$
+In general, an **estimator $\hat{\theta}$ is consistent if its standard error ($SE$) approaches $0$ as the sample size ($n$) increases**:$$\lim_{n \rightarrow \infty}{SE(\hat{\theta})} = 0$$
 
 That is, as the sample size grows, the value of the examined statistical measure computed from a single sample ($\hat{\theta}$) gets closer and closer to the true population value of the measure ($\theta$).
 
-It is easy to see that, **as a function of the sample size ($n$), both the standard errors of the sample means and sample proportions follow a hyperbolic function of the form $f(n) \sim \frac{1}{n}$, which approaches $0$ as $n$ tends to infinity**:$$\lim_{n \rightarrow \infty}{SH(\bar{y})} = \lim_{n \rightarrow \infty}{\frac{\sigma}{\sqrt{n}}} = 0$$
+It is easy to see that, **as a function of the sample size ($n$), both the standard errors of the sample means and sample proportions follow a hyperbolic function of the form $f(n) \sim \frac{1}{n}$, which approaches $0$ as $n$ tends to infinity**:$$\lim_{n \rightarrow \infty}{SE(\bar{y})} = \lim_{n \rightarrow \infty}{\frac{\sigma}{\sqrt{n}}} = 0$$
 
-and $$lim_{n \rightarrow \infty}{SH(p)} = \lim_{n \rightarrow \infty}{\sqrt{\frac{P(1-P)}{n}}} = 0$$
+and $$\lim_{n \rightarrow \infty}{SE(p)} = \lim_{n \rightarrow \infty}{\sqrt{\frac{P(1-P)}{n}}} = 0$$
 
 Let’s **plot the standard error function for $SE(\bar{y})$**, in case of sample sizes $n={10,20,...,200}$, and we will see the **hyperbolic shape**. Although the concept is not entirely straightforward, since the rate of convergence to $0$ follows a "*square root*" pattern according to the formula. :) Logic of the R code used for visualization is entirely consistent with what was used in *Section 2.1.*
 

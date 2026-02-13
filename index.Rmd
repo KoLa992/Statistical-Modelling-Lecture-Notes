@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Chapter 1 - <a href="Chapter01.html" target="_blank">Introduction to R</a>
 
-## Chapter 2 - <a href="Chapter02.html" target="_blank">Descriptve Statistics and Data Visualization in R</a>
+## Chapter 2 - <a href="Chapter02.html" target="_blank">Descriptive Statistics and Data Visualization in R</a>
 
 ## Chapter 3 - <a href="Chapter03.html" target="_blank">Probability Distributions</a>
 

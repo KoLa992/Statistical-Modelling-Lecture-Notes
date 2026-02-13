@@ -2866,7 +2866,7 @@ the commands to execute in the script and then press the
 broken into multiple lines, but a new command always has to start in a
 new line! It’s advisable to leave an empty line between commands to
 better separate the code.</p>
-<p>Now, let’s make R calcuate the results of two operations: <span class="math inline">\(3+2\)</span> and <span class="math inline">\(3
+<p>Now, let’s make R calculate the results of two operations: <span class="math inline">\(3+2\)</span> and <span class="math inline">\(3
 \times 2\)</span>:</p>
 <center>
 <iframe width="560" height="315" src="https://www.youtube.com/embed/G0jXgZ0MYmE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" data-external="1" allowfullscreen>
@@ -2974,7 +2974,7 @@ reveals that this object is a <code>double</code> type number. The
 <code>double</code> type numbers are numerical data types that can store
 fractions as well not just integers.</p>
 <p>The function <code>str</code> also shows the current value stored in
-the object (which is <code>5</code> in the exmaple above) next to its
+the object (which is <code>5</code> in the example above) next to its
 data type.</p>
 <p>There exist a data type called <code>integer</code> that can only
 store whole numbers, or in other name integers. To create an object with
@@ -2989,7 +2989,7 @@ str(whole_number)</code></pre>
 <p>In our course, it won’t have any significance, but if you need to
 handle true <strong>big data</strong>, then in order to save RAM
 storage, even the difference between integers and doubles matter! So,
-you don’t want to use up the space needed for dubles to store something
+you don’t want to use up the space needed for doubles to store something
 that can only be an integer number!</p>
 <p>Some other important data types and their definitons:</p>
 <pre class="r"><code>textual &lt;- &quot;HelloThere&quot; # Text in code should be put between quotation marks! Like in Excel! :)
@@ -3053,7 +3053,7 @@ good</code></pre>
 <h3>5.2. Data Structures</h3>
 <div id="vectors" class="section level4">
 <h4>Vectors</h4>
-<p>We can create R objects containing multiple values with the dunction
+<p>We can create R objects containing multiple values with the function
 <code>c</code>. The name of this kind of objects containing multiple
 values in a sequence is <strong>vector</strong>.</p>
 <pre class="r"><code>many_numbers &lt;- c(3.14, 2.67, 88, 1234)
@@ -3067,7 +3067,7 @@ functions both tell us that the data type of out new object is numeric.
 This is because <strong>vector objects can only store values of the same
 data type</strong>!</p>
 <p>If we want to store values of different data types in a vector, then
-R converts ecerything to the most general data type. Which is in the
+R converts everything to the most general data type. Which is in the
 example below is <code>character</code>:</p>
 <pre class="r"><code>many_numbers_texts &lt;- c(88, 42, &quot;Hello&quot;, 1992, 9, &quot;There&quot;, &quot;Friend&quot;, 11)
 
@@ -3119,7 +3119,7 @@ for in the search bar.</p>
 <p>Elegantly you can say that the documentation gives the <em>callable
 parameters</em> of an R function.</p>
 <p>When using the documentation and R in general be careful for the fact
-that R is a <strong>case-semsitive</strong> language! This means that
+that R is a <strong>case-sensitive</strong> language! This means that
 the difference between small and large letters matter! Like the
 <code>order</code> function is <strong>not</strong> the same as the
 <code>Order</code> function!!</p>
@@ -3147,7 +3147,7 @@ str(blacklist) # the function shows elements of the list separated with $ signs<
 <p>Number of elements in a list can be queried with the
 <code>length</code> function as well.</p>
 <p>On the other hand, if you need to select an element from the list,
-then you’ll need use some triks since the method applied in the case of
+then you’ll need use some tricks since the method applied in the case of
 vectors does not work here:</p>
 <pre class="r"><code>blacklist[2]</code></pre>
 <pre><code>## [[1]]
@@ -3239,7 +3239,7 @@ these countries:</p>
 <li>Prop_UrbanPop: proportion of urban population in 2019 (%)</li>
 <li>PressLiberty: press liberty index in 2019 (lower = press is more
 free)</li>
-<li>PerCapita_HealthExp_2016: per capita helth expenditures based on
+<li>PerCapita_HealthExp_2016: per capita health expenditures based on
 purchasing power parity (2016)</li>
 <li>COVID19_CasesPerMillion: registered COVID-19 infections per million
 people on 26th March 2020.</li>
@@ -3313,7 +3313,7 @@ sign like in a list:</p>
 object!</p>
 <p>We can look into the first few rows with the <code>head</code>
 function (by default the first 6):</p>
-<pre class="r"><code>head(COVID) # shwos first 6 rows by default</code></pre>
+<pre class="r"><code>head(COVID) # shows first 6 rows by default</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Country"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Pop"],"name":[2],"type":["int"],"align":["right"]},{"label":["PopDens"],"name":[3],"type":["int"],"align":["right"]},{"label":["Prop_UrbanPop"],"name":[4],"type":["int"],"align":["right"]},{"label":["PressLiberty"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["PerCapita_HealthExp_2016"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["COVID19_CasesPerMillion"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["ConstitutionalForm"],"name":[8],"type":["chr"],"align":["left"]},{"label":["HeadOfState"],"name":[9],"type":["chr"],"align":["left"]}],"data":[{"1":"Afghanistan","2":"38928346","3":"60","4":"25","5":"27.66757","6":"162.8","7":"2.414693","8":"Republic","9":"Executive","_rn_":"1"},{"1":"Albania","2":"2877797","3":"105","4":"63","5":"29.83647","6":"759.7","7":"60.462917","8":"Republic","9":"Ceremonial","_rn_":"2"},{"1":"Algeria","2":"43851044","3":"18","4":"73","5":"45.75159","6":"998.2","7":"8.369242","8":"Republic","9":"Executive","_rn_":"3"},{"1":"Argentina","2":"45195774","3":"17","4":"93","5":"28.30321","6":"1531.0","7":"11.107233","8":"Republic","9":"Executive","_rn_":"4"},{"1":"Armenia","2":"2963243","3":"104","4":"63","5":"28.74149","6":"876.9","7":"97.865750","8":"Republic","9":"Ceremonial","_rn_":"5"},{"1":"Australia","2":"25499884","3":"3","4":"86","5":"16.54625","6":"4529.9","7":"110.196580","8":"Constitutional monarchy","9":"Ceremonial","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
@@ -3628,7 +3628,7 @@ operations in R instructions:</p>
 <div id="installing-and-importing-external-packages" class="section level2">
 <h2>7. Installing and Importing External Packages</h2>
 <p>As I wrote in the introduction, one of the most attractive features
-of R is that its functionality can be extended by using extrenal
+of R is that its functionality can be extended by using external
 libraries called <em>packages</em>. These packages add extra functions
 to the command set of R that are not included in the ‘base’ version.</p>
 <p>During the course, we’ll use the following packages rather

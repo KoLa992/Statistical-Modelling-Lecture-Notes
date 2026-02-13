@@ -285,7 +285,7 @@ mean(samples_100$p_value_H0true<0.01) # empirical probability of Type I error
 mean(samples_100$p_value_H0false>=0.01) # empirical probability of Type II error
 ```
 
-### 2.1. The *t-test* with a bulit-in R function
+### 2.1. The *t-test* with a built-in R function
 
 Luckily, we have an advantage because the **p-value of the t-test for the mean can be nicely computed using a built-in R function**!
 
